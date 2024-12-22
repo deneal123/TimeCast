@@ -1,3 +1,5 @@
+python-multipart
+aiofiles
 uvicorn
 pymysql
 fastapi

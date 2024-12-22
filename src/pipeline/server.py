@@ -14,6 +14,7 @@ from src.library.pydantic_models import (EntrySeasonAnalyticPipeline, EntryClass
 from src.services.analytic_services import season_analytic_pipeline
 from src.services.classic_services import classic_graduate_pipeline, classic_inference_pipeline
 from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference_pipeline
+from src.services.file_services import upload_csv_to_server
 
 env = Env()
 log = setup_logging()
@@ -33,21 +34,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/public", StaticFiles(directory=os.path.join(path_to_project(), "public")), name="public")
+app_server.mount("/public", StaticFiles(directory=os.path.join(path_to_project(), "public")), name="public")
 
 
 # Определяем теги
+ServerFileTag = OpenApiTag(name="File", description="Operations file")
 ServerAnalyticTag = OpenApiTag(name="Analytic", description="Operations analytic")
 ServerGraduateTag = OpenApiTag(name="Graduate", description="Operations graduate")
 ServerInferenceTag = OpenApiTag(name="Inference", description="Operations inference")
 
 # Настройка документации с тегами
 app_server.openapi_tags = [
+    ServerFileTag.model_dump(),
     ServerAnalyticTag.model_dump(),
     ServerGraduateTag.model_dump(),
     ServerInferenceTag.model_dump()
 ]
 
+
+
+@app_server.post("/upload_csv/", response_model=Dict, tags=["File"])
+async def upload_csv(files: list[UploadFile] = File(...)):
+    """
+    Route for upload csv files.
+
+    :param files: CSV Files. [UploadFile]
+
+    :return: response model None.
+    """
+    try:
+        return await upload_csv_to_server(files)
+    except HTTPException as ex:
+        log.exception(f"Error", exc_info=ex)
+        raise ex
 
 
 
@@ -61,7 +80,6 @@ async def season_analytic(entry: EntrySeasonAnalyticPipeline):
     :return: response model None.
     """
     try:
-        log.info(entry)
         return season_analytic_pipeline(entry)
     except HTTPException as ex:
         log.exception(f"Error", exc_info=ex)

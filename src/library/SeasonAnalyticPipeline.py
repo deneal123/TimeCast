@@ -4,7 +4,7 @@ from .ClassicDataset import ClassicDataset
 from .ClassicProccess import ClassicProccess
 from dataclasses import dataclass
 from src import path_to_project
-from env import Env
+from env import Env, log
 import os
 
 env = Env()
@@ -22,7 +22,7 @@ class SeasonAnalyticPipeline:
         shop_sales_dates = os.path.join(path_to_project(), env.__getattr__("DATA_PATH"), "shop_sales_dates.csv")
         shop_sales_prices = os.path.join(path_to_project(), env.__getattr__("DATA_PATH"), "shop_sales_prices.csv")
 
-        if not os.path.exists(shop_sales_dates) or not os.path.exists(shop_sales_prices) or not os.path.exists(
+        if not os.path.exists(shop_sales) or not os.path.exists(shop_sales_dates) or not os.path.exists(
                 shop_sales_prices):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="CSV files not found")
 
