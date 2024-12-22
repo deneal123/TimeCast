@@ -68,18 +68,18 @@ class EntryClassicDataset(BaseModel):
                                alias="store_id",
                                examples=["STORE_1"],
                                description="Строковое название магазина в наборе данных")
-    ShopSales: FilePath = Field(...,
-                                alias="shop_sales",
-                                examples=["./data/shop_sales.csv"],
-                                description="Путь к набору данных shop_sales")
-    ShopSalesDates: FilePath = Field(...,
-                                     alias="shop_sales_dates",
-                                     examples=["./data/shop_sales_dates.csv"],
-                                     description="Путь к набору данных shop_sales_dates")
-    ShopSalesPrices: FilePath = Field(...,
-                                      alias="shop_sales_prices",
-                                      examples=["./data/shop_sales_prices.csv"],
-                                      description="Путь к набору данных shop_sales_prices")
+    ShopSales: StrictStr = Field(...,
+                                 alias="shop_sales",
+                                 examples=["./data/shop_sales.csv"],
+                                 description="Путь к набору данных shop_sales")
+    ShopSalesDates: StrictStr = Field(...,
+                                      alias="shop_sales_dates",
+                                      examples=["./data/shop_sales_dates.csv"],
+                                      description="Путь к набору данных shop_sales_dates")
+    ShopSalesPrices: StrictStr = Field(...,
+                                       alias="shop_sales_prices",
+                                       examples=["./data/shop_sales_prices.csv"],
+                                       description="Путь к набору данных shop_sales_prices")
     Plots: Optional[StrictBool] = Field(False,
                                         alias="plots",
                                         examples=[True],
@@ -92,6 +92,38 @@ class EntryClassicDataset(BaseModel):
                                                alias="save_path_plots",
                                                examples=["./plots"],
                                                description="Если сохраняем графики, то куда? Дефолтный путь ./plots")
+
+    exclude_fields: Optional[Dict[str, bool]] = None
+
+    @root_validator(pre=True)
+    def handle_excluded_fields(cls, values):
+        exclude_fields = values.get("exclude_fields", {})
+        shop_sales = values.get("shop_sales", None)
+        shop_sales_dates = values.get("shop_sales_dates", None)
+        shop_sales_prices = values.get("shop_sales_prices", None)
+
+        if exclude_fields and "shop_sales" in exclude_fields and exclude_fields["shop_sales"]:
+            values["shop_sales"] = "ok"
+
+        if exclude_fields and "shop_sales_dates" in exclude_fields and exclude_fields["shop_sales_dates"]:
+            values["shop_sales_dates"] = "ok"
+
+        if exclude_fields and "shop_sales_prices" in exclude_fields and exclude_fields["shop_sales_prices"]:
+            values["shop_sales_prices"] = "ok"
+
+        if shop_sales is None and not exclude_fields:
+            raise ValueError(
+                "Field 'shop_sales' must be defined when 'exclude_fields' is not provided or shop_sales is not excluded.")
+
+        if shop_sales_dates is None and not exclude_fields:
+            raise ValueError(
+                "Field 'shop_sales_dates' must be defined when 'exclude_fields' is not provided or shop_sales_dates is not excluded.")
+
+        if shop_sales_prices is None and not exclude_fields:
+            raise ValueError(
+                "Field 'shop_sales_prices' must be defined when 'exclude_fields' is not provided or shop_sales_prices is not excluded.")
+
+        return values
 
 
 @auto_generate_docstring
@@ -114,16 +146,12 @@ class EntryClassicProccess(BaseModel):
                                                 }],
                                                 description="Словарь, по какому периоду будет осуществляться декомпозиция")
     RemoveBound: Optional[Dict[str, StrictInt]] = Field(...,
-                                                        default={
-                                                            "lower_bound_factor": 10000,
-                                                            "uper_bound_factor": 10000
-                                                        },
-                                                            alias="remove_bound",
-                                                            examples=[{
-                                                                "lower_bound_factor": 5,
-                                                                "uper_bound_factor": 5
-                                                            }],
-                                                            description="Границы выравнивания выбросов по медиане Q1 -+ bound_factor * IQR")
+                                                        alias="remove_bound",
+                                                        examples=[{
+                                                            "lower_bound_factor": 5,
+                                                            "uper_bound_factor": 5
+                                                        }],
+                                                        description="Границы выравнивания выбросов по медиане Q1 -+ bound_factor * IQR")
     Plots: Optional[StrictBool] = Field(False,
                                         alias="plots",
                                         examples=[True],
@@ -315,7 +343,17 @@ class EntryNeiroInference(BaseModel):
                                                }],
                                                description="Словарь диапазонов предсказаний, на какую дистанцию предсказывать?")
     DictModels: Dict[str, Dict] = Field(...,
-                                        default={
+                                        alias="dictmodels",
+                                        examples=[{
+                                            "IF": {
+                                                "num_variates": 7,
+                                                "num_tokens_per_variate": 1,
+                                                "dim": 256,
+                                                "depth": 6,
+                                                "heads": 8,
+                                                "dim_head": 64,
+                                                "use_reversible_instance_norm": True
+                                            },
                                             "IFFT": {
                                                 "num_variates": 7,
                                                 "num_tokens_per_variate": 1,
@@ -325,29 +363,8 @@ class EntryNeiroInference(BaseModel):
                                                 "dim_head": 64,
                                                 "use_reversible_instance_norm": True
                                             }
-                                        },
-                                            alias="dictmodels",
-                                            examples=[{
-                                                "IF": {
-                                                    "num_variates": 7,
-                                                    "num_tokens_per_variate": 1,
-                                                    "dim": 256,
-                                                    "depth": 6,
-                                                    "heads": 8,
-                                                    "dim_head": 64,
-                                                    "use_reversible_instance_norm": True
-                                                },
-                                                "IFFT": {
-                                                    "num_variates": 7,
-                                                    "num_tokens_per_variate": 1,
-                                                    "dim": 256,
-                                                    "depth": 6,
-                                                    "heads": 8,
-                                                    "dim_head": 64,
-                                                    "use_reversible_instance_norm": True
-                                                }
-                                            }],
-                                            description="Словарь с параметрами моделей")
+                                        }],
+                                        description="Словарь с параметрами моделей")
     FutureOrEstimate: StrictStr = Field('estimate',
                                         alias="future_or_estimate",
                                         examples=['estimate'],
@@ -438,16 +455,6 @@ class EntryNeiroGraduate(BaseModel):
                                                }],
                                                description="Словарь диапазонов предсказаний, на какую дистанцию предсказывать?")
     DictModels: Dict[str, Dict] = Field(...,
-                                        default={"IFFT": {
-                                                "num_variates": 7,
-                                                "num_tokens_per_variate": 1,
-                                                "dim": 512,
-                                                "depth": 6,
-                                                "heads": 8,
-                                                "dim_head": 64,
-                                                "use_reversible_instance_norm": True
-                                            }
-                                        },
                                         alias="dictmodels",
                                         examples=[{
                                             "IF": {
@@ -565,6 +572,11 @@ class EntrySeasonAnalyticPipeline(BaseModel):
         allow_population_by_field_name = True  # Поддержка алиасов
 
     def __init__(self, **data):
+
+        if "dataset" in data:
+            dataset_data = data["dataset"]
+            dataset_data["exclude_fields"] = {"shop_sales": True, "shop_sales_dates": True, "shop_sales_prices": True}
+
         if "proccess" in data:
             process_data = data["proccess"]
             process_data["exclude_fields"] = {"dictmerge": True}
@@ -591,6 +603,11 @@ class EntryClassicGraduatePipeline(BaseModel):
         allow_population_by_field_name = True  # Поддержка алиасов
 
     def __init__(self, **data):
+
+        if "dataset" in data:
+            dataset_data = data["dataset"]
+            dataset_data["exclude_fields"] = {"shop_sales": True, "shop_sales_dates": True, "shop_sales_prices": True}
+
         if "graduate" in data:
             graduate_data = data["graduate"]
             graduate_data["exclude_fields"] = {"dictidx": True, "dictmerge": True}
@@ -617,6 +634,11 @@ class EntryClassicInferencePipeline(BaseModel):
         allow_population_by_field_name = True  # Поддержка алиасов
 
     def __init__(self, **data):
+
+        if "dataset" in data:
+            dataset_data = data["dataset"]
+            dataset_data["exclude_fields"] = {"shop_sales": True, "shop_sales_dates": True, "shop_sales_prices": True}
+
         if "inference" in data:
             graduate_data = data["inference"]
             graduate_data["exclude_fields"] = {"dictidx": True, "dictmerge": True}
@@ -643,6 +665,11 @@ class EntryNeiroGraduatePipeline(BaseModel):
         allow_population_by_field_name = True  # Поддержка алиасов
 
     def __init__(self, **data):
+
+        if "dataset" in data:
+            dataset_data = data["dataset"]
+            dataset_data["exclude_fields"] = {"shop_sales": True, "shop_sales_dates": True, "shop_sales_prices": True}
+
         if "graduate" in data:
             graduate_data = data["graduate"]
             graduate_data["exclude_fields"] = {"dictidx": True, "dictmerge": True}
@@ -669,6 +696,11 @@ class EntryNeiroInferencePipeline(BaseModel):
         allow_population_by_field_name = True  # Поддержка алиасов
 
     def __init__(self, **data):
+
+        if "dataset" in data:
+            dataset_data = data["dataset"]
+            dataset_data["exclude_fields"] = {"shop_sales": True, "shop_sales_dates": True, "shop_sales_prices": True}
+
         if "inference" in data:
             inference_data = data["inference"]
             inference_data["exclude_fields"] = {"dictidx": True, "dictmerge": True}
