@@ -2,7 +2,7 @@ from .pydantic_models import validate_with_pydantic, EntryNeiroGraduatePipeline,
 from .ClassicDataset import ClassicDataset
 from .NeiroGraduate import NeiroGraduate
 from dataclasses import dataclass
-from src import project_path
+from src import path_to_project
 from env import Env
 import os
 
@@ -18,9 +18,9 @@ class NeiroGraduatePipeline:
 
         dataset = self.entry.Dataset
 
-        shop_sales = os.path.join(project_path, env.__getattr__("DATA_PATH"), "shop_sales.csv")
-        shop_sales_dates = os.path.join(project_path, env.__getattr__("DATA_PATH"), "shop_sales_dates.csv")
-        shop_sales_prices = os.path.join(project_path, env.__getattr__("DATA_PATH"), "shop_sales_prices.csv")
+        shop_sales = os.path.join(path_to_project(), env.__getattr__("DATA_PATH"), "shop_sales.csv")
+        shop_sales_dates = os.path.join(path_to_project(), env.__getattr__("DATA_PATH"), "shop_sales_dates.csv")
+        shop_sales_prices = os.path.join(path_to_project(), env.__getattr__("DATA_PATH"), "shop_sales_prices.csv")
 
         if not os.path.exists(shop_sales_dates) or not os.path.exists(shop_sales_prices) or not os.path.exists(shop_sales_prices):
             raise FileNotFoundError("CSV files not found")

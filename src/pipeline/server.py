@@ -17,8 +17,10 @@ from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference
 env = Env()
 log = setup_logging()
 
+app = FastAPI(title="TimeCast API", version="1.3.2",
+              description="This API server is intended for the TimeCast project. For rights, contact the service owner.")
 
-app_server = FastAPI(title="API - server")
+app.mount("/public", StaticFiles(directory=os.path.join(path_to_project(), "public")), name="public")
 
 app = FastAPI()
 

@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from .utils import seed_everything, dec_series
 from sktime.split import SingleWindowSplitter
 
-    
+
 def collate_fn(batch,
                minmax_resid=None,
                minmax_trend=None,
@@ -25,7 +25,6 @@ def collate_fn(batch,
                minmax_series=None,
                pdata=False,
                without_test=False):
-
     if minmax_resid and minmax_trend and minmax_season and minmax_sellprice and minmax_series:
         process = True
     else:
@@ -83,7 +82,7 @@ def collate_fn(batch,
         if process:
             # Выполняем декомпозицию объединенных данных (или только train при without_test=True)
             resid, trend, season = dec_series(combined_series, 7, 'multiplicative')
-            
+
             # Нормализуем на объединенных данных
             resid = pd.Series(
                 minmax_resid.fit_transform(resid.values.reshape(-1, 1)).flatten(),
@@ -127,7 +126,8 @@ def collate_fn(batch,
             )
             exogenous = torch.tensor(exogenous.values, dtype=torch.float32)
         else:
-            series = pd.Series(minmax_series.fit_transform(series.values.reshape(-1, 1)).flatten(), name='series', index=series.index)
+            series = pd.Series(minmax_series.fit_transform(series.values.reshape(-1, 1)).flatten(), name='series',
+                               index=series.index)
             exogenous['sell_price'] = minmax_sellprice.fit_transform(
                 exogenous['sell_price'].values.reshape(-1, 1)
             ).flatten()
@@ -162,7 +162,8 @@ def collate_fn(batch,
                 )
                 exogenous = torch.tensor(exogenous.values, dtype=torch.float32)
             else:
-                series = pd.Series(minmax_series.fit_transform(series.values.reshape(-1, 1)).flatten(), name='series', index=series.index)
+                series = pd.Series(minmax_series.fit_transform(series.values.reshape(-1, 1)).flatten(), name='series',
+                                   index=series.index)
                 exogenous['sell_price'] = minmax_sellprice.fit_transform(
                     exogenous['sell_price'].values.reshape(-1, 1)
                 ).flatten()
@@ -197,17 +198,16 @@ def collate_fn(batch,
     return process_batch
 
 
-    
 def get_datasets(
-    dictidx: dict,
-    dictmerge: dict,
-    item_id: str,
-    test_size: float = 0.3,
-    period: int = 7,
-    seq_len: int = 365,
-    step_length: int = 1,
-    seed: int = 17,
-    future_or_estimate_or_train: str = 'train'
+        dictidx: dict,
+        dictmerge: dict,
+        item_id: str,
+        test_size: float = 0.3,
+        period: int = 7,
+        seq_len: int = 365,
+        step_length: int = 1,
+        seed: int = 17,
+        future_or_estimate_or_train: str = 'train'
 ):
     seed_everything(seed)
 
@@ -216,7 +216,7 @@ def get_datasets(
     item_metadata.sort_values(by='date_id', inplace=True)
 
     if future_or_estimate_or_train == 'train':
-        
+
         # Разделяем данные на train и test, сохраняя порядок
         train_metadata, test_metadata = train_test_split(
             item_metadata,
@@ -224,7 +224,7 @@ def get_datasets(
             random_state=seed,
             shuffle=False  # Не перемешиваем данные
         )
-    
+
         # SlidingWindowSplitter для кросс-валидации на train части
         train_splits = []
         splitter = SlidingWindowSplitter(
@@ -232,7 +232,7 @@ def get_datasets(
             fh=list(range(0, period)),  # Периоды для предсказания
             step_length=step_length  # Шаг скользящего окна
         )
-    
+
         # SlidingWindowSplitter для test части
         test_splits = []
         splitter = SlidingWindowSplitter(
@@ -240,27 +240,27 @@ def get_datasets(
             fh=list(range(0, period)),  # Периоды для предсказания
             step_length=step_length  # Шаг скользящего окна
         )
-        
+
         for train_idx, test_idx in splitter.split(train_metadata):
             train_splits.append((train_metadata.iloc[train_idx], train_metadata.iloc[test_idx]))
-    
+
         for train_idx, test_idx in splitter.split(test_metadata):
             test_splits.append((test_metadata.iloc[train_idx], test_metadata.iloc[test_idx]))
-    
+
         # Создаём объекты датасетов
         train_dataset = NeiroDataset(dictidx, train_splits)
         test_dataset = NeiroDataset(dictidx, test_splits)
         return train_dataset, test_dataset
-        
+
     elif future_or_estimate_or_train == 'estimate':
-        
+
         # Создаем список для хранения разбиений
         test_splits = []
-    
+
         # Вычисляем размер данных для корректного среза
         total_length = len(item_metadata)
         start_index = total_length - seq_len - period  # Индекс начала последнего окна
-    
+
         # Проверяем, что данных достаточно для такого разбиения
         if start_index < 0:
             raise ValueError("Длина данных меньше, чем seq_len + period. Увеличьте данные или уменьшите параметры.")
@@ -270,31 +270,28 @@ def get_datasets(
         # Инциализация сплиттера
         splitter = SingleWindowSplitter(fh=list(range(0, period)),
                                         window_length=len(item_metadata) - period)
-    
+
         # Разбиваем данные с помощью скользящего окна
         for train_idx, test_idx in splitter.split(item_metadata):
             # Сохраняем разбиения: train и test
             test_splits.append((item_metadata.iloc[train_idx], item_metadata.iloc[test_idx]))
-    
+
         # Создаем тестовый датасет
         test_dataset = NeiroDataset(dictidx, test_splits)
         return test_dataset
-        
+
     elif future_or_estimate_or_train == 'future':
 
         # Берем только последние seq_len значения
         item_metadata = item_metadata[(len(item_metadata) - seq_len):]
-        
+
         # Создаем список для хранения разбиений
-        test_splits = []
-        test_splits.append((item_metadata, None))
-        
+        test_splits = [(item_metadata, None)]
+
         # Создаем тестовый датасет
         test_dataset = NeiroDataset(dictidx, test_splits)
 
         return test_dataset
-
-        
 
 
 @dataclass
@@ -304,7 +301,7 @@ class NeiroDataset(Dataset):
 
     def __post_init__(self):
         self.datasets = []
-        
+
         for jndex, data in enumerate(self.metadata):
             self.part_datasets = {
                 "train": None,
@@ -317,11 +314,11 @@ class NeiroDataset(Dataset):
                 self.part_datasets['test'] = self.process_data(data[1])
             except Exception as ex:
                 pass
-            
+
             self.datasets.append(self.part_datasets)
 
     def process_data(self, data):
-        
+
         """Общий метод для обработки train и test данных"""
         series = data['cnt']
         date_id = data['date_id']
@@ -346,7 +343,7 @@ class NeiroDataset(Dataset):
             "cashback": cashback
         })
 
-        return (date_id, series, exogenous)
+        return date_id, series, exogenous
 
     def __len__(self) -> int:
         return len(self.datasets)
@@ -354,7 +351,7 @@ class NeiroDataset(Dataset):
     def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
         without_test = False
         datasets = self.datasets[idx]
-        
+
         timestamp_train = datasets['train'][0].index
         timestamp_train.freq = "D"
         date_id_train = datasets['train'][0]
@@ -372,7 +369,7 @@ class NeiroDataset(Dataset):
         except Exception as ex:
             without_test = True
 
-        if without_test == False:
+        if not without_test:
             return {
                 'train': {
                     'timestamp': timestamp_train,

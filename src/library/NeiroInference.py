@@ -15,17 +15,16 @@ from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 from sktime.split import SingleWindowSplitter
 from copy import deepcopy
-
 from .NeiroDataset import get_datasets, collate_fn
 from .utils import calculate_metrics_auto, convert_timeseries_to_dataframe, download_all_files_rep_hugging_face
-from .create_dir import create_directories_if_not_exist
+from src.utils.create_dir import create_directories_if_not_exist
 from .pydantic_models import EntryNeiroInference
 from iTransformer import iTransformer, iTransformerFFT
-from .custom_logging import setup_logging
-log = setup_logging(debug=False)
-
-
-project_path = './'
+from src import path_to_project
+from env import Env
+from src.utils.custom_logging import setup_logging
+log = setup_logging()
+env = Env()
 
 
 
@@ -49,11 +48,10 @@ class NeiroInference:
         self.num_workers = self.entry.NumWorkers
         self.pin_memory = self.entry.PinMemory
 
-        if self.path_to_weights == None: 
-            self.path_to_weights = Path(os.path.join(project_path, "./weights_neiro"))
+        if self.path_to_weights is None:
+            self.path_to_weights = Path(os.path.join(path_to_project(), env.__getattr__("WEIGHTS_NEIRO_PATH")))
         else:
-            self.path_to_weights = Path(os.path.join(project_path, self.path_to_weights))
-
+            self.path_to_weights = Path(os.path.join(self.path_to_weights))
         create_directories_if_not_exist([self.path_to_weights])
 
         if len(os.listdir(self.path_to_weights)) == 0:
@@ -92,10 +90,12 @@ class NeiroInference:
             self.device = torch.device("cpu")
         elif self.use_device == "cuda":
             self.device = torch.device("cuda")
-        
+
         if self.save_plots:
             if self.save_path_plots is None:
-                self.save_path_plots = "./plots"
+                self.save_path_plots = os.path.join(path_to_project(), env.__getattr__("PLOTS_PATH"))
+            else:
+                self.save_path_plots = os.path.join(self.save_path_plots)
             create_directories_if_not_exist([self.save_path_plots])
         
     def inference(self):

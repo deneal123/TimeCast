@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod # Абстрактные методы
-import pandas as pd # Работа с таблицами
-import os # Для работы с файловой системой
+from abc import ABC, abstractmethod
+import pandas as pd
+import os
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.auto_reg import AutoREG
 from sktime.forecasting.ets import AutoETS
@@ -9,11 +9,14 @@ from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.arima import ARIMA
 import matplotlib.pyplot as plt
 import json
-import numpy as np # Для работы с массивами
-from copy import deepcopy # Позволяет делать полную копию данных (не ссылаясь на обьект)
-from .custom_logging import setup_logging
-log = setup_logging(debug=False)
+import numpy as np
+from copy import deepcopy
+from src import path_to_project
+from env import Env
+from src.utils.custom_logging import setup_logging
 
+log = setup_logging()
+env = Env()
 
 
 class ClassicModel(ABC):
@@ -26,9 +29,9 @@ class ClassicModel(ABC):
         self.exogenous = exogenous
         self.model = None
         self.dictseasonal = {
-            "week": 7,   # 7 точек данных для недельной сезонности
-            "month": 30, # Ориентировочно 30 дней для месячной сезонности
-            "quater": 90 # 90 дней для квартальной сезонности (примерная оценка)
+            "week": 7,
+            "month": 30,
+            "quater": 90
         }
         self.train_index = self.train.index
         self.train.index.freq = "D"
@@ -48,21 +51,21 @@ class ClassicModel(ABC):
             last_timestamp = exogenous.index[-2]
             future_timestamps = pd.date_range(start=last_timestamp + pd.Timedelta(days=1), periods=period, freq='D')
             future_exogenous = pd.DataFrame(0, index=future_timestamps, columns=exogenous_columns)
-        self.model.fit(y=train) #, X=exogenous.loc[train.index].fillna(0))
+        self.model.fit(y=train)  # X=exogenous.loc[train.index].fillna(0))
         if future_or_estimate == 'estimate':
-            pred = self.model.predict(fh=np.arange(0, period)) #,
-                                      # X=exogenous.loc[test.index].fillna(0))
+            pred = self.model.predict(fh=np.arange(0, period))
+            # X=exogenous.loc[test.index].fillna(0))
         elif future_or_estimate == "future":
-            pred = self.model.predict(fh=np.arange(0, period)) #,
-                                      # X=future_exogenous.fillna(0))
+            pred = self.model.predict(fh=np.arange(0, period))
+            # X=future_exogenous.fillna(0))
         return pred
-        
+
     def param(self):
         return self.model.get_params(deep=True)
 
     def pred(self) -> pd.Series:
-        pred = self.model.predict(fh=np.arange(0, len(self.test))) #,
-                                  # X=self.exogenous.loc[self.test.index].fillna(0))
+        pred = self.model.predict(fh=np.arange(0, len(self.test)))
+        # X=self.exogenous.loc[self.test.index].fillna(0))
         return pred
 
     def save(self, dir_path: str = "./weights", prefix: str = None, results=None) -> None:
@@ -87,6 +90,7 @@ class ClassicModel(ABC):
         def decorator(subclass):
             cls._registered_models[model_name] = subclass
             return subclass
+
         return decorator
 
     @classmethod
@@ -156,7 +160,7 @@ class _AUTOARIMA_(ClassicModel):
         #                        n_jobs=8,
         #                        stepwise=True)
         self.model = ARIMA(order=(p, 0, q))
-        self.model.fit(y=self.train) #, X=self.exogenous.loc[self.train.index].fillna(0))
+        self.model.fit(y=self.train)  # X=self.exogenous.loc[self.train.index].fillna(0))
 
 
 @ClassicModel.register_model("AUTOREG")
@@ -168,8 +172,8 @@ class _AUTOREG_(ClassicModel):
         super().__init__(train, test, exogenous)
 
     def fit(self, lags: int, m: str) -> None:
-        self.model = AutoREG(lags=lags, seasonal=True, trend='t') # period=self.dictseasonal[f'{m}'])
-        self.model.fit(y=self.train) #, X=self.exogenous.loc[self.train.index].fillna(0))
+        self.model = AutoREG(lags=lags, seasonal=True, trend='t')  # period=self.dictseasonal[f'{m}'])
+        self.model.fit(y=self.train)  # X=self.exogenous.loc[self.train.index].fillna(0))
 
 
 @ClassicModel.register_model("AUTOETS")
@@ -182,7 +186,7 @@ class _AUTOETS_(ClassicModel):
 
     def fit(self, m: str) -> None:
         self.model = AutoETS(auto=True, freq='D', sp=self.dictseasonal[f'{m}'])
-        self.model.fit(y=self.train) #, X=self.exogenous.loc[self.train.index].fillna(0))
+        self.model.fit(y=self.train)  # X=self.exogenous.loc[self.train.index].fillna(0))
 
 
 @ClassicModel.register_model("PROPHET")
@@ -195,7 +199,7 @@ class _PROPHET_(ClassicModel):
 
     def fit(self, n_changepoints: int) -> None:
         self.model = Prophet(freq="D", n_changepoints=n_changepoints)
-        self.model.fit(y=self.train) #, X=self.exogenous.loc[self.train.index].fillna(0))
+        self.model.fit(y=self.train)  # X=self.exogenous.loc[self.train.index].fillna(0))
 
 
 @ClassicModel.register_model("TBATS")
@@ -211,4 +215,4 @@ class _TBATS_(ClassicModel):
                            use_trend=True,
                            use_damped_trend=True,
                            use_arma_errors=False)
-        self.model.fit(y=self.train) #, X=self.exogenous.loc[self.train.index].fillna(0))
+        self.model.fit(y=self.train)  # X=self.exogenous.loc[self.train.index].fillna(0))

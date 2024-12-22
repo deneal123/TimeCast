@@ -1,16 +1,19 @@
-from dataclasses import dataclass # Для классов
+from dataclasses import dataclass
 from .pydantic_models import EntryClassicDataset
-import pandas as pd # Работа с таблицами
+import pandas as pd
 import duckdb as db
 import matplotlib.pyplot as plt
-import os # Для работы с файловой системой
-import calendar as clr # Календарь с месяцами, годами и днями
+import os
+import calendar as clr
 from sklearn.preprocessing import MinMaxScaler
-from .create_dir import create_directories_if_not_exist
-from tqdm import tqdm # Для красивого отображения процесса работы метода
-from copy import deepcopy # Позволяет делать полную копию данных (не ссылаясь на обьект)
-from .custom_logging import setup_logging
-log = setup_logging(debug=False)
+from src.utils.create_dir import create_directories_if_not_exist
+from tqdm import tqdm
+from copy import deepcopy
+from src import path_to_project
+from env import Env
+from src.utils.custom_logging import setup_logging
+log = setup_logging()
+env = Env()
 
 
 
@@ -34,7 +37,9 @@ class ClassicDataset:
 
         if self.save_plots:
             if self.save_path_plots is None:
-                self.save_path_plots = "./plots"
+                self.save_path_plots = os.path.join(path_to_project(), env.__getattr__("PLOTS_PATH"))
+            else:
+                self.save_path_plots = os.path.join(self.save_path_plots)
             create_directories_if_not_exist([self.save_path_plots])
         
         self.month_color = 'blue'

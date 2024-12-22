@@ -1,8 +1,8 @@
-from dataclasses import dataclass # Для классов
+from dataclasses import dataclass
 from .pydantic_models import EntryClassicProccess
-import pandas as pd # Работа с таблицами
+import pandas as pd
 import statsmodels.api as sm
-import os # Для работы с файловой системой
+import os
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.tsa.seasonal import STL
 import statsmodels.tsa.stattools as ts
@@ -11,15 +11,17 @@ from statsmodels.graphics import tsaplots
 import duckdb as db
 from statsmodels.tsa.stattools import adfuller, kpss
 from statsmodels.stats.diagnostic import acorr_ljungbox, het_breuschpagan
-import numpy as np # Для работы с массивами
+import numpy as np
 import matplotlib.pyplot as plt
-from .create_dir import create_directories_if_not_exist
-from tqdm import tqdm # Для красивого отображения процесса работы метода
-from copy import deepcopy # Позволяет делать полную копию данных (не ссылаясь на обьект)
-from .custom_logging import setup_logging
-log = setup_logging(debug=False)
+from src.utils.create_dir import create_directories_if_not_exist
+from tqdm import tqdm
+from copy import deepcopy
+from src import path_to_project
+from env import Env
+from src.utils.custom_logging import setup_logging
 
-
+log = setup_logging()
+env = Env()
 
 
 @dataclass
@@ -38,9 +40,11 @@ class ClassicProccess:
 
         if self.save_plots:
             if self.save_path_plots is None:
-                self.save_path_plots = "./plots"
+                self.save_path_plots = os.path.join(path_to_project(), env.__getattr__("PLOTS_PATH"))
+            else:
+                self.save_path_plots = os.path.join(self.save_path_plots)
             create_directories_if_not_exist([self.save_path_plots])
-        
+
         self.dictstructparam = {
             "series": None,
             "redis": None,
@@ -71,7 +75,8 @@ class ClassicProccess:
         series = series.apply(lambda x: series.median() if x < lower_bound or x > upper_bound else x)
         return series
 
-    def decompose_series(self, series: pd.Series, period: int, model: str):
+    @staticmethod
+    def decompose_series(series: pd.Series, period: int, model: str):
         return seasonal_decompose(
             series,
             model=model,
@@ -85,22 +90,23 @@ class ClassicProccess:
         dictredis = {}
         dicttrend = {}
         dictseasonal = {}
-        
+
         for index, (seasonality, value) in enumerate(self.dictdecompose.items()):
             sales_add = self.decompose_series(self.remove_outliers(series), value, 'additive')
             sales_mult = self.decompose_series(self.remove_outliers(series), value, 'multiplicative')
-    
+
             dictredis[f'{seasonality}'] = [self.remove_outliers(sales_add.resid.fillna(0)),
                                            self.remove_outliers(sales_mult.resid.fillna(0))]
             dicttrend[f'{seasonality}'] = [sales_add.trend.fillna(0), sales_mult.trend.fillna(0)]
             dictseasonal[f'{seasonality}'] = [sales_add.seasonal.fillna(0), sales_mult.seasonal.fillna(0)]
-            
+
         self.dictstructparam["redis"] = dictredis
         self.dictstructparam["trend"] = dicttrend
         self.dictstructparam["seasonal"] = dictseasonal
         self.dictstructparam["series"] = series
 
-    def visualise(self, item: str, series: pd.DataFrame, redis: dict, trend: dict, seasonal: dict, date_id: pd.DataFrame):
+    def visualise(self, item: str, series: pd.DataFrame, redis: dict, trend: dict, seasonal: dict,
+                  date_id: pd.DataFrame):
         fixed_fontsize = 10  # Фиксированный размер шрифта для заголовков
         for seasonality, _ in self.dictdecompose.items():
             # Получение данных для текущей сезонности
@@ -109,8 +115,10 @@ class ClassicProccess:
             seasonal_add, seasonal_mult = seasonal[seasonality]
 
             # Рассчитываем минимальные и максимальные значения для оси ординат
-            min_value = min(series.min(), redis_add.min(), redis_mult.min(), trend_add.min(), trend_mult.min(), seasonal_add.min(), seasonal_mult.min())
-            max_value = max(series.max(), redis_add.max(), redis_mult.max(), trend_add.max(), trend_mult.max(), seasonal_add.max(), seasonal_mult.max())
+            min_value = min(series.min(), redis_add.min(), redis_mult.min(), trend_add.min(), trend_mult.min(),
+                            seasonal_add.min(), seasonal_mult.min())
+            max_value = max(series.max(), redis_add.max(), redis_mult.max(), trend_add.max(), trend_mult.max(),
+                            seasonal_add.max(), seasonal_mult.max())
 
             # Создаем фигуру с 6 сабплотами
             fig, ax = plt.subplots(3, 2, figsize=(16, 12))
@@ -151,16 +159,18 @@ class ClassicProccess:
 
             # 5. Автокорреляция (add и mult на одном графике)
             tsaplots.plot_acf(redis_add, ax=ax[2, 0], lags=40, alpha=0.05, color='red', label='ACF (Additive)')
-            tsaplots.plot_acf(redis_mult, ax=ax[2, 0], lags=40, alpha=0.05, color='orange', label='ACF (Multiplicative)')
+            tsaplots.plot_acf(redis_mult, ax=ax[2, 0], lags=40, alpha=0.05, color='orange',
+                              label='ACF (Multiplicative)')
             ax[2, 0].set_ylim(-0.75, 0.75)
             ax[2, 0].legend()
-            
+
             # 6. Частичная автокорреляция (add и mult на одном графике)
             tsaplots.plot_pacf(redis_add, ax=ax[2, 1], lags=40, alpha=0.05, color='red', label='ACF (Additive)')
-            tsaplots.plot_pacf(redis_mult, ax=ax[2, 1], lags=40, alpha=0.05, color='orange', label='ACF (Multiplicative)')
+            tsaplots.plot_pacf(redis_mult, ax=ax[2, 1], lags=40, alpha=0.05, color='orange',
+                               label='ACF (Multiplicative)')
             ax[2, 1].set_ylim(-0.75, 0.75)
             ax[2, 1].legend()
-        
+
             # Показать графики
             plt.tight_layout()
             if self.plots:

@@ -13,18 +13,18 @@ import torch.nn.functional as F
 from dataclasses import dataclass
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from sklearn.preprocessing import MinMaxScaler
-
 from .NeiroDataset import get_datasets, collate_fn
 from .CustomLoss import CustomLoss
 from .utils import calculate_metrics_auto, convert_timeseries_to_dataframe
-from .create_dir import create_directories_if_not_exist
+from src.utils.create_dir import create_directories_if_not_exist
 from .pydantic_models import EntryNeiroGraduate
 from iTransformer import iTransformer, iTransformerFFT
-from .custom_logging import setup_logging
-log = setup_logging(debug=False)
+from src import path_to_project
+from env import Env
+from src.utils.custom_logging import setup_logging
 
-
-project_path = './'
+log = setup_logging()
+env = Env()
 
 
 @dataclass
@@ -51,11 +51,12 @@ class NeiroGraduate:
         self.name_optimizer = self.entry.NameOptimizer
         self.seed = self.entry.Seed
 
-        if self.path_to_weights == None: 
-            self.path_to_weights = Path(os.path.join(project_path, "./weights_neiro"))
+        if self.path_to_weights is None:
+            self.path_to_weights = Path(os.path.join(path_to_project(), env.__getattr__("WEIGHTS_NEIRO_PATH")))
         else:
-            self.path_to_weights = Path(os.path.join(project_path, self.path_to_weights))
-                                         
+            self.path_to_weights = Path(os.path.join(self.path_to_weights))
+        create_directories_if_not_exist([self.path_to_weights])
+
         self.train_dataset = None
         self.test_dataset = None
         self.train_loader = None
@@ -82,9 +83,6 @@ class NeiroGraduate:
 
         if self.device == "cpu":
             self.pin_memory = False
-
-        # Создаем директории для сохранения весов и метрик
-        create_directories_if_not_exist([self.path_to_weights])
 
     def graduate(self):
         for index, (item_id, _) in enumerate(self.dictmerge.items()):
@@ -125,7 +123,7 @@ class NeiroGraduate:
             seq_len=self.seq_len,
             step_length=self.step_length
         )
-        
+
         self.train_loader = DataLoader(self.train_dataset,
                                        batch_size=self.batch_size,
                                        shuffle=True,
@@ -138,7 +136,7 @@ class NeiroGraduate:
                                        num_workers=self.num_workers,
                                        pin_memory=self.pin_memory,
                                        drop_last=True)
-        
+
         self.test_loader = DataLoader(self.test_dataset,
                                       batch_size=self.batch_size,
                                       shuffle=False,
@@ -153,7 +151,7 @@ class NeiroGraduate:
                                       drop_last=True)
 
     def get_models(self, period: int):
-        
+
         for model_name, model_params in self.dictmodels.items():
             if model_name == "IFFT":
                 self.models[model_name] = iTransformerFFT(
@@ -190,7 +188,7 @@ class NeiroGraduate:
             )
             for model_name, model in self.models.items()
         }
-        
+
         # Планировщики
         self.schedulers = {
             model_name: ReduceLROnPlateau(
@@ -218,9 +216,9 @@ class NeiroGraduate:
 
     # Функция для обучения модели с валидацией
     def train_models(self, period: int):
-        
+
         for name_model, model in self.models.items():
-            
+
             # Переводим модель в режим тренировки
             model.train()
 
@@ -238,7 +236,7 @@ class NeiroGraduate:
                             proccess = True
                         else:
                             proccess = False
-                        
+
                         # Распаковка тренировочных данных    
                         timestamp_train = batch['train']["timestamp"]
                         date_id_train = batch['train']["date_id"].to(self.device)
@@ -256,12 +254,12 @@ class NeiroGraduate:
                         series_train = series_train.unsqueeze(-1)
                         # Объединяем вдоль третьей оси
                         if proccess:
-                            timeseries_train = torch.cat((resid_train, # date_id_train,
+                            timeseries_train = torch.cat((resid_train,  # date_id_train,
                                                           trend_train,
                                                           season_train,
                                                           exogenous_train), dim=-1)  # Формат [batch, seq_length, 8]
                         else:
-                            timeseries_train = torch.cat((series_train, # date_id_train,
+                            timeseries_train = torch.cat((series_train,  # date_id_train,
                                                           exogenous_train), dim=-1)  # Формат [batch, seq_length, 6]
 
                         # Распаковка валидационных данных
@@ -281,17 +279,17 @@ class NeiroGraduate:
                         series_valid = series_valid.unsqueeze(-1)
                         # Объединяем вдоль третьей оси
                         if proccess:
-                            timeseries_valid = torch.cat((resid_valid, # date_id_valid,
+                            timeseries_valid = torch.cat((resid_valid,  # date_id_valid,
                                                           trend_valid,
                                                           season_valid,
                                                           exogenous_valid), dim=-1)  # Формат [batch, seq_length, 8]
                         else:
-                            timeseries_valid = torch.cat((series_valid, # date_id_valid,
+                            timeseries_valid = torch.cat((series_valid,  # date_id_valid,
                                                           exogenous_valid), dim=-1)  # Формат [batch, seq_length, 6]
-    
+
                         # Обучаем модель
                         logits = torch.nan_to_num(model(timeseries_train)[period], nan=0.0)
-                            
+
                         if proccess:
                             loss = self.criterion(logits[:, :, :3], timeseries_valid[:, :, :3])
                         else:
@@ -301,17 +299,17 @@ class NeiroGraduate:
                         # Собираем предсказания и истинные значения
                         all_y_true.append(timeseries_valid.cpu().detach().numpy())
                         all_y_pred.append(logits.cpu().detach().numpy())
-                
+
                         train_loss += loss.item() * self.batch_size
                         loss.backward()
                         self.optimizers[f'{name_model}'].step()
-    
+
                         # Обновляем бар
                         pbar_train.set_description(f"(Train) / {name_model}")
                         pbar_train.unit = " sample"
                         pbar_train.set_postfix(epoch=(epoch + 1), loss=train_loss / ((index + 1) * self.batch_size))
                         pbar_train.update(1)
-                    
+
                 # После всех батчей вычисляем метрики
                 all_y_true = np.concatenate(all_y_true, axis=0)
                 all_y_pred = np.concatenate(all_y_pred, axis=0)
@@ -322,10 +320,11 @@ class NeiroGraduate:
                 elif num_components == 5:
                     all_y_true = all_y_true[..., :1]
                     all_y_pred = all_y_pred[..., :1]
-                
+
                 mae, rmse, r2 = calculate_metrics_auto(all_y_true, all_y_pred)
-                log.info(f"Epoch {epoch + 1} - Model {name_model} - Loss: {train_loss / len(self.train_loader.dataset)} - MAE: {mae:.2f} - RMSE: {rmse:.2f} - R²: {r2:.2f}")
-    
+                log.info(
+                    f"Epoch {epoch + 1} - Model {name_model} - Loss: {train_loss / len(self.train_loader.dataset)} - MAE: {mae:.2f} - RMSE: {rmse:.2f} - R²: {r2:.2f}")
+
         log.info("Тренировка завершена!")
 
     # Функция для оценки модели на тестовом датасете
@@ -333,7 +332,7 @@ class NeiroGraduate:
         best_name = ""
         best_model = None
         best_metrics = {"MAE": float('inf'), "RMSE": float('inf'), "R2": float('-inf')}
-        
+
         for name_model, model in self.models.items():
 
             # Переводим модель в режим инференса
@@ -351,7 +350,7 @@ class NeiroGraduate:
                             proccess = True
                         else:
                             proccess = False
-    
+
                         # Распаковка тренировочных данных    
                         timestamp_test = batch['train']["timestamp"]
                         date_id_test = batch['train']["date_id"].to(self.device)
@@ -369,12 +368,12 @@ class NeiroGraduate:
                         series_test = series_test.unsqueeze(-1)
                         # Объединяем вдоль третьей оси
                         if proccess:
-                            timeseries_test = torch.cat((resid_test, # date_id_test,
+                            timeseries_test = torch.cat((resid_test,  # date_id_test,
                                                          trend_test,
                                                          season_test,
                                                          exogenous_test), dim=-1)  # Формат [batch, seq_length, 8]
                         else:
-                            timeseries_test = torch.cat((series_test, # date_id_test,
+                            timeseries_test = torch.cat((series_test,  # date_id_test,
                                                          exogenous_test), dim=-1)  # Формат [batch, seq_length, 6]
 
                         # Распаковка валидационных данных
@@ -394,27 +393,27 @@ class NeiroGraduate:
                         series_valid = series_valid.unsqueeze(-1)
                         # Объединяем вдоль третьей оси
                         if proccess:
-                            timeseries_valid = torch.cat((resid_valid, # date_id_valid,
+                            timeseries_valid = torch.cat((resid_valid,  # date_id_valid,
                                                           trend_valid,
                                                           season_valid,
                                                           exogenous_valid), dim=-1)  # Формат [batch, seq_length, 8]
                         else:
-                            timeseries_valid = torch.cat((series_valid, # date_id_valid
+                            timeseries_valid = torch.cat((series_valid,  # date_id_valid
                                                           exogenous_valid), dim=-1)  # Формат [batch, seq_length, 6]
-    
+
                         # Тестируем модель
                         logits = torch.nan_to_num(model(timeseries_test)[period], nan=0.0)
-                            
+
                         if proccess:
                             loss = self.criterion(logits[:, :, :3], timeseries_valid[:, :, :3])
                         else:
                             loss = self.criterion(logits[:, :, :1], timeseries_valid[:, :, :1])
                         valid_loss += loss.item() * self.batch_size
-                            
+
                         # Собираем предсказания и истинные значения
                         all_y_true.append(timeseries_valid.cpu().detach().numpy())
                         all_y_pred.append(logits.cpu().detach().numpy())
-    
+
                         # Обновляем бар
                         pbar_test.set_description(f"(Test) / {name_model}")
                         pbar_test.unit = " sample"
@@ -445,5 +444,6 @@ class NeiroGraduate:
         # Сохраняем лучшую модель
         if best_model:
             save_model(self.path_to_weights, best_name, best_model, best_optimizer, self.num_epochs)
-            log.info(f"Лучшая модель: {best_name} - MAE: {best_metrics['MAE']:.2f} - RMSE: {best_metrics['RMSE']:.2f} - R²: {best_metrics['R2']:.2f}")
+            log.info(
+                f"Лучшая модель: {best_name} - MAE: {best_metrics['MAE']:.2f} - RMSE: {best_metrics['RMSE']:.2f} - R²: {best_metrics['R2']:.2f}")
         log.info("Тестирование завершено!")
