@@ -1,5 +1,5 @@
 from sktime.performance_metrics.forecasting import MeanAbsoluteError, MeanAbsolutePercentageError
-from sklearn.metrics import mean_absolute_error, r2_score,mean_squared_error, mean_squared_log_error
+from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error, mean_squared_log_error
 from scipy import stats, signal
 from scipy.stats import shapiro
 from scipy.signal import windows as wind
@@ -8,16 +8,16 @@ from statsmodels.tsa.stattools import adfuller, kpss
 from statsmodels.stats.diagnostic import acorr_ljungbox, het_breuschpagan
 from statsmodels.tsa.seasonal import seasonal_decompose as decompose
 import statsmodels.api as sm
-import numpy as np # Для работы с массивами
+import numpy as np
 import pandas as pd
 import torch
 import os
 from sklearn.preprocessing import MinMaxScaler
 import random
 import requests
-from .custom_logging import setup_logging
-log = setup_logging(debug=False)
+from src.utils.custom_logging import setup_logging
 
+log = setup_logging()
 
 
 def download_all_files_rep_hugging_face(model_name: str, save_dir: str, token: str = None):
@@ -33,13 +33,13 @@ def download_all_files_rep_hugging_face(model_name: str, save_dir: str, token: s
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    
+
     try:
         # Запрашиваем список файлов из репозитория
         response = requests.get(api_url, headers=headers)
         response.raise_for_status()
         data = response.json()
-        
+
         # Фильтруем файлы с расширениями .pt, .json, .zip
         pt_files = [file["rfilename"] for file in data.get("siblings", []) if file["rfilename"].endswith(".pt")]
         json_files = [file["rfilename"] for file in data.get("siblings", []) if file["rfilename"].endswith(".json")]
@@ -47,7 +47,7 @@ def download_all_files_rep_hugging_face(model_name: str, save_dir: str, token: s
 
         # Убедимся, что папка для сохранения существует
         os.makedirs(save_dir, exist_ok=True)
-        
+
         # Если .pt файлы найдены, скачиваем их
         if pt_files:
             for file_name in pt_files:
@@ -75,17 +75,16 @@ def download_file(model_name: str, file_name: str, save_dir: str, headers: dict)
     """
     file_url = f"https://huggingface.co/{model_name}/resolve/main/{file_name}"
     save_path = os.path.join(save_dir, file_name)
-    
+
     try:
         file_response = requests.get(file_url, stream=True, headers=headers)
         file_response.raise_for_status()
-        
+
         with open(save_path, "wb") as f:
             for chunk in file_response.iter_content(chunk_size=8192):
                 f.write(chunk)
     except requests.exceptions.RequestException as e:
         log.error(f"Ошибка при скачивании файла {file_name}: {e}")
-
 
 
 def clear_gpu_memory():
@@ -114,7 +113,6 @@ def save_model(path_to_weights,
         path)
 
 
-
 def convert_timeseries_to_dataframe(batch_size,
                                     timeseries,
                                     timestamp,
@@ -122,16 +120,15 @@ def convert_timeseries_to_dataframe(batch_size,
                                     minmax_trend: MinMaxScaler = None,
                                     minmax_season: MinMaxScaler = None,
                                     minmax_series: MinMaxScaler = None):
-
-    if minmax_resid and minmax_trend and minmax_season and minmax_series != None:
+    if minmax_resid and minmax_trend and minmax_season and minmax_series is not None:
         proccess = True
     else:
         proccess = False
-        
+
     dataframes = []
-    
+
     for part in range(batch_size):
-        
+
         if proccess:
             # Извлекаем данные для текущего сэмпла
             # date_id = timeseries[part, :, 0].cpu().detach().numpy()
@@ -151,10 +148,10 @@ def convert_timeseries_to_dataframe(batch_size,
             event_name = timeseries[part, :, 2].cpu().detach().numpy()
             event_type = timeseries[part, :, 3].cpu().detach().numpy()
             cashback = timeseries[part, :, 4].cpu().detach().numpy()
-        
+
         # Используем временные метки из `timestamp` для индекса
         timestamps = timestamp[part]
-    
+
         # Формируем DataFrame для текущего сэмпла
         if proccess:
             data = {
@@ -175,29 +172,28 @@ def convert_timeseries_to_dataframe(batch_size,
                 'event_type': event_type.flatten(),
                 'cashback': cashback.flatten(),
             }
-        
+
         df = pd.DataFrame(data)
-        
+
         # Присваиваем временные метки как индекс
         df['timestamp'] = timestamps
         df.set_index('timestamp', inplace=True)
-        
+
         # Добавляем DataFrame в список
         dataframes.append(df)
-    
+
     return dataframes
 
 
-
 def decompose_series(series: pd.Series, period: int, model: str):
-        return decompose(
-            series,
-            model=model,
-            filt=None,
-            period=period,
-            two_sided=True,
-            extrapolate_trend=1
-        )
+    return decompose(
+        series,
+        model=model,
+        filt=None,
+        period=period,
+        two_sided=True,
+        extrapolate_trend=1
+    )
 
 
 def dec_series(series: pd.Series, period: int, model: str):
@@ -228,7 +224,6 @@ def seed_everything(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
-
 
 
 def check_fit(resids):

@@ -1,4 +1,5 @@
 from .pydantic_models import validate_with_pydantic, EntryNeiroGraduatePipeline, EntryClassicDataset, EntryNeiroGraduate
+from fastapi import HTTPException, status
 from .ClassicDataset import ClassicDataset
 from .NeiroGraduate import NeiroGraduate
 from dataclasses import dataclass
@@ -22,8 +23,9 @@ class NeiroGraduatePipeline:
         shop_sales_dates = os.path.join(path_to_project(), env.__getattr__("DATA_PATH"), "shop_sales_dates.csv")
         shop_sales_prices = os.path.join(path_to_project(), env.__getattr__("DATA_PATH"), "shop_sales_prices.csv")
 
-        if not os.path.exists(shop_sales_dates) or not os.path.exists(shop_sales_prices) or not os.path.exists(shop_sales_prices):
-            raise FileNotFoundError("CSV files not found")
+        if not os.path.exists(shop_sales_dates) or not os.path.exists(shop_sales_prices) or not os.path.exists(
+                shop_sales_prices):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="CSV files not found")
 
         self.classic_dataset = validate_with_pydantic(EntryClassicDataset)(ClassicDataset)(
             entry={

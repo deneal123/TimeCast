@@ -1,11 +1,12 @@
-from typing import Any, Tuple, Union, Optional, List, Type, Callable, Dict  # Для работы с типами данных
+from typing import Any, Tuple, Union, Optional, List, Type, Callable, Dict
 from pydantic import (BaseModel, Field, StrictStr, condecimal, StrictInt, StrictBool,
                       FilePath, DirectoryPath, ValidationError, root_validator, ConfigDict)
-import pandas as pd  # Работа с таблицами
+from fastapi import HTTPException, status
+import pandas as pd
 from functools import wraps
-from .custom_logging import setup_logging
+from src.utils.custom_logging import setup_logging
 
-log = setup_logging(debug=False)
+log = setup_logging()
 
 
 def validate_with_pydantic(model_cls):
@@ -20,15 +21,19 @@ def validate_with_pydantic(model_cls):
             try:
                 data = kwargs.get("entry", args[0] if args else None)
                 if not data:
-                    raise ValueError("No data provided for validation.")
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                        detail="No data provided for validation.")
                 # Валидация данных
+                if isinstance(data, BaseModel):
+                    data = data.dict(by_alias=True)
                 validated_data = model_cls(**data)
                 # Передаем валидированные данные дальше
                 kwargs["entry"] = validated_data
                 return func(*args, **kwargs)
             except ValidationError as ve:
                 log.exception("Validation failed", exc_info=ve)
-                raise ValueError("Invalid data for Pydantic model.") from ve
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                    detail="Invalid data for Pydantic model.") from ve
 
         return wrapper
 
@@ -112,16 +117,19 @@ class EntryClassicDataset(BaseModel):
             values["shop_sales_prices"] = "ok"
 
         if shop_sales is None and not exclude_fields:
-            raise ValueError(
-                "Field 'shop_sales' must be defined when 'exclude_fields' is not provided or shop_sales is not excluded.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Field 'shop_sales' must be defined when 'exclude_fields'"
+                                       " is not provided or shop_sales is not excluded.")
 
         if shop_sales_dates is None and not exclude_fields:
-            raise ValueError(
-                "Field 'shop_sales_dates' must be defined when 'exclude_fields' is not provided or shop_sales_dates is not excluded.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Field 'shop_sales_dates' must be defined when 'exclude_fields'"
+                                       " is not provided or shop_sales_dates is not excluded.")
 
         if shop_sales_prices is None and not exclude_fields:
-            raise ValueError(
-                "Field 'shop_sales_prices' must be defined when 'exclude_fields' is not provided or shop_sales_prices is not excluded.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Field 'shop_sales_prices' must be defined when 'exclude_fields'"
+                                       " is not provided or shop_sales_prices is not excluded.")
 
         return values
 
@@ -177,8 +185,9 @@ class EntryClassicProccess(BaseModel):
 
         # Если exclude_fields не передано или оно не включает dictmerge, то проверяем, что DictMerge передано
         if dict_merge is None and not exclude_fields:
-            raise ValueError(
-                "Field 'dictmerge' must be defined when 'exclude_fields' is not provided or dictmerge is not excluded.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Field 'dictmerge' must be defined when 'exclude_fields'"
+                                       " is not provided or dictmerge is not excluded.")
 
         return values
 
@@ -235,15 +244,17 @@ class EntryClassicGraduate(BaseModel):
         if exclude_fields and "dictmerge" in exclude_fields and exclude_fields["dictmerge"]:
             values["dictmerge"] = "ok"
 
-        # Если exclude_fields не передано или оно не включает dictmerge, то проверяем, что DictMerge передано
+        # Если exclude_fields не передано или оно не включает dictidx, то проверяем, что DictIdx передано
         if dict_idx is None and not exclude_fields:
-            raise ValueError(
-                "Field 'dictidx' must be defined when 'exclude_fields' is not provided or dictidx is not excluded.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Field 'dictidx' must be defined when 'exclude_fields'"
+                                       " is not provided or dictidx is not excluded.")
 
         # Если exclude_fields не передано или оно не включает dictmerge, то проверяем, что DictMerge передано
         if dict_merge is None and not exclude_fields:
-            raise ValueError(
-                "Field 'dictmerge' must be defined when 'exclude_fields' is not provided or dictmerge is not excluded.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Field 'dictmerge' must be defined when 'exclude_fields'"
+                                       " is not provided or dictmerge is not excluded.")
 
         return values
 
@@ -307,15 +318,17 @@ class EntryClassicInference(BaseModel):
         if exclude_fields and "dictmerge" in exclude_fields and exclude_fields["dictmerge"]:
             values["dictmerge"] = "ok"
 
-        # Если exclude_fields не передано или оно не включает dictmerge, то проверяем, что DictMerge передано
+        # Если exclude_fields не передано или оно не включает dictidx, то проверяем, что DictIdx передано
         if dict_idx is None and not exclude_fields:
-            raise ValueError(
-                "Field 'dictidx' must be defined when 'exclude_fields' is not provided or dictidx is not excluded.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Field 'dictidx' must be defined when 'exclude_fields'"
+                                       " is not provided or dictidx is not excluded.")
 
         # Если exclude_fields не передано или оно не включает dictmerge, то проверяем, что DictMerge передано
         if dict_merge is None and not exclude_fields:
-            raise ValueError(
-                "Field 'dictmerge' must be defined when 'exclude_fields' is not provided or dictmerge is not excluded.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Field 'dictmerge' must be defined when 'exclude_fields'"
+                                       " is not provided or dictmerge is not excluded.")
 
         return values
 
@@ -418,15 +431,17 @@ class EntryNeiroInference(BaseModel):
         if exclude_fields and "dictmerge" in exclude_fields and exclude_fields["dictmerge"]:
             values["dictmerge"] = "ok"
 
-        # Если exclude_fields не передано или оно не включает dictmerge, то проверяем, что DictMerge передано
+        # Если exclude_fields не передано или оно не включает dictidx, то проверяем, что DictIdx передано
         if dict_idx is None and not exclude_fields:
-            raise ValueError(
-                "Field 'dictidx' must be defined when 'exclude_fields' is not provided or dictidx is not excluded.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Field 'dictidx' must be defined when 'exclude_fields'"
+                                       " is not provided or dictidx is not excluded.")
 
         # Если exclude_fields не передано или оно не включает dictmerge, то проверяем, что DictMerge передано
         if dict_merge is None and not exclude_fields:
-            raise ValueError(
-                "Field 'dictmerge' must be defined when 'exclude_fields' is not provided or dictmerge is not excluded.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Field 'dictmerge' must be defined when 'exclude_fields'"
+                                       " is not provided or dictmerge is not excluded.")
 
         return values
 
@@ -541,15 +556,17 @@ class EntryNeiroGraduate(BaseModel):
         if exclude_fields and "dictmerge" in exclude_fields and exclude_fields["dictmerge"]:
             values["dictmerge"] = "ok"
 
-        # Если exclude_fields не передано или оно не включает dictmerge, то проверяем, что DictMerge передано
+        # Если exclude_fields не передано или оно не включает dictidx, то проверяем, что DictIdx передано
         if dict_idx is None and not exclude_fields:
-            raise ValueError(
-                "Field 'dictidx' must be defined when 'exclude_fields' is not provided or dictidx is not excluded.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Field 'dictidx' must be defined when 'exclude_fields'"
+                                       " is not provided or dictidx is not excluded.")
 
         # Если exclude_fields не передано или оно не включает dictmerge, то проверяем, что DictMerge передано
         if dict_merge is None and not exclude_fields:
-            raise ValueError(
-                "Field 'dictmerge' must be defined when 'exclude_fields' is not provided or dictmerge is not excluded.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Field 'dictmerge' must be defined when 'exclude_fields'"
+                                       " is not provided or dictmerge is not excluded.")
 
         return values
 
@@ -569,7 +586,7 @@ class EntrySeasonAnalyticPipeline(BaseModel):
                                            description="Данные для валидации EntryClassicProccess")
 
     class Config:
-        allow_population_by_field_name = True  # Поддержка алиасов
+        populate_by_name = True  # Поддержка алиасов
 
     def __init__(self, **data):
 
@@ -600,7 +617,7 @@ class EntryClassicGraduatePipeline(BaseModel):
                                            description="Данные для валидации EntryClassicGraduate")
 
     class Config:
-        allow_population_by_field_name = True  # Поддержка алиасов
+        populate_by_name = True  # Поддержка алиасов
 
     def __init__(self, **data):
 
@@ -631,7 +648,7 @@ class EntryClassicInferencePipeline(BaseModel):
                                              description="Данные для валидации EntryClassicInference")
 
     class Config:
-        allow_population_by_field_name = True  # Поддержка алиасов
+        populate_by_name = True  # Поддержка алиасов
 
     def __init__(self, **data):
 
@@ -662,7 +679,7 @@ class EntryNeiroGraduatePipeline(BaseModel):
                                          description="Данные для валидации EntryNeiroGraduate")
 
     class Config:
-        allow_population_by_field_name = True  # Поддержка алиасов
+        populate_by_name = True  # Поддержка алиасов
 
     def __init__(self, **data):
 
@@ -693,7 +710,7 @@ class EntryNeiroInferencePipeline(BaseModel):
                                            description="Данные для валидации EntryNeiroInference")
 
     class Config:
-        allow_population_by_field_name = True  # Поддержка алиасов
+        populate_by_name = True  # Поддержка алиасов
 
     def __init__(self, **data):
 

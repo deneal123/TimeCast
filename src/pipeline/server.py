@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI, HTTPException, Depends, Request, File, UploadFile, status, Form
+from fastapi.staticfiles import StaticFiles
 from typing import Dict
 from fastapi.openapi.models import Tag as OpenApiTag
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,10 +18,8 @@ from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference
 env = Env()
 log = setup_logging()
 
-app = FastAPI(title="TimeCast API", version="1.3.2",
-              description="This API server is intended for the TimeCast project. For rights, contact the service owner.")
-
-app.mount("/public", StaticFiles(directory=os.path.join(path_to_project(), "public")), name="public")
+app_server = FastAPI(title="TimeCast API", version="1.3.2",
+                     description="This API server is intended for the TimeCast project. For rights, contact the service owner.")
 
 app = FastAPI()
 
@@ -33,6 +32,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/public", StaticFiles(directory=os.path.join(path_to_project(), "public")), name="public")
 
 
 # Определяем теги
@@ -51,7 +52,7 @@ app_server.openapi_tags = [
 
 
 @app_server.post("/season_analytic/", response_model=None, tags=["Analytic"])
-async def season_analytic(enrty: EntrySeasonAnalyticPipeline):
+async def season_analytic(entry: EntrySeasonAnalyticPipeline):
     """
     Route for season analytic.
 
@@ -60,14 +61,15 @@ async def season_analytic(enrty: EntrySeasonAnalyticPipeline):
     :return: response model None.
     """
     try:
-        return season_analytic_pipeline(enrty)
+        log.info(entry)
+        return season_analytic_pipeline(entry)
     except HTTPException as ex:
         log.exception(f"Error", exc_info=ex)
         raise ex
 
 
 @app_server.post("/classic_graduate/", response_model=None, tags=["Graduate"])
-async def classic_graduate(enrty: EntryClassicGraduatePipeline):
+async def classic_graduate(entry: EntryClassicGraduatePipeline):
     """
     Route for graduate of classical models.
 
@@ -76,14 +78,14 @@ async def classic_graduate(enrty: EntryClassicGraduatePipeline):
     :return: response model None.
     """
     try:
-        return classic_graduate_pipeline(enrty)
+        return classic_graduate_pipeline(entry)
     except HTTPException as ex:
         log.exception(f"Error", exc_info=ex)
         raise ex
 
 
 @app_server.post("/neiro_graduate/", response_model=None, tags=["Graduate"])
-async def neiro_graduate(enrty: EntryNeiroGraduatePipeline):
+async def neiro_graduate(entry: EntryNeiroGraduatePipeline):
     """
     Route for graduate of neiro models.
 
@@ -92,14 +94,14 @@ async def neiro_graduate(enrty: EntryNeiroGraduatePipeline):
     :return: response model None.
     """
     try:
-        return neiro_graduate_pipeline(enrty)
+        return neiro_graduate_pipeline(entry)
     except HTTPException as ex:
         log.exception(f"Error", exc_info=ex)
         raise ex
 
 
 @app_server.post("/classic_inference/", response_model=None, tags=["Inference"])
-async def classic_inference(enrty: EntryClassicInferencePipeline):
+async def classic_inference(entry: EntryClassicInferencePipeline):
     """
     Route for inference of classical models.
 
@@ -108,14 +110,14 @@ async def classic_inference(enrty: EntryClassicInferencePipeline):
     :return: response model None.
     """
     try:
-        return classic_inference_pipeline(enrty)
+        return classic_inference_pipeline(entry)
     except HTTPException as ex:
         log.exception(f"Error", exc_info=ex)
         raise ex
 
 
 @app_server.post("/neiro_inference/", response_model=None, tags=["Inference"])
-async def neiro_inference(enrty: EntryNeiroInferencePipeline):
+async def neiro_inference(entry: EntryNeiroInferencePipeline):
     """
     Route for inference of neiro models.
 
@@ -124,7 +126,7 @@ async def neiro_inference(enrty: EntryNeiroInferencePipeline):
     :return: response model None.
     """
     try:
-        return neiro_inference_pipeline(enrty)
+        return neiro_inference_pipeline(entry)
     except HTTPException as ex:
         log.exception(f"Error", exc_info=ex)
         raise ex
