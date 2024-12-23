@@ -13,7 +13,7 @@ from functools import partial
 from statsmodels.tsa.seasonal import seasonal_decompose as decompose
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
-from .utils import seed_everything, dec_series
+from src.library.utils import seed_everything, dec_series
 from sktime.split import SingleWindowSplitter
 
 

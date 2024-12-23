@@ -1,3 +1,6 @@
+aiohttp
+httpx
+orjson
 python-multipart
 aiofiles
 uvicorn

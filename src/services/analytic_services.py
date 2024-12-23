@@ -4,10 +4,11 @@ from src.library.SeasonAnalyticPipeline import SeasonAnalyticPipeline
 
 
 
-def season_analytic_pipeline(
+async def season_analytic_pipeline(
         entry: EntrySeasonAnalyticPipeline
 ) -> None:
 
     season_analytic_pipeline = validate_with_pydantic(EntrySeasonAnalyticPipeline)(SeasonAnalyticPipeline)(
         entry=entry
     )
+    await season_analytic_pipeline.analyze()

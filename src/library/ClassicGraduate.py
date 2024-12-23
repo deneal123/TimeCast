@@ -1,21 +1,21 @@
 from dataclasses import dataclass
-from .pydantic_models import EntryClassicGraduate
+from src.library.pydantic_models import EntryClassicGraduate
 import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 from pandas.tseries.frequencies import to_offset
 from itertools import product
-from .utils import check_fit, metrics_report
+from src.library.utils import check_fit, metrics_report
 from sktime.forecasting.model_selection import SlidingWindowSplitter, ExpandingWindowSplitter
 import os
 from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error, mean_squared_log_error
 from sklearn.model_selection import train_test_split
-from .ClassicModel import ClassicModel
+from src.library.ClassicModel import ClassicModel
 from sklearn.preprocessing import MinMaxScaler
 from src.utils.create_dir import create_directories_if_not_exist
 import json
-from .utils import dec_series
+from src.library.utils import dec_series
 from pathlib import Path
 from copy import deepcopy
 from src import path_to_project
@@ -52,7 +52,7 @@ class ClassicGraduate:
 
         self.results = {}
 
-    def graduate(self):
+    async def graduate(self):
         for item_id, params in self.dictmerge.items():
 
             series = params['cnt']
@@ -100,9 +100,9 @@ class ClassicGraduate:
                         model = p
                         self.results[item_id][key]['best_model'] = model.name_model
                         try:
-                            model.save(dir_path=self.path_to_weights,
-                                       prefix=f"{item_id}_{key}_{model.name_model}",
-                                       results=self.results[item_id][key])
+                            await model.save(dir_path=self.path_to_weights,
+                                             prefix=f"{item_id}_{key}_{model.name_model}",
+                                             results=self.results[item_id][key])
                         except Exception as ex:
                             log.exception("", exc_info=ex)
 

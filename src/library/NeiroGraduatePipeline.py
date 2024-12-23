@@ -1,7 +1,7 @@
-from .pydantic_models import validate_with_pydantic, EntryNeiroGraduatePipeline, EntryClassicDataset, EntryNeiroGraduate
+from src.library.pydantic_models import validate_with_pydantic, EntryNeiroGraduatePipeline, EntryClassicDataset, EntryNeiroGraduate
 from fastapi import HTTPException, status
-from .ClassicDataset import ClassicDataset
-from .NeiroGraduate import NeiroGraduate
+from src.library.ClassicDataset import ClassicDataset
+from src.library.NeiroGraduate import NeiroGraduate
 from dataclasses import dataclass
 from src import path_to_project
 from env import Env
@@ -16,6 +16,9 @@ class NeiroGraduatePipeline:
     entry: EntryNeiroGraduatePipeline
 
     def __post_init__(self):
+        pass
+
+    async def graduate(self):
 
         dataset = self.entry.Dataset
 
@@ -39,7 +42,7 @@ class NeiroGraduatePipeline:
             }
         )
 
-        self.classic_dataset.dataset()
+        await self.classic_dataset.dataset()
         dictidx = self.classic_dataset.dictidx
         dictmerge = self.classic_dataset.dictmerge
 
@@ -66,4 +69,4 @@ class NeiroGraduatePipeline:
             }
         )
         
-        self.neiro_graduate.graduate()        
+        await self.neiro_graduate.graduate()

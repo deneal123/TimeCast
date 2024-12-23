@@ -1,24 +1,27 @@
 from dataclasses import dataclass
-from .pydantic_models import EntryClassicInference
+from src.library.pydantic_models import EntryClassicInference
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import re
 import numpy as np
 from sktime.split import SingleWindowSplitter
-from .ClassicModel import ClassicModel
+from src.library.ClassicModel import ClassicModel
 import pickle
 import json
 from sklearn.preprocessing import MinMaxScaler
-from .utils import dec_series, download_all_files_rep_hugging_face
+from src.library.utils import dec_series
 from src.utils.create_dir import create_directories_if_not_exist
 from pathlib import Path
+from src.utils.write_file_into_server import save_plot_into_server, download_all_files_rep_hugging_face
 from sklearn.metrics import mean_squared_error, r2_score
+from aiofiles import open as aio_open
 from tqdm import tqdm
 from copy import deepcopy
 from src import path_to_project
 from env import Env
 from src.utils.custom_logging import setup_logging
+from threading import Lock
 log = setup_logging()
 env = Env()
 
@@ -44,13 +47,6 @@ class ClassicInference:
             self.path_to_weights = Path(os.path.join(self.path_to_weights))
         create_directories_if_not_exist([self.path_to_weights])
 
-        if len(os.listdir(self.path_to_weights)) == 0:
-            download_all_files_rep_hugging_face(
-                model_name="GrafTrahula/STORE_CLASSIC",
-                save_dir=self.path_to_weights,
-                token=None
-            )
-
         self.results = {}
         self.dictmodels = {}
 
@@ -72,8 +68,19 @@ class ClassicInference:
                 self.save_path_plots = os.path.join(self.save_path_plots)
             create_directories_if_not_exist([self.save_path_plots])
 
-    def inference(self):
-        self.load_models()
+        self.lock = Lock()
+
+    async def download_weights(self):
+        if len(os.listdir(self.path_to_weights)) == 0:
+            await download_all_files_rep_hugging_face(
+                model_name="GrafTrahula/STORE_CLASSIC",
+                save_dir=self.path_to_weights,
+                token=None
+            )
+
+    async def inference(self):
+        await self.download_weights()
+        await self.load_models()
         with tqdm(total=len(self.dictmerge.items()), unit="ItemID") as pbar:
             for index, (item_id, params) in enumerate(self.dictmerge.items()):
                 self.results[f"{item_id}"] = deepcopy(self.dictseasonal)
@@ -99,9 +106,9 @@ class ClassicInference:
                 pbar.update(1)
                 pbar.set_description(f"Processing {item_id}")
 
-        self.visualise()
+        await self.visualise()
 
-    def load_models(self) -> dict[str, list[tuple[object, dict]]]:
+    async def load_models(self) -> dict[str, list[tuple[object, dict]]]:
         """
         Загрузить модели и их JSON-файлы из указанной директории.
     
@@ -139,11 +146,7 @@ class ClassicInference:
                 )
 
                 # Загружаем JSON-данные
-                if os.path.exists(json_path):
-                    with open(json_path, "r", encoding="utf-8") as json_file:
-                        json_data = json.load(json_file)
-                else:
-                    json_data = {}
+                json_data = await self.load_json_file(json_path)
 
                 # Добавляем модель и JSON в соответствующий период
                 if key in models_dict:
@@ -151,7 +154,22 @@ class ClassicInference:
 
         self.dictmodels = models_dict
 
-    def visualise(self):
+    @staticmethod
+    async def load_json_file(json_path):
+        """
+        Асинхронно загружает данные из JSON-файла.
+
+        :param json_path: Путь к JSON-файлу.
+        :return: Данные из JSON-файла в виде Python-объекта.
+        """
+        if os.path.exists(json_path):
+            async with aio_open(json_path, "r", encoding="utf-8") as json_file:
+                content = await json_file.read()  # Асинхронно читаем содержимое
+                return json.loads(content)       # Загружаем JSON из строки
+        else:
+            return {}  # Возвращаем пустой объект, если файл не существует
+
+    async def visualise(self):
         for item_id, periods in self.results.items():
             ncols = 3  # Количество столбцов
             nrows = -(-len(periods) // ncols)  # Округляем вверх количество строк
@@ -233,7 +251,8 @@ class ClassicInference:
             if self.plots:
                 plt.show()
             if self.save_plots:
-                fig.savefig(os.path.join(self.save_path_plots, f"classic_inference_{item_id}"), dpi=100)
+                path = os.path.join(self.save_path_plots, f"classic_inference_{item_id}.png")
+                await save_plot_into_server(fig, path)
             plt.close(fig)
 
     def evaluate(self, series, exogenous, item_id):
@@ -309,9 +328,9 @@ class ClassicInference:
             # )
             # train, test = series.iloc[:train_len], series.iloc[train_len:]
 
-            train[train == 0.01] = 0.000001
-            test[test == 0.01] = 0.000001
-            pred = model.fit_pred(train, test, exogenous)
+            train.loc[train == 0.01] = 0.000001
+            test.loc[test == 0.01] = 0.000001
+            pred = model.fit_pred_async(train, test, exogenous, self.lock)
             rmse = np.sqrt(mean_squared_error(test, pred))
             r2 = r2_score(test, pred)
             return rmse, r2, pred, model
@@ -344,6 +363,6 @@ class ClassicInference:
 
             # train = series
 
-            train[train == 0.01] = 0.000001
-            pred = model.fit_pred(train, test, exogenous, 'future')
+            train.loc[train == 0.01] = 0.000001
+            pred = model.fit_pred_async(train, test, exogenous, self.lock, 'future')
             return None, None, pred, model

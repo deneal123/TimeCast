@@ -17,6 +17,8 @@ python.exe .\setup\check_local_modules.py --no_question
 call .\venv\Scripts\activate.bat
 set PATH=%PATH%;%~dp0venv\Lib\site-packages\torch\lib
 
+set TF_ENABLE_ONEDNN_OPTS=0
+
 :: Валидация requirements
 python.exe .\setup\validate_requirements.py
 

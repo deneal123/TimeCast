@@ -1,8 +1,8 @@
-from .pydantic_models import validate_with_pydantic, EntryClassicGraduatePipeline, EntryClassicDataset, \
+from src.library.pydantic_models import validate_with_pydantic, EntryClassicGraduatePipeline, EntryClassicDataset, \
     EntryClassicGraduate
 from fastapi import HTTPException, status
-from .ClassicDataset import ClassicDataset
-from .ClassicGraduate import ClassicGraduate
+from src.library.ClassicDataset import ClassicDataset
+from src.library.ClassicGraduate import ClassicGraduate
 from dataclasses import dataclass
 from src import path_to_project
 from env import Env
@@ -16,6 +16,10 @@ class ClassicGraduatePipeline:
     entry: EntryClassicGraduatePipeline
 
     def __post_init__(self):
+        pass
+
+    async def graduate(self):
+
         dataset = self.entry.Dataset
 
         shop_sales = os.path.join(path_to_project(), env.__getattr__("DATA_PATH"), "shop_sales.csv")
@@ -38,7 +42,7 @@ class ClassicGraduatePipeline:
             }
         )
 
-        self.classic_dataset.dataset()
+        await self.classic_dataset.dataset()
         dictidx = self.classic_dataset.dictidx
         dictmerge = self.classic_dataset.dictmerge
 
@@ -54,4 +58,4 @@ class ClassicGraduatePipeline:
             }
         )
 
-        self.classic_graduate.graduate()
+        await self.classic_graduate.graduate()

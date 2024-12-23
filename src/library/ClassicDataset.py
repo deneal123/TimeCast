@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from .pydantic_models import EntryClassicDataset
+from src.library.pydantic_models import EntryClassicDataset
 import pandas as pd
 import duckdb as db
 import matplotlib.pyplot as plt
 import os
+from src.utils.write_file_into_server import save_plot_into_server
 import calendar as clr
 from sklearn.preprocessing import MinMaxScaler
 from src.utils.create_dir import create_directories_if_not_exist
@@ -68,11 +69,11 @@ class ClassicDataset:
     def dictmerge(self):
         return self._split_merge
     
-    def dataset(self):
+    async def dataset(self):
         try:
             self.merge_data()
             self.split_merge()
-            self.visualiser()
+            await self.visualiser()
         except Exception as ex:
             log.error("", exc_info=ex)
 
@@ -166,7 +167,7 @@ class ClassicDataset:
             # Добавляем таблицу в словарь под ключом item
             self._split_merge[item] = item_table
 
-    def visualiser(self):
+    async def visualiser(self):
         # Создаем сетку для графиков
         fig, ax = plt.subplots(15, 1, figsize=(12, 70))
         ax = ax.flatten()  # Преобразуем для удобной индексации
@@ -208,5 +209,6 @@ class ClassicDataset:
         if self.plots:
             plt.show()
         if self.save_plots:
-            fig.savefig(os.path.join(self.save_path_plots, "classic_dataset"), dpi=100)
+            path = os.path.join(self.save_path_plots, "classic_dataset.png")
+            await save_plot_into_server(fig, path)
         plt.close(fig)

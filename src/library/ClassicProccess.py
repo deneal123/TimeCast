@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from .pydantic_models import EntryClassicProccess
+from src.library.pydantic_models import EntryClassicProccess
 import pandas as pd
 import statsmodels.api as sm
 import os
@@ -11,6 +11,7 @@ from statsmodels.graphics import tsaplots
 import duckdb as db
 from statsmodels.tsa.stattools import adfuller, kpss
 from statsmodels.stats.diagnostic import acorr_ljungbox, het_breuschpagan
+from src.utils.write_file_into_server import save_plot_into_server
 import numpy as np
 import matplotlib.pyplot as plt
 from src.utils.create_dir import create_directories_if_not_exist
@@ -52,17 +53,23 @@ class ClassicProccess:
             "seasonal": None
         }
 
-    def proccess(self):
-        for item_id, item in self.dictmerge.items():
-            date_id = item['date_id']
-            series = item['cnt']
-            self.decompose(series, item_id)
-            self.visualise(item_id,
-                           series,
-                           self.dictstructparam["redis"],
-                           self.dictstructparam["trend"],
-                           self.dictstructparam["seasonal"],
-                           date_id)
+    async def proccess(self):
+        with tqdm(total=len(self.dictmerge.items())) as proccess_bar:
+            for item_id, item in self.dictmerge.items():
+                date_id = item['date_id']
+                series = item['cnt']
+                self.decompose(series, item_id)
+                await self.visualise(item_id,
+                                     series,
+                                     self.dictstructparam["redis"],
+                                     self.dictstructparam["trend"],
+                                     self.dictstructparam["seasonal"],
+                                     date_id)
+                # Обновляем бар
+                proccess_bar.set_description(f"(Proccess)")
+                proccess_bar.unit = "ItemID"
+                proccess_bar.set_postfix(item=item_id)
+                proccess_bar.update(1)
 
     def remove_outliers(self, series: pd.DataFrame):
         Q1 = series.quantile(0.25)
@@ -105,8 +112,8 @@ class ClassicProccess:
         self.dictstructparam["seasonal"] = dictseasonal
         self.dictstructparam["series"] = series
 
-    def visualise(self, item: str, series: pd.DataFrame, redis: dict, trend: dict, seasonal: dict,
-                  date_id: pd.DataFrame):
+    async def visualise(self, item: str, series: pd.DataFrame, redis: dict, trend: dict, seasonal: dict,
+                        date_id: pd.DataFrame):
         fixed_fontsize = 10  # Фиксированный размер шрифта для заголовков
         for seasonality, _ in self.dictdecompose.items():
             # Получение данных для текущей сезонности
@@ -176,5 +183,6 @@ class ClassicProccess:
             if self.plots:
                 plt.show()
             if self.save_plots:
-                fig.savefig(os.path.join(self.save_path_plots, f"classic_proccess_{item}_{seasonality}"), dpi=100)
+                path = os.path.join(self.save_path_plots, f"classic_proccess_{item}_{seasonality}.png")
+                await save_plot_into_server(fig, path)
             plt.close(fig)

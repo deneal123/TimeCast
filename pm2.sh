@@ -22,6 +22,8 @@ source ./venv/bin/activate
 # shellcheck disable=SC2155
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(pwd)/venv/lib/python3.9/site-packages/torch/lib"
 
+export TF_ENABLE_ONEDNN_OPTS=0
+
 # Валидация requirements
 python3 ./setup/validate_requirements.py
 

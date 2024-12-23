@@ -14,6 +14,18 @@ handlers:
     class: logging.StreamHandler
     formatter: default
 loggers:
+  cmdstanpy:
+    handlers: [console]
+    level: WARNING
+    propagate: False
+  statsmodels:
+    handlers: [console]
+    level: ERROR
+    propagate: False
+  pandas:
+    handlers: [ ]
+    level: CRITICAL
+    propagate: False
   uvicorn:
     handlers: [console]
     level: INFO

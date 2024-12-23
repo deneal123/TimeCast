@@ -1,7 +1,7 @@
-from .pydantic_models import validate_with_pydantic, EntryNeiroInferencePipeline, EntryClassicDataset, EntryNeiroInference
+from src.library.pydantic_models import validate_with_pydantic, EntryNeiroInferencePipeline, EntryClassicDataset, EntryNeiroInference
 from fastapi import HTTPException, status
-from .ClassicDataset import ClassicDataset
-from .NeiroInference import NeiroInference
+from src.library.ClassicDataset import ClassicDataset
+from src.library.NeiroInference import NeiroInference
 from dataclasses import dataclass
 from src import path_to_project
 from env import Env
@@ -17,6 +17,9 @@ class NeiroInferencePipeline:
     entry: EntryNeiroInferencePipeline
 
     def __post_init__(self):
+        pass
+
+    async def inference(self):
 
         dataset = self.entry.Dataset
 
@@ -40,7 +43,7 @@ class NeiroInferencePipeline:
             }
         )
 
-        self.classic_dataset.dataset()
+        await self.classic_dataset.dataset()
         dictidx = self.classic_dataset.dictidx
         dictmerge = self.classic_dataset.dictmerge
 
@@ -51,7 +54,7 @@ class NeiroInferencePipeline:
                 "dictidx": dictidx,
                 "dictmerge": dictmerge,
                 "dictseasonal": inference.DictSeasonal,
-                "dictmodels":inference.DictModels,
+                "dictmodels": inference.DictModels,
                 "future_or_estimate": inference.FutureOrEstimate,
                 "sen_len": inference.SeqLen,
                 "path_to_weights": inference.PathWeights,
@@ -64,4 +67,4 @@ class NeiroInferencePipeline:
             }
         )
         
-        self.neiro_inference.inference()
+        await self.neiro_inference.inference()

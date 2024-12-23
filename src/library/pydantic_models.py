@@ -5,8 +5,8 @@ from fastapi import HTTPException, status
 import pandas as pd
 from functools import wraps
 from src.utils.custom_logging import setup_logging
-
 log = setup_logging()
+
 
 
 def validate_with_pydantic(model_cls):
@@ -149,15 +149,14 @@ class EntryClassicProccess(BaseModel):
                                                 examples=[{
                                                     "week": 7,
                                                     "month": 30,
-                                                    "quarter": 90,
-                                                    "year": 365
+                                                    "quarter": 90
                                                 }],
                                                 description="Словарь, по какому периоду будет осуществляться декомпозиция")
     RemoveBound: Optional[Dict[str, StrictInt]] = Field(...,
                                                         alias="remove_bound",
                                                         examples=[{
                                                             "lower_bound_factor": 5,
-                                                            "uper_bound_factor": 5
+                                                            "upper_bound_factor": 5
                                                         }],
                                                         description="Границы выравнивания выбросов по медиане Q1 -+ bound_factor * IQR")
     Plots: Optional[StrictBool] = Field(False,
@@ -465,8 +464,7 @@ class EntryNeiroGraduate(BaseModel):
                                                examples=[{
                                                    "week": 7,
                                                    "month": 30,
-                                                   "quater": 90,
-                                                   "year": 365
+                                                   "quater": 90
                                                }],
                                                description="Словарь диапазонов предсказаний, на какую дистанцию предсказывать?")
     DictModels: Dict[str, Dict] = Field(...,

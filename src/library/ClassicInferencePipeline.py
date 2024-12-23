@@ -1,7 +1,7 @@
-from .pydantic_models import validate_with_pydantic, EntryClassicInferencePipeline, EntryClassicDataset, EntryClassicInference
+from src.library.pydantic_models import validate_with_pydantic, EntryClassicInferencePipeline, EntryClassicDataset, EntryClassicInference
 from fastapi import HTTPException, status
-from .ClassicDataset import ClassicDataset
-from .ClassicInference import ClassicInference
+from src.library.ClassicDataset import ClassicDataset
+from src.library.ClassicInference import ClassicInference
 from dataclasses import dataclass
 from src import path_to_project
 from env import Env
@@ -16,6 +16,9 @@ class ClassicInferencePipeline:
     entry: EntryClassicInferencePipeline
 
     def __post_init__(self):
+        pass
+
+    async def inference(self):
 
         dataset = self.entry.Dataset
 
@@ -39,7 +42,7 @@ class ClassicInferencePipeline:
             }
         )
 
-        self.classic_dataset.dataset()
+        await self.classic_dataset.dataset()
         dictidx = self.classic_dataset.dictidx
         dictmerge = self.classic_dataset.dictmerge
 
@@ -58,4 +61,4 @@ class ClassicInferencePipeline:
             }
         )
         
-        self.classic_inference.inference()        
+        await self.classic_inference.inference()

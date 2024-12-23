@@ -13,11 +13,12 @@ import torch.nn.functional as F
 from dataclasses import dataclass
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from sklearn.preprocessing import MinMaxScaler
-from .NeiroDataset import get_datasets, collate_fn
-from .CustomLoss import CustomLoss
-from .utils import calculate_metrics_auto, convert_timeseries_to_dataframe
+from src.library.NeiroDataset import get_datasets, collate_fn
+from src.library.CustomLoss import CustomLoss
+from src.library.utils import calculate_metrics_auto, convert_timeseries_to_dataframe
 from src.utils.create_dir import create_directories_if_not_exist
-from .pydantic_models import EntryNeiroGraduate
+from src.library.pydantic_models import EntryNeiroGraduate
+from src.library.utils import save_model
 from iTransformer import iTransformer, iTransformerFFT
 from src import path_to_project
 from env import Env
@@ -84,7 +85,7 @@ class NeiroGraduate:
         if self.device == "cpu":
             self.pin_memory = False
 
-    def graduate(self):
+    async def graduate(self):
         for index, (item_id, _) in enumerate(self.dictmerge.items()):
             log.info(f"Обучаем модели для товара: {item_id}")
             for period, value in self.dictseasonal.items():
@@ -96,7 +97,7 @@ class NeiroGraduate:
                 # Определяем оптимизатор, функцию потерь и планировщик
                 self.get_opt_crit_sh()
                 # Загружаем чекпоинт
-                self.load_checkpoint(item_id, value)
+                await self.load_checkpoint(item_id, value)
                 # Выводим информацию
                 print(self.__str__())
                 # Обучаем
@@ -197,12 +198,12 @@ class NeiroGraduate:
             for model_name in self.models.keys()
         }
 
-    def load_checkpoint(self, item_id: str, period: int):
+    async def load_checkpoint(self, item_id: str, period: int):
         for name_model, model in self.models.items():
             path = os.path.join(self.path_to_weights, f"{name_model}_{item_id}_{period}_{name_model}.pt")
             try:
                 if os.path.isfile(path):
-                    self.checkpoint = torch.load(path, map_location=self.device, weights_only=True)
+                    self.checkpoint = await torch.load(path, map_location=self.device, weights_only=True)
                     try:
                         model.load_state_dict(self.checkpoint['model_state_dict'])
                         self.optimizers[f'{name_model}'].load_state_dict(self.checkpoint['optimizer_state_dict'])

@@ -1,7 +1,7 @@
-from .pydantic_models import validate_with_pydantic, EntrySeasonAnalyticPipeline, EntryClassicDataset, EntryClassicProccess
+from src.library.pydantic_models import validate_with_pydantic, EntrySeasonAnalyticPipeline, EntryClassicDataset, EntryClassicProccess
 from fastapi import HTTPException, status
-from .ClassicDataset import ClassicDataset
-from .ClassicProccess import ClassicProccess
+from src.library.ClassicDataset import ClassicDataset
+from src.library.ClassicProccess import ClassicProccess
 from dataclasses import dataclass
 from src import path_to_project
 from env import Env, log
@@ -15,6 +15,9 @@ class SeasonAnalyticPipeline:
     entry: EntrySeasonAnalyticPipeline
 
     def __post_init__(self):
+        pass
+
+    async def analyze(self):
 
         dataset = self.entry.Dataset
 
@@ -38,7 +41,7 @@ class SeasonAnalyticPipeline:
             }
         )
 
-        self.classic_dataset.dataset()
+        await self.classic_dataset.dataset()
         dictidx = self.classic_dataset.dictidx
         dictmerge = self.classic_dataset.dictmerge
 
@@ -55,4 +58,4 @@ class SeasonAnalyticPipeline:
             }
         )
         
-        self.classic_proccess.proccess()
+        await self.classic_proccess.proccess()

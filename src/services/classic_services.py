@@ -5,19 +5,21 @@ from src.library.ClassicInferencePipeline import ClassicInferencePipeline
 
 
 
-def classic_graduate_pipeline(
+async def classic_graduate_pipeline(
         entry: EntryClassicGraduatePipeline
 ) -> None:
 
     classic_graduate_pipeline = validate_with_pydantic(EntryClassicGraduatePipeline)(ClassicGraduatePipeline)(
         entry=entry
     )
+    await classic_graduate_pipeline.graduate()
 
 
-def classic_inference_pipeline(
+async def classic_inference_pipeline(
         entry: EntryClassicInferencePipeline
 ) -> None:
 
     classic_inference_pipeline = validate_with_pydantic(EntryClassicInferencePipeline)(ClassicInferencePipeline)(
         entry=entry
     )
+    await classic_inference_pipeline.inference()

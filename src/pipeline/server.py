@@ -16,6 +16,9 @@ from src.services.classic_services import classic_graduate_pipeline, classic_inf
 from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference_pipeline
 from src.services.file_services import upload_csv_to_server
 
+import warnings
+warnings.simplefilter("ignore", category=FutureWarning)
+
 env = Env()
 log = setup_logging()
 
@@ -80,7 +83,7 @@ async def season_analytic(entry: EntrySeasonAnalyticPipeline):
     :return: response model None.
     """
     try:
-        return season_analytic_pipeline(entry)
+        return await season_analytic_pipeline(entry)
     except HTTPException as ex:
         log.exception(f"Error", exc_info=ex)
         raise ex
@@ -96,7 +99,7 @@ async def classic_graduate(entry: EntryClassicGraduatePipeline):
     :return: response model None.
     """
     try:
-        return classic_graduate_pipeline(entry)
+        return await classic_graduate_pipeline(entry)
     except HTTPException as ex:
         log.exception(f"Error", exc_info=ex)
         raise ex
@@ -112,7 +115,7 @@ async def neiro_graduate(entry: EntryNeiroGraduatePipeline):
     :return: response model None.
     """
     try:
-        return neiro_graduate_pipeline(entry)
+        return await neiro_graduate_pipeline(entry)
     except HTTPException as ex:
         log.exception(f"Error", exc_info=ex)
         raise ex
@@ -128,7 +131,7 @@ async def classic_inference(entry: EntryClassicInferencePipeline):
     :return: response model None.
     """
     try:
-        return classic_inference_pipeline(entry)
+        return await classic_inference_pipeline(entry)
     except HTTPException as ex:
         log.exception(f"Error", exc_info=ex)
         raise ex
@@ -144,7 +147,7 @@ async def neiro_inference(entry: EntryNeiroInferencePipeline):
     :return: response model None.
     """
     try:
-        return neiro_inference_pipeline(entry)
+        return await neiro_inference_pipeline(entry)
     except HTTPException as ex:
         log.exception(f"Error", exc_info=ex)
         raise ex

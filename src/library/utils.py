@@ -1,5 +1,5 @@
 from sktime.performance_metrics.forecasting import MeanAbsoluteError, MeanAbsolutePercentageError
-from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error, mean_squared_log_error
+from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error, mean_squared_log_error, root_mean_squared_error
 from scipy import stats, signal
 from scipy.stats import shapiro
 from scipy.signal import windows as wind
@@ -16,75 +16,7 @@ from sklearn.preprocessing import MinMaxScaler
 import random
 import requests
 from src.utils.custom_logging import setup_logging
-
 log = setup_logging()
-
-
-def download_all_files_rep_hugging_face(model_name: str, save_dir: str, token: str = None):
-    """
-    Скачивает все файлы с расширениями .pt, .json и .zip из указанного репозитория на Hugging Face.
-
-    :param model_name: Название репозитория на Hugging Face (например, "GrafTrahula/STORE_NEIRO").
-    :param save_dir: Локальная директория, куда будут сохранены файлы.
-    :param token: (Необязательно) Токен доступа для приватных репозиториев.
-    """
-    # URL для получения информации о содержимом репозитория
-    api_url = f"https://huggingface.co/api/models/{model_name}"
-    headers = {}
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-
-    try:
-        # Запрашиваем список файлов из репозитория
-        response = requests.get(api_url, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-
-        # Фильтруем файлы с расширениями .pt, .json, .zip
-        pt_files = [file["rfilename"] for file in data.get("siblings", []) if file["rfilename"].endswith(".pt")]
-        json_files = [file["rfilename"] for file in data.get("siblings", []) if file["rfilename"].endswith(".json")]
-        zip_files = [file["rfilename"] for file in data.get("siblings", []) if file["rfilename"].endswith(".zip")]
-
-        # Убедимся, что папка для сохранения существует
-        os.makedirs(save_dir, exist_ok=True)
-
-        # Если .pt файлы найдены, скачиваем их
-        if pt_files:
-            for file_name in pt_files:
-                download_file(model_name, file_name, save_dir, headers)
-        else:
-            # Если .pt файлы не найдены, скачиваем .json и .zip файлы
-            if json_files or zip_files:
-                for file_name in json_files + zip_files:
-                    download_file(model_name, file_name, save_dir, headers)
-            else:
-                log.warning("Нет доступных файлов для скачивания.")
-
-    except requests.exceptions.RequestException as e:
-        log.error(f"Ошибка при работе с Hugging Face API: {e}")
-
-
-def download_file(model_name: str, file_name: str, save_dir: str, headers: dict):
-    """
-    Скачивает файл из репозитория Hugging Face и сохраняет его в указанную директорию.
-
-    :param model_name: Название репозитория.
-    :param file_name: Имя файла для скачивания.
-    :param save_dir: Локальная директория для сохранения.
-    :param headers: Заголовки HTTP-запроса.
-    """
-    file_url = f"https://huggingface.co/{model_name}/resolve/main/{file_name}"
-    save_path = os.path.join(save_dir, file_name)
-
-    try:
-        file_response = requests.get(file_url, stream=True, headers=headers)
-        file_response.raise_for_status()
-
-        with open(save_path, "wb") as f:
-            for chunk in file_response.iter_content(chunk_size=8192):
-                f.write(chunk)
-    except requests.exceptions.RequestException as e:
-        log.error(f"Ошибка при скачивании файла {file_name}: {e}")
 
 
 def clear_gpu_memory():
@@ -302,7 +234,7 @@ def calculate_metrics_auto(y_true, y_pred):
 
         # Рассчитываем метрики для компоненты
         mae = mean_absolute_error(y_true_component, y_pred_component)
-        rmse = mean_squared_error(y_true_component, y_pred_component, squared=False)
+        rmse = root_mean_squared_error(y_true_component, y_pred_component)
         r2 = r2_score(y_true_component, y_pred_component)
 
         mae_total += mae
