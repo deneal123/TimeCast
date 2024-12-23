@@ -192,3 +192,5 @@ cython_debug/
 /src/EDA/sample_submission.csv
 /src/EDA/submission.csv
 /src/plots/
+/src/weights_neiro/
+/src/weights_classic/

@@ -80,7 +80,7 @@ class ClassicInference:
 
     async def inference(self):
         await self.download_weights()
-        await self.load_models()
+        self.load_models()
         with tqdm(total=len(self.dictmerge.items()), unit="ItemID") as pbar:
             for index, (item_id, params) in enumerate(self.dictmerge.items()):
                 self.results[f"{item_id}"] = deepcopy(self.dictseasonal)
@@ -108,7 +108,7 @@ class ClassicInference:
 
         await self.visualise()
 
-    async def load_models(self) -> dict[str, list[tuple[object, dict]]]:
+    def load_models(self) -> dict[str, list[tuple[object, dict]]]:
         """
         Загрузить модели и их JSON-файлы из указанной директории.
     
@@ -145,8 +145,14 @@ class ClassicInference:
                     prefix=f"{item_id}_{key}_{model_name}"
                 )
 
-                # Загружаем JSON-данные
-                json_data = await self.load_json_file(json_path)
+                # # Загружаем JSON-данные
+                # json_data = await self.load_json_file(json_path)
+
+                if os.path.exists(json_path):
+                    with open(json_path, "r", encoding="utf-8") as json_file:
+                        json_data = json.loads(json_file.read())
+                else:
+                    return {}
 
                 # Добавляем модель и JSON в соответствующий период
                 if key in models_dict:
@@ -154,20 +160,20 @@ class ClassicInference:
 
         self.dictmodels = models_dict
 
-    @staticmethod
-    async def load_json_file(json_path):
-        """
-        Асинхронно загружает данные из JSON-файла.
-
-        :param json_path: Путь к JSON-файлу.
-        :return: Данные из JSON-файла в виде Python-объекта.
-        """
-        if os.path.exists(json_path):
-            async with aio_open(json_path, "r", encoding="utf-8") as json_file:
-                content = await json_file.read()  # Асинхронно читаем содержимое
-                return json.loads(content)       # Загружаем JSON из строки
-        else:
-            return {}  # Возвращаем пустой объект, если файл не существует
+    # @staticmethod
+    # async def load_json_file(json_path):
+    #     """
+    #     Асинхронно загружает данные из JSON-файла.
+    #
+    #     :param json_path: Путь к JSON-файлу.
+    #     :return: Данные из JSON-файла в виде Python-объекта.
+    #     """
+    #     if os.path.exists(json_path):
+    #         async with aio_open(json_path, "r", encoding="utf-8") as json_file:
+    #             content = await json_file.read()  # Асинхронно читаем содержимое
+    #             return json.loads(content)       # Загружаем JSON из строки
+    #     else:
+    #         return {}  # Возвращаем пустой объект, если файл не существует
 
     async def visualise(self):
         for item_id, periods in self.results.items():

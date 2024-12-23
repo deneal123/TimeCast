@@ -62,7 +62,6 @@ class ClassicModel(ABC):
             future_timestamps = pd.date_range(start=last_timestamp + pd.Timedelta(days=1), periods=period, freq='D')
             future_exogenous = pd.DataFrame(0, index=future_timestamps, columns=exogenous_columns)
         self.model.fit(y=train)  # X=exogenous.loc[train.index].fillna(0))
-        log.info("FIT")
         if future_or_estimate == 'estimate':
             pred = self.model.predict(fh=np.arange(0, period))
             # X=exogenous.loc[test.index].fillna(0))
@@ -79,21 +78,21 @@ class ClassicModel(ABC):
         # X=self.exogenous.loc[self.test.index].fillna(0))
         return pred
 
-    async def save(self, dir_path: str = "./weights", prefix: str = None, results=None) -> None:
+    def save(self, dir_path: str = "./weights", prefix: str = None, results=None) -> None:
         if not os.path.exists(dir_path):
             create_directories_if_not_exist([dir_path])
         if prefix is not None:
             file_path = os.path.join(dir_path, f"{self.name_model}_{prefix}")
         else:
             file_path = os.path.join(dir_path, f"{self.name_model}")
-        await self.model.save(file_path, serialization_format='pickle')
+        self.model.save(file_path, serialization_format='pickle')
         if results is not None:
             if prefix is not None:
                 json_path = os.path.join(dir_path, f"{self.name_model}_{prefix}.json")
             else:
                 json_path = os.path.join(dir_path, f"{self.name_model}.json")
-            async with aio_open(json_path, "w", encoding="utf-8") as json_file:
-                await json.dump(results, json_file, ensure_ascii=False, indent=4)
+            with open(json_path, "w", encoding="utf-8") as json_file:
+                json.dump(results, json_file, ensure_ascii=False, indent=4)
         log.info(f"Save model to {file_path}")
 
     @classmethod

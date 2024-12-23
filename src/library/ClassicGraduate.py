@@ -100,9 +100,9 @@ class ClassicGraduate:
                         model = p
                         self.results[item_id][key]['best_model'] = model.name_model
                         try:
-                            await model.save(dir_path=self.path_to_weights,
-                                             prefix=f"{item_id}_{key}_{model.name_model}",
-                                             results=self.results[item_id][key])
+                            model.save(dir_path=self.path_to_weights,
+                                       prefix=f"{item_id}_{key}_{model.name_model}",
+                                       results=self.results[item_id][key])
                         except Exception as ex:
                             log.exception("", exc_info=ex)
 
