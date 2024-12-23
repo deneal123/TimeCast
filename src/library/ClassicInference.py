@@ -79,10 +79,13 @@ class ClassicInference:
             )
 
     async def inference(self):
+        log.info("Checking weights")
         await self.download_weights()
+        log.info("Initializing models")
         self.load_models()
         with tqdm(total=len(self.dictmerge.items()), unit="ItemID") as pbar:
             for index, (item_id, params) in enumerate(self.dictmerge.items()):
+                log.info(f"Proccess {item_id}")
                 self.results[f"{item_id}"] = deepcopy(self.dictseasonal)
                 series = params['cnt']
                 date_id = params['date_id']
@@ -101,11 +104,12 @@ class ClassicInference:
                     "cashback": cashback
                 })
                 series.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
+                log.info("Evaluating")
                 self.evaluate(series, exogenous, item_id)
                 # Обновляем прогресс-бар
                 pbar.update(1)
                 pbar.set_description(f"Processing {item_id}")
-
+        log.info("Visualising")
         await self.visualise()
 
     def load_models(self) -> dict[str, list[tuple[object, dict]]]:

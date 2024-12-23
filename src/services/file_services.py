@@ -25,6 +25,7 @@ async def upload_csv_to_server(
         for file in files:
             # Записываем каждый файл на сервер
             filename = await write_file_into_server("data", file)
+        log.info("CSV was successfully uploaded")
         return {"message": "CSV was successfully uploaded"}
     except Exception as ex:
         log.error(ex)
@@ -38,6 +39,7 @@ def get_zip_from_server(
         path_to_plots = os.path.join(path_to_project(), env.__getattr__("PLOTS_PATH"))
         path_to_zip = os.path.join(path_to_project(), env.__getattr__("ZIP_PATH"))
         zip_filename = create_zip_with_unique_name(path_to_plots, path_to_zip)
+        log.info("Url was successfully got")
         return {"url": f"{return_url_object(zip_filename, 'zip')}"}
     except Exception as ex:
         log.error(ex)

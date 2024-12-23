@@ -3,6 +3,8 @@ from src.library.pydantic_models import EntryNeiroGraduatePipeline, EntryNeiroIn
 from src.library.NeiroGraduatePipeline import NeiroGraduatePipeline
 from src.library.NeiroInferencePipeline import NeiroInferencePipeline
 from typing import Dict
+from src.utils.custom_logging import setup_logging
+log = setup_logging()
 
 
 async def neiro_graduate_pipeline(
@@ -14,6 +16,7 @@ async def neiro_graduate_pipeline(
     )
     await neiro_graduate_pipeline.graduate()
 
+    log.info("Success graduate")
     return {"message": "Success graduate"}
 
 
@@ -26,4 +29,5 @@ async def neiro_inference_pipeline(
     )
     await neiro_inference_pipeline.inference()
 
+    log.info("Success inference")
     return {"message": "Success inference"}

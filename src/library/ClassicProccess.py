@@ -56,9 +56,11 @@ class ClassicProccess:
     async def proccess(self):
         with tqdm(total=len(self.dictmerge.items())) as proccess_bar:
             for item_id, item in self.dictmerge.items():
+                log.info(f"Proccess {item_id}")
                 date_id = item['date_id']
                 series = item['cnt']
                 self.decompose(series, item_id)
+                log.info("Visualising")
                 await self.visualise(item_id,
                                      series,
                                      self.dictstructparam["redis"],
@@ -66,7 +68,7 @@ class ClassicProccess:
                                      self.dictstructparam["seasonal"],
                                      date_id)
                 # Обновляем бар
-                proccess_bar.set_description(f"(Proccess)")
+                proccess_bar.set_description(f"Proccess {item_id}")
                 proccess_bar.unit = "ItemID"
                 proccess_bar.set_postfix(item=item_id)
                 proccess_bar.update(1)

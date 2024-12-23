@@ -87,9 +87,9 @@ class NeiroGraduate:
 
     async def graduate(self):
         for index, (item_id, _) in enumerate(self.dictmerge.items()):
-            log.info(f"Обучаем модели для товара: {item_id}")
+            log.info(f"Proccessing: {item_id}")
             for period, value in self.dictseasonal.items():
-                log.info(f"Период: {period}")
+                log.info(f"Period: {period}")
                 # Получаем генераторы обучения, валидации и теста
                 self.get_loaders(item_id, value)
                 # Загружаем модели
@@ -101,8 +101,10 @@ class NeiroGraduate:
                 # Выводим информацию
                 print(self.__str__())
                 # Обучаем
+                log.info("Training")
                 self.train_models(value)
                 # Тестируем
+                log.info("Testing")
                 self.evaluate_models(item_id, value)
 
     def __str__(self):

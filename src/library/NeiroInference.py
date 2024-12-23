@@ -102,7 +102,9 @@ class NeiroInference:
             )
 
     async def inference(self):
+        log.info("Checking weights")
         await self.download_weights()
+        log.info("Initialize models")
         self.load_models()
         with tqdm(total=len(self.dictmerge.items()), unit="ItemID") as pbar:
             for index, (item_id, params) in enumerate(self.dictmerge.items()):
@@ -110,7 +112,9 @@ class NeiroInference:
                 self.evaluate(item_id)
                 # Обновляем прогресс-бар
                 pbar.update(1)
+                log.info(f"Processing {item_id}")
                 pbar.set_description(f"Processing {item_id}")
+        log.info(f"Visialising")
         await self.visualise()
 
     def get_models(self, period: int):

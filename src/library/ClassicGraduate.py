@@ -54,7 +54,7 @@ class ClassicGraduate:
 
     async def graduate(self):
         for item_id, params in self.dictmerge.items():
-
+            log.info(f"Proccess {item_id}")
             series = params['cnt']
             date_id = params['date_id']
             sell_price = params['sell_price']
@@ -73,6 +73,7 @@ class ClassicGraduate:
                 "cashback": cashback
             })
 
+            log.info("Training")
             best_models, best_params, best_rmses, best_r2s = self.train_model(series, exogenous, item_id)
 
             self.results[item_id] = {

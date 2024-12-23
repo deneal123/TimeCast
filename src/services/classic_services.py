@@ -3,6 +3,8 @@ from src.library.pydantic_models import EntryClassicGraduatePipeline, EntryClass
 from src.library.ClassicGraduatePipeline import ClassicGraduatePipeline
 from src.library.ClassicInferencePipeline import ClassicInferencePipeline
 from typing import Dict
+from src.utils.custom_logging import setup_logging
+log = setup_logging()
 
 
 async def classic_graduate_pipeline(
@@ -14,6 +16,7 @@ async def classic_graduate_pipeline(
     )
     await classic_graduate_pipeline.graduate()
 
+    log.info("Success graduate")
     return {"message": "Success graduate"}
 
 
@@ -26,4 +29,5 @@ async def classic_inference_pipeline(
     )
     await classic_inference_pipeline.inference()
 
+    log.info("Success inference")
     return {"message": "Success inference"}

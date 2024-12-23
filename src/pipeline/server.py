@@ -19,7 +19,8 @@ from fastapi.responses import StreamingResponse
 import asyncio
 import sys
 import time
-
+import logging
+from queue import Queue
 import warnings
 warnings.simplefilter("ignore", category=FutureWarning)
 
@@ -45,6 +46,7 @@ app_server.mount("/public", StaticFiles(directory=os.path.join(path_to_project()
 
 
 # Определяем теги
+ServerStreamTag = OpenApiTag(name="Stream", description="Operations stream")
 ServerFileTag = OpenApiTag(name="File", description="Operations file")
 ServerAnalyticTag = OpenApiTag(name="Analytic", description="Operations analytic")
 ServerGraduateTag = OpenApiTag(name="Graduate", description="Operations graduate")
@@ -52,6 +54,7 @@ ServerInferenceTag = OpenApiTag(name="Inference", description="Operations infere
 
 # Настройка документации с тегами
 app_server.openapi_tags = [
+    ServerStreamTag.model_dump(),
     ServerFileTag.model_dump(),
     ServerAnalyticTag.model_dump(),
     ServerGraduateTag.model_dump(),
@@ -59,19 +62,48 @@ app_server.openapi_tags = [
 ]
 
 
-# Генератор для отправки логов
+# Очередь для логов
+log_queue = asyncio.Queue()
+
+
+class LogStreamHandler(logging.Handler):
+    def __init__(self):
+        super().__init__()
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        # Добавляем лог в очередь с проверкой, есть ли активный цикл событий
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            print(f"Adding log entry to queue: {log_entry}")
+            # Если цикл событий уже работает, используем asyncio.create_task
+            asyncio.create_task(log_queue.put(log_entry))
+        else:
+            # Если цикл не работает, добавляем задачу вручную через run_until_complete
+            loop.run_until_complete(log_queue.put(log_entry))
+
+
+log_stream_handler = LogStreamHandler()
+log.addHandler(log_stream_handler)
+
+
 async def log_generator():
     while True:
-        logs = log_stream_handler.get_logs()
-        if logs:
-            log_entry = logs.pop(0)  # Берем первую строку лога
-            yield log_entry + "\n"
-        await asyncio.sleep(1)  # Пауза между чтением логов
+        log_entry = await log_queue.get()  # Ждем, пока появится новый лог
+        yield f"data: {log_entry}\n\n"  # Форматируем как SSE-сообщение
+        log_queue.task_done()
 
 
-@app_server.get("/stream-logs")
+@app_server.get("/stream-logs", tags=["Stream"])
 async def stream_logs():
-    return StreamingResponse(log_generator(), media_type="text/plain")
+    return StreamingResponse(log_generator(), media_type="text/event-stream")
+
+
+# Тестирование логов (например, для проверки)
+@app_server.get("/generate-log", tags=["Stream"])
+async def generate_log():
+    log.info("This is a new log message!")  # Генерация тестового лога
+    return {"message": "Log generated"}
 
 
 
