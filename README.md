@@ -1,8 +1,8 @@
 
 # 
 
-| <img src="./src/images/logo.svg" width="100" height="100" alt="logo"> | <a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=100&size=30&pause=1000&center=true&vCenter=true&multiline=true&repeat=false&random=false&width=950&lines=UIBOT" alt="Typing SVG" /></a> |
-|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <img src="./src/images/logo.svg" width="100" height="100" alt="logo"> | <a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=100&size=30&pause=1000&center=true&vCenter=true&multiline=true&repeat=false&random=false&width=950&lines=TimeCast" alt="Typing SVG" /></a> |
+|-----------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 
 
 ---
@@ -20,12 +20,11 @@
 
 ### Внешний вид графического интерфейса на React:
 
-| ![Auth](src/images/auth.svg) | ![Main](src/images/main.svg) |
-|------------------------------|------------------------------|
+| ![Main](src/images/main.jpg) | ![Query](src/images/query.jpg) | ![Dock](src/images/dock.jpg) |
+|------------------------------|--------------------------------|------------------------------|
 
 
-Все страницы сайта можно посмотреть здесь [**auth**](src/images/auth.pdf) | [**main**](src/images/main.pdf) <br/>
-Презентация проекта находится [**здесь**](src/images/UIBOT.pdf)
+Презентация проекта находится [**Пока не здесь**](src/images/UIBOT.pdf)
 
 
 
@@ -57,27 +56,18 @@
     |   ├── setup_windows.py - установочное меню
     |   └── validate_requirements.py - валидация модулей
     ├── src
-    |   ├── baseline
     |   ├── database - база данных
     |   |   ├── models.py - модели
     |   |   └── my_connector.py - класс для подключения к базе данных
-    |   ├── EDA - исследование данных
     |   ├── images - статические файлы
-    |   ├── metrics # - метрики
-    |   ├── modelling - модульные скрипты
     |   ├── pipeline - пайплайны
-    |   |   ├── data_downloader.py - парсер набора данных
     |   |   ├── server.py - uvicorn сервер
-    |   |   ├── test.py - тесты CRUD операций
-    |   |   └── train.py - тренировка модели
+    |   |   └── test.py - тесты CRUD операций
     |   ├── repository - репозитории
-    |   |   ├── image_repository.py
     |   |   └── ...
     |   ├── scripts - скрипты
     |   ├── service - сервисы
-    |   |   ├── image_services.py
     |   |   └── ...
-    |   ├── stuff - дополнительные файлы
     |   ├── utils
     |   |   ├── custom_logging.py - кастомный лог
     |   |   ├── exam_services.py - проверка на дубликаты
@@ -88,19 +78,13 @@
     ├── venv # - виртуальная среда
     ├── .env # - переменные среды
     ├── .gitignore
-    ├── category.yaml - категории для классификации
-    ├── clear_setup_log - очистка логов
-    ├── config.yaml - скрипт для работы с переменными средами
     ├── create_sql.py - скрипт для авто создания и заполнения базы данных
     ├── env.py - скрипт для работы с переменными средами
-    ├── logging.yaml - конфигурационный файл для лога
     ├── main.bat - запуск сервера на windows
-    ├── main.ipynb - доп файл
     ├── main.sh - запуск сервера на linux
-    ├── NaRuTagAI.sql - sql скрипт для создания базы данных
+    ├── TimeCase.sql - sql скрипт для создания базы данных
     ├── requirements.txt - список зависимостей
-    ├── requirements_windows_tensorflow.txt - дополнительныйсписок зависимостей
-    ├── server.sh - скрипт для запуска сервера на linux через pm2
+    ├── requirements_external.txt - дополнительныйсписок зависимостей
     ├── setup.bat - установка среды на windows
     ├── setup.log # - файл лога
     └── setup.sh - установка среды на linux
@@ -109,7 +93,7 @@
 
 ### Реляционная база данных:
 
-![image](./src/images/UIBOT.svg)
+![В разработке](./)
 
 
 
@@ -129,7 +113,7 @@
 
 * Клонируйте репозиторий на сервер:
     ```bash
-    git clone https://github.com/Prischli-Drink-Coffee/NaRuTagAI.git
+    git clone https://github.com/Prischli-Drink-Coffee/TimeCast.git
     cd repo
     ```
 * Запустите скрипт для установки виртуальной среды и всех необходимых зависимостей:
@@ -143,7 +127,7 @@
 
 * Клонируйте репозиторий на сервер:
     ```cmd
-    git clone https://github.com/Prischli-Drink-Coffee/NaRuTagAI.git
+    git clone https://github.com/Prischli-Drink-Coffee/TimeCast.git
     cd repo
     ```
 
@@ -182,22 +166,20 @@ bash test_main.sh
  test_main.bat
    ```
 
-### Как запустить основные скрипты?
+Сервер можно запустить локально или в веб-пространстве, тогда вы получите доступ к пользовательскому интерфейсу, для настройки сервера достаточно указать переменные среды в таком формате:
 
-1. Чтобы обучить модель необходимо указать желаемые аргументы в файле `config.yaml`.
-
-Для запуска скрипта для обучения просто запустите *main.sh* или *main.bat* в корневой директории проекта в зависимости от вашей ОС.
-Выберите пукнт 2 в меню для запуска скрипта для обучения модели.
-```
-bash main.sh # пункт 3 в меню
-```
-
-
-2. Для того чтобы воспользоваться парсером набора данных рутуб видео, для этого также настройте
-config.yaml и запустите main.sh или main.bat в корневой директории проекта и выберите пункт 1 в меню.
-
-3. Сервер можно запустить локально или в веб-пространстве, тогда вы получите доступ к пользовательскому интерфейсу, для настройки сервера достаточно указать переменные среды в таком формате:
-
-DATA_PATH=./data;WEIGHTS_PATH=./src/weights;METRICS_PATH=./src/metrics;HOST=HOST;SERVER_PORT=PORT;DB_HOST=HOST
-DB=DATABASE;DB_PORT=PORT;DB_USER=USER;DB_PASSWORD=PASSWORD;SECRET_KEY=SECRET_KEY
-
+UPLOAD_DIR=./public <br/>
+DATA_PATH=./public/data <br/>
+PLOTS_PATH=./public/plots <br/>
+ZIP_PATH=./public/zip <br/>
+WEIGHTS_CLASSIC_PATH=./src/weights_classic <br/>
+WEIGHTS_NEIRO_PATH=./src/weights_neiro <br/>
+HOST=localhost <br/>
+SERVER_PORT=8080 <br/>
+DB_HOST=127.0.0.1 <br/>
+DB=TimeCast <br/>
+DB_PORT=3306 <br/>
+DB_USER=root <br/>
+DB_PASSWORD= <br/>
+DEBUG=FALSE <br/>
+OFF_DATABASE=TRUE <br/>
