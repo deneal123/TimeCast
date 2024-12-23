@@ -6,9 +6,11 @@ from src.library.SeasonAnalyticPipeline import SeasonAnalyticPipeline
 
 async def season_analytic_pipeline(
         entry: EntrySeasonAnalyticPipeline
-) -> None:
+) -> Dict:
 
     season_analytic_pipeline = validate_with_pydantic(EntrySeasonAnalyticPipeline)(SeasonAnalyticPipeline)(
         entry=entry
     )
     await season_analytic_pipeline.analyze()
+
+    return {"message": "Success analyse"}

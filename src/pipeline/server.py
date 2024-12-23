@@ -14,7 +14,7 @@ from src.library.pydantic_models import (EntrySeasonAnalyticPipeline, EntryClass
 from src.services.analytic_services import season_analytic_pipeline
 from src.services.classic_services import classic_graduate_pipeline, classic_inference_pipeline
 from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference_pipeline
-from src.services.file_services import upload_csv_to_server
+from src.services.file_services import upload_csv_to_server, get_zip_from_server
 
 import warnings
 warnings.simplefilter("ignore", category=FutureWarning)
@@ -73,7 +73,22 @@ async def upload_csv(files: list[UploadFile] = File(...)):
 
 
 
-@app_server.post("/season_analytic/", response_model=None, tags=["Analytic"])
+@app_server.get("/get_zip/", response_model=Dict, tags=["File"])
+async def get_zip():
+    """
+    Route for get zip file.
+
+    :return: response model URL.
+    """
+    try:
+        return get_zip_from_server()
+    except HTTPException as ex:
+        log.exception(f"Error", exc_info=ex)
+        raise ex
+
+
+
+@app_server.post("/season_analytic/", response_model=Dict, tags=["Analytic"])
 async def season_analytic(entry: EntrySeasonAnalyticPipeline):
     """
     Route for season analytic.
@@ -89,7 +104,7 @@ async def season_analytic(entry: EntrySeasonAnalyticPipeline):
         raise ex
 
 
-@app_server.post("/classic_graduate/", response_model=None, tags=["Graduate"])
+@app_server.post("/classic_graduate/", response_model=Dict, tags=["Graduate"])
 async def classic_graduate(entry: EntryClassicGraduatePipeline):
     """
     Route for graduate of classical models.
@@ -105,7 +120,7 @@ async def classic_graduate(entry: EntryClassicGraduatePipeline):
         raise ex
 
 
-@app_server.post("/neiro_graduate/", response_model=None, tags=["Graduate"])
+@app_server.post("/neiro_graduate/", response_model=Dict, tags=["Graduate"])
 async def neiro_graduate(entry: EntryNeiroGraduatePipeline):
     """
     Route for graduate of neiro models.
@@ -121,7 +136,7 @@ async def neiro_graduate(entry: EntryNeiroGraduatePipeline):
         raise ex
 
 
-@app_server.post("/classic_inference/", response_model=None, tags=["Inference"])
+@app_server.post("/classic_inference/", response_model=Dict, tags=["Inference"])
 async def classic_inference(entry: EntryClassicInferencePipeline):
     """
     Route for inference of classical models.
@@ -137,7 +152,7 @@ async def classic_inference(entry: EntryClassicInferencePipeline):
         raise ex
 
 
-@app_server.post("/neiro_inference/", response_model=None, tags=["Inference"])
+@app_server.post("/neiro_inference/", response_model=Dict, tags=["Inference"])
 async def neiro_inference(entry: EntryNeiroInferencePipeline):
     """
     Route for inference of neiro models.
