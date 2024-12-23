@@ -15,12 +15,16 @@ from src.services.analytic_services import season_analytic_pipeline
 from src.services.classic_services import classic_graduate_pipeline, classic_inference_pipeline
 from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference_pipeline
 from src.services.file_services import upload_csv_to_server, get_zip_from_server
+from fastapi.responses import StreamingResponse
+import asyncio
+import sys
+import time
 
 import warnings
 warnings.simplefilter("ignore", category=FutureWarning)
 
 env = Env()
-log = setup_logging()
+log, log_stream_handler = setup_logging()
 
 app_server = FastAPI(title="TimeCast API", version="1.3.2",
                      description="This API server is intended for the TimeCast project. For rights, contact the service owner.")
@@ -53,6 +57,21 @@ app_server.openapi_tags = [
     ServerGraduateTag.model_dump(),
     ServerInferenceTag.model_dump()
 ]
+
+
+# Генератор для отправки логов
+async def log_generator():
+    while True:
+        logs = log_stream_handler.get_logs()
+        if logs:
+            log_entry = logs.pop(0)  # Берем первую строку лога
+            yield log_entry + "\n"
+        await asyncio.sleep(1)  # Пауза между чтением логов
+
+
+@app_server.get("/stream-logs")
+async def stream_logs():
+    return StreamingResponse(log_generator(), media_type="text/plain")
 
 
 
@@ -186,6 +205,7 @@ def run_server():
         raise Exception("Not init debug mode in env file")
     uvicorn.run("server:app", host=env.__getattr__("HOST"), port=int(env.__getattr__("SERVER_PORT")),
                 log_config=uvicorn_log_config, reload=reload)
+    log_stream_handler = LogStreamHandler()
 
 
 if __name__ == "__main__":

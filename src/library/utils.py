@@ -16,7 +16,7 @@ from sklearn.preprocessing import MinMaxScaler
 import random
 import requests
 from src.utils.custom_logging import setup_logging
-log = setup_logging()
+log, log_stream_handler = setup_logging()
 
 
 def clear_gpu_memory():

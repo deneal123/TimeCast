@@ -19,7 +19,7 @@ from src.utils.custom_logging import setup_logging
 from threading import Lock
 from aiofiles import open as aio_open
 import threading
-log = setup_logging()
+log, log_stream_handler = setup_logging()
 env = Env()
 
 

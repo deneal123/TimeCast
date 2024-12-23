@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 import pandas as pd
 from functools import wraps
 from src.utils.custom_logging import setup_logging
-log = setup_logging()
+log, log_stream_handler = setup_logging()
 
 
 

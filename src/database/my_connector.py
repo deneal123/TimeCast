@@ -4,7 +4,7 @@ from env import Env
 from src.utils.custom_logging import setup_logging
 
 env = Env()
-log = setup_logging()
+log, log_stream_handler = setup_logging()
 
 
 class Database:

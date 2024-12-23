@@ -21,7 +21,7 @@ from src import path_to_project
 from env import Env
 from src.utils.custom_logging import setup_logging
 
-log = setup_logging()
+log, log_stream_handler = setup_logging()
 env = Env()
 
 

@@ -6,7 +6,7 @@ import aiohttp
 from src import path_to_project
 from src.utils.custom_logging import setup_logging
 from env import Env
-log = setup_logging()
+log, log_stream_handler = setup_logging()
 env = Env()
 
 
