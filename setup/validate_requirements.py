@@ -21,7 +21,6 @@ from src.utils.custom_logging import setup_logging
 # Настройка ведения журнала
 log = setup_logging()
 
-
 def check_tensorflow():
     # Проверка наличия CUDA или ROCm
     if shutil.which('nvidia-smi') is not None or os.path.exists(

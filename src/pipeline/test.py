@@ -11,7 +11,7 @@ from src.utils.custom_logging import setup_logging
 from src.utils.list_to_str import encode_list_to_string
 import os
 
-log, log_stream_handler = setup_logging()
+log = setup_logging()
 client = TestClient(app)
 
 

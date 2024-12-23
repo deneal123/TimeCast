@@ -12,19 +12,6 @@ from rich.traceback import install as traceback_install
 log = None
 
 
-class LogStreamHandler(logging.Handler):
-    def __init__(self):
-        super().__init__()
-        self.logs = []
-
-    def emit(self, record):
-        log_entry = self.format(record)
-        self.logs.append(log_entry)
-
-    def get_logs(self):
-        return self.logs
-
-
 def setup_logging(clean=False, debug=False):
     global log
 
@@ -35,7 +22,7 @@ def setup_logging(clean=False, debug=False):
         if clean and os.path.isfile('setup.log'):
             os.remove('setup.log')
         time.sleep(0.1)  # prevent race condition
-    except Exception:
+    except:
         pass
 
     if sys.version_info >= (3, 9):
@@ -53,16 +40,11 @@ def setup_logging(clean=False, debug=False):
     pretty_install(console=console)
     traceback_install(console=console, extra_lines=1, width=console.width, word_wrap=False, indent_guides=False,
                       suppress=[])
-
-    # Создаем кастомный обработчик для сохранения логов в память
-    log_stream_handler = LogStreamHandler()
     rh = RichHandler(show_time=True, omit_repeated_times=False, show_level=True, show_path=False, markup=False,
                      rich_tracebacks=True, log_time_format='%H:%M:%S-%f',
                      level=logging.DEBUG if debug else logging.INFO, console=console)
     rh.set_name(logging.DEBUG if debug else logging.INFO)
-
     log = logging.getLogger("sd")
     log.addHandler(rh)
-    log.addHandler(log_stream_handler)  # Добавляем обработчик для сохранения логов в память
 
-    return log, log_stream_handler  # Возвращаем лог и обработчик
+    return log

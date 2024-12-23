@@ -1,5 +1,6 @@
 import os
 
+
 def set_pythonpath():
     # Получаем текущую директорию
     current_dir = os.getcwd()

@@ -26,7 +26,7 @@ from env import Env
 from src.utils.custom_logging import setup_logging
 from fastapi import HTTPException, status
 
-log, log_stream_handler = setup_logging()
+log = setup_logging()
 env = Env()
 
 

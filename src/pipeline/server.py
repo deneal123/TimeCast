@@ -24,7 +24,7 @@ import warnings
 warnings.simplefilter("ignore", category=FutureWarning)
 
 env = Env()
-log, log_stream_handler = setup_logging()
+log = setup_logging()
 
 app_server = FastAPI(title="TimeCast API", version="1.3.2",
                      description="This API server is intended for the TimeCast project. For rights, contact the service owner.")
