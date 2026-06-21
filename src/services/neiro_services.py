@@ -7,9 +7,10 @@ log = setup_logging()
 
 
 async def neiro_graduate_pipeline(entry: EntryNeiroGraduatePipeline) -> Dict:
-    await asyncio.to_thread(timecast.train_neiro, entry)
+    pipeline = await asyncio.to_thread(timecast.train_neiro, entry)
+    results = timecast.collect_training_results(pipeline)
     log.info("Success graduate")
-    return {"message": "Success graduate"}
+    return {"message": "Success graduate", "results": results}
 
 
 async def neiro_inference_pipeline(entry: EntryNeiroInferencePipeline) -> Dict:
