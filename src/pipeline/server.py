@@ -1,31 +1,45 @@
 import os
-from fastapi import FastAPI, HTTPException, Depends, Request, File, UploadFile, status, Form
+from fastapi import FastAPI, HTTPException, Request, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from typing import Dict
 from fastapi.openapi.models import Tag as OpenApiTag
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse
 from src.utils.custom_logging import setup_logging
 from env import Env
 from src import path_to_project
-from src.library.pydantic_models import (EntrySeasonAnalyticPipeline, EntryClassicGraduatePipeline,
+from timecast.pydantic_models import (EntrySeasonAnalyticPipeline, EntryClassicGraduatePipeline,
                                          EntryClassicInferencePipeline, EntryNeiroGraduatePipeline,
                                          EntryNeiroInferencePipeline)
 from src.services.analytic_services import season_analytic_pipeline
 from src.services.classic_services import classic_graduate_pipeline, classic_inference_pipeline
 from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference_pipeline
 from src.services.file_services import upload_csv_to_server, get_zip_from_server
+from timecast.exceptions import TimeCastError
+from timecast.config import configure_paths
 from fastapi.responses import StreamingResponse
 import asyncio
-import sys
-import time
 import logging
-from queue import Queue
 import warnings
 warnings.simplefilter("ignore", category=FutureWarning)
 
 env = Env()
 log = setup_logging()
+
+
+def _abs_path(value):
+    """Делает путь абсолютным относительно корня проекта; None — оставить дефолт библиотеки."""
+    return os.path.join(path_to_project(), value) if value else None
+
+
+# Подставляем в библиотеку пути из .env (как раньше — абсолютные, от корня проекта).
+# Если переменная не задана, остаётся относительный дефолт из timecast/config.py.
+configure_paths(
+    data_dir=_abs_path(os.environ.get("DATA_PATH")),
+    plots_dir=_abs_path(os.environ.get("PLOTS_PATH")),
+    weights_classic_dir=_abs_path(os.environ.get("WEIGHTS_CLASSIC_PATH")),
+    weights_neiro_dir=_abs_path(os.environ.get("WEIGHTS_NEIRO_PATH")),
+)
 
 app_server = FastAPI(title="TimeCast API", version="1.3.2",
                      description="This API server is intended for the TimeCast project. For rights, contact the service owner.")
@@ -34,15 +48,34 @@ app = FastAPI()
 
 app.mount("/server", app_server)
 
+# Список разрешённых origin берётся из переменной окружения CORS_ORIGINS
+# (значения через запятую). По умолчанию — локальный фронтенд. В проде НЕ "*",
+# так как allow_origins=["*"] несовместимо с allow_credentials=True.
+cors_origins = [
+    origin.strip()
+    for origin in os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 app_server.mount("/public", StaticFiles(directory=os.path.join(path_to_project(), "public")), name="public")
+
+
+# Единый перевод доменных ошибок библиотеки в HTTP-ответы.
+# Пакет timecast не зависит от FastAPI и поднимает TimeCastError-наследников;
+# здесь, на краю веб-слоя, они превращаются в корректный HTTP-код.
+@app_server.exception_handler(TimeCastError)
+async def timecast_error_handler(request: Request, exc: TimeCastError):
+    log.exception("Domain error", exc_info=exc)
+    return JSONResponse(status_code=getattr(exc, "http_status", 500),
+                        content={"detail": str(exc) or exc.__class__.__name__})
 
 
 # Определяем теги
@@ -119,7 +152,7 @@ async def upload_csv(files: list[UploadFile] = File(...)):
     try:
         return await upload_csv_to_server(files)
     except HTTPException as ex:
-        log.exception(f"Error", exc_info=ex)
+        log.exception("Error", exc_info=ex)
         raise ex
 
 
@@ -134,7 +167,7 @@ async def get_zip():
     try:
         return get_zip_from_server()
     except HTTPException as ex:
-        log.exception(f"Error", exc_info=ex)
+        log.exception("Error", exc_info=ex)
         raise ex
 
 
@@ -151,7 +184,7 @@ async def season_analytic(entry: EntrySeasonAnalyticPipeline):
     try:
         return await season_analytic_pipeline(entry)
     except HTTPException as ex:
-        log.exception(f"Error", exc_info=ex)
+        log.exception("Error", exc_info=ex)
         raise ex
 
 
@@ -167,7 +200,7 @@ async def classic_graduate(entry: EntryClassicGraduatePipeline):
     try:
         return await classic_graduate_pipeline(entry)
     except HTTPException as ex:
-        log.exception(f"Error", exc_info=ex)
+        log.exception("Error", exc_info=ex)
         raise ex
 
 
@@ -183,7 +216,7 @@ async def neiro_graduate(entry: EntryNeiroGraduatePipeline):
     try:
         return await neiro_graduate_pipeline(entry)
     except HTTPException as ex:
-        log.exception(f"Error", exc_info=ex)
+        log.exception("Error", exc_info=ex)
         raise ex
 
 
@@ -199,7 +232,7 @@ async def classic_inference(entry: EntryClassicInferencePipeline):
     try:
         return await classic_inference_pipeline(entry)
     except HTTPException as ex:
-        log.exception(f"Error", exc_info=ex)
+        log.exception("Error", exc_info=ex)
         raise ex
 
 
@@ -215,7 +248,7 @@ async def neiro_inference(entry: EntryNeiroInferencePipeline):
     try:
         return await neiro_inference_pipeline(entry)
     except HTTPException as ex:
-        log.exception(f"Error", exc_info=ex)
+        log.exception("Error", exc_info=ex)
         raise ex
 
 
@@ -241,14 +274,5 @@ def run_server():
 
 
 if __name__ == "__main__":
-    if env.__getattr__("OFF_DATABASE") == "FALSE":
-        # Создание датабазы и таблиц, если они не существуют
-        log.info("Start create/update database")
-        from create_sql import CreateSQL
-
-        create_sql = CreateSQL()
-        create_sql.read_sql()
-
-    # Запуск сервера и бота
     log.info("Start run server")
     run_server()

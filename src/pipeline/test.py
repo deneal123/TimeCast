@@ -1,4 +1,3 @@
-from http.client import responses
 from datetime import datetime
 import pytest
 import random
@@ -6,10 +5,7 @@ import string
 from copy import deepcopy
 from fastapi.testclient import TestClient
 from src.pipeline.server import app
-from setup.debug_info import machine
 from src.utils.custom_logging import setup_logging
-from src.utils.list_to_str import encode_list_to_string
-import os
 
 log = setup_logging()
 client = TestClient(app)

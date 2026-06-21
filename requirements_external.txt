@@ -1,3 +1,5 @@
-torch --index-url https://download.pytorch.org/whl/cu118
-tensorflow==2.16.2 tensorboard==2.16.2 tensorflow-intel==2.16.2
+# GPU-сборка torch теперь является зависимостью библиотеки timecast
+# (см. ../timecast/pyproject.toml: [[tool.uv.index]] с CUDA-индексом).
+# Через pip GPU-колесо torch можно поставить отдельно:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu118
 -r requirements.txt

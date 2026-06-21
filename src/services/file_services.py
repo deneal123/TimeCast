@@ -1,14 +1,11 @@
 import os
 from typing import Dict, Optional
 from fastapi import UploadFile, HTTPException, status
-from src.utils.create_dir import create_directories_if_not_exist
-import pandas as pd
 from src.utils.write_file_into_server import write_file_into_server
 from src import path_to_project
 from datetime import datetime
 from env import Env
 import zipfile
-import uuid
 from src.utils.return_url_object import return_url_object
 from src.utils.custom_logging import setup_logging
 log = setup_logging()
@@ -16,20 +13,57 @@ env = Env()
 
 
 
+ALLOWED_UPLOAD_EXTENSIONS = {".csv"}
+MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 МБ на файл
+
+
+def _validate_upload(file: UploadFile) -> str:
+    """Проверяет имя/расширение файла и возвращает безопасное basename.
+
+    Защита от path traversal: разрешаем только basename без разделителей пути.
+    """
+    raw_name = file.filename or ""
+    safe_name = os.path.basename(raw_name)
+    if not safe_name or safe_name != raw_name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Недопустимое имя файла: {raw_name!r}")
+    if os.path.splitext(safe_name)[1].lower() not in ALLOWED_UPLOAD_EXTENSIONS:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Разрешены только файлы {sorted(ALLOWED_UPLOAD_EXTENSIONS)}")
+    return safe_name
+
+
 async def upload_csv_to_server(
         files: list[UploadFile]
 ) -> Dict:
 
-    try:
-        # Инициализируем путь до папки
-        for file in files:
-            # Записываем каждый файл на сервер
-            filename = await write_file_into_server("data", file)
-        log.info("CSV was successfully uploaded")
-        return {"message": "CSV was successfully uploaded"}
-    except Exception as ex:
-        log.error(ex)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Files not uploaded")
+    if not files:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Файлы не переданы")
+
+    saved = []
+    for file in files:
+        safe_name = _validate_upload(file)
+        # Проверка размера: читаем в память (CSV небольшие), затем перематываем поток.
+        content = await file.read()
+        if len(content) == 0:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Пустой файл: {safe_name}")
+        if len(content) > MAX_UPLOAD_SIZE:
+            raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                                detail=f"Файл {safe_name} превышает {MAX_UPLOAD_SIZE // (1024 * 1024)} МБ")
+        await file.seek(0)
+        try:
+            await write_file_into_server("data", file)
+            saved.append(safe_name)
+        except HTTPException:
+            raise
+        except Exception as ex:
+            log.error(ex)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail="Files not uploaded")
+
+    log.info(f"CSV uploaded: {saved}")
+    return {"message": "CSV was successfully uploaded", "files": saved}
 
 
 def get_zip_from_server(
