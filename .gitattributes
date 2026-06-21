@@ -1,0 +1,5 @@
+# Скрипты/Dockerfile, исполняемые в Linux-контейнерах — строго LF.
+*.sh         text eol=lf
+Dockerfile   text eol=lf
+*.dockerfile text eol=lf
+entrypoint.sh text eol=lf
