@@ -1,0 +1,46 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        exclude: >
+          (?x)^(
+              \.git/.*|
+              .*/\.venv/.*|
+              .*/node_modules/.*|
+              .*/build/.*|
+              dist/.*|
+              docs/.*|
+              .*/package-lock\.json|
+              .*/public/.*|
+              infra/.*|
+          )$
+      - id: check-json
+      - id: debug-statements
+
+  # Lint + форматирование Python (ruff заменяет isort/black; конфиг — в pyproject каждого пакета).
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.10
+    hooks:
+      - id: ruff
+        files: ^(backend|timecast)/.*\.py$
+      - id: ruff-format
+        files: ^(backend|timecast)/.*\.py$
+
+  - repo: local
+    hooks:
+      - id: timecast-tests
+        name: timecast library tests
+        entry: bash -lc "cd timecast && uv run pytest -q"
+        language: system
+        pass_filenames: false
+
+      - id: frontend-lint
+        name: Frontend ESLint
+        entry: bash -lc "cd frontend && npm run lint"
+        language: system
+        pass_filenames: false
+        files: ^frontend/src/.*\.(js|jsx)$

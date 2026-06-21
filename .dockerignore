@@ -1,0 +1,22 @@
+# Контекст сборки backend = корень репозитория. Исключаем тяжёлое/ненужное.
+**/.git
+**/.venv
+**/venv
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+frontend/build
+backend/data
+backend/public
+**/data
+**/public
+infra/minio_data
+infra/redis_data
+infra/storage
+docker/.run-state
+**/*.log
+.git
+docs

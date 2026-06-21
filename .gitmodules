@@ -1,0 +1,12 @@
+[submodule "backend"]
+	path = backend
+	url = https://github.com/deneal123/TimeCast.git
+	branch = backend
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/deneal123/TimeCast.git
+	branch = frontend
+[submodule "timecast"]
+	path = timecast
+	url = https://github.com/deneal123/TimeCast.git
+	branch = library
