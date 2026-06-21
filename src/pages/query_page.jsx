@@ -8,6 +8,14 @@ import { sendClassicInference, sendNeiroInference } from "../API/services/infere
 import { sendSeasonAnalytic } from "../API/services/season_analytic_services";
 import LogStreamComponent from "../API/apiLogStreamComponent";
 import ForecastChart from "../components/ForecastChart";
+import TrainingResults from "../components/TrainingResults";
+
+// Различаем форму ответа: обучение (best_model) vs инференс (pred).
+const isTrainingResults = (results) => {
+  const firstItem = results && Object.values(results)[0];
+  const firstPeriod = firstItem && Object.values(firstItem)[0];
+  return !!(firstPeriod && "best_model" in firstPeriod);
+};
 
 const QueryPage = () => {
   const { width } = useWindowDimensions();
@@ -95,10 +103,12 @@ const QueryPage = () => {
           console.log("Sending Classic Graduate request...");
           const response = await sendClassicGraduate(parsedRequest);
           setResponseText(JSON.stringify(response, null, 2));
+          setResultData(response);
         } else {
           console.log("Sending Neiro Graduate request...");
           const response = await sendNeiroGraduate(parsedRequest);
           setResponseText(JSON.stringify(response, null, 2));
+          setResultData(response);
         }
       } else if (parsedRequest.proccess) {
         console.log("Sending Season Analytic request...");
@@ -264,8 +274,13 @@ const QueryPage = () => {
           />
         </HStack>
 
-        {/* Дашборд: график прогноза по структурированным результатам инференса */}
-        {resultData && resultData.results && <ForecastChart results={resultData.results} />}
+        {/* Дашборд: инференс -> график прогноза (pred); обучение -> таблица лучших моделей */}
+        {resultData && resultData.results && isTrainingResults(resultData.results) ? (
+          <TrainingResults results={resultData.results} />
+        ) : (
+          resultData &&
+          resultData.results && <ForecastChart results={resultData.results} />
+        )}
       </VStack>
     </Flex>
   );
