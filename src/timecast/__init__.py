@@ -27,12 +27,14 @@ from timecast.exceptions import TimeCastError, DataNotFoundError, ValidationFail
 # Высокоуровневый API
 from timecast.api import (season_analytic, train_classic, infer_classic,
                           train_neiro, infer_neiro)
-from timecast.results import collect_results, serialize_inference_results
+from timecast.results import (collect_results, serialize_inference_results,
+                              collect_training_results, serialize_training_results)
 
 __all__ = [  # высокоуровневый API
            'season_analytic', 'train_classic', 'infer_classic',
            'train_neiro', 'infer_neiro',
            'collect_results', 'serialize_inference_results',
+           'collect_training_results', 'serialize_training_results',
            # конфигурация и исключения
            'configure_paths', 'get_paths', 'LibraryPaths', 'DEFAULT_SEASONAL',
            'TimeCastError', 'DataNotFoundError', 'ValidationFailedError',

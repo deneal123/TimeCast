@@ -2,7 +2,8 @@
 import numpy as np
 import pandas as pd
 
-from timecast.results import serialize_inference_results, collect_results
+from timecast.results import (serialize_inference_results, collect_results,
+                              serialize_training_results, collect_training_results)
 
 
 class _FakeModel:
@@ -54,3 +55,39 @@ def test_collect_results_from_pipeline():
     assert "STORE_1_FOODS_1_001" in out
     # неизвестный пайплайн → пустой результат, без падения
     assert collect_results(object()) == {}
+
+
+def _sample_training():
+    return {
+        "STORE_1_FOODS_1_001": {
+            # best_model — строка; best_param — кортеж со смешанными типами
+            "week": {"best_model": "AUTOARIMA",
+                     "best_param": (3, 3, 0, 0, 1, 1, "week"),
+                     "best_rmse": np.float64(1.2), "best_r2": 0.9},
+            "month": {"best_model": "PROPHET",
+                      "best_param": (25,), "best_rmse": 2.5, "best_r2": float("nan")},
+            "quater": 90,  # незаполненный период → отбрасывается
+        }
+    }
+
+
+def test_serialize_training_results():
+    out = serialize_training_results(_sample_training())
+    item = out["STORE_1_FOODS_1_001"]
+    assert item["week"]["best_model"] == "AUTOARIMA"
+    assert item["week"]["best_param"] == [3, 3, 0, 0, 1, 1, "week"]  # tuple→list, строки сохранены
+    assert item["week"]["best_rmse"] == 1.2
+    assert item["month"]["best_r2"] is None  # NaN → None
+    assert "quater" not in item
+
+
+def test_collect_training_results_from_pipeline():
+    class _Graduate:
+        results = _sample_training()
+
+    class _Pipeline:
+        classic_graduate = _Graduate()
+
+    out = collect_training_results(_Pipeline())
+    assert out["STORE_1_FOODS_1_001"]["week"]["best_model"] == "AUTOARIMA"
+    assert collect_training_results(object()) == {}

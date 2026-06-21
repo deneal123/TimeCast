@@ -37,6 +37,8 @@ def _to_jsonable(value):
         return [_to_jsonable(x) for x in value.tolist()]
     if isinstance(value, (list, tuple)):
         return [_to_jsonable(x) for x in value]
+    if isinstance(value, str):
+        return value
     # модели и прочие объекты не сериализуем
     return None
 
@@ -64,8 +66,39 @@ def serialize_inference_results(results: dict) -> dict:
     return out
 
 
+def serialize_training_results(results: dict) -> dict:
+    """results[item_id][period] = {best_model, best_param, best_rmse, best_r2} → JSON-безопасный dict.
+
+    Для дашборда обучения: лучшая модель и её метрики по каждому периоду.
+    """
+    out = {}
+    for item_id, periods in (results or {}).items():
+        if not isinstance(periods, dict):
+            continue
+        item_out = {}
+        for period, r in periods.items():
+            if not isinstance(r, dict):
+                continue
+            item_out[str(period)] = {
+                "best_model": _to_jsonable(r.get("best_model")),
+                "best_param": _to_jsonable(r.get("best_param")),
+                "best_rmse": _to_jsonable(r.get("best_rmse")),
+                "best_r2": _to_jsonable(r.get("best_r2")),
+            }
+        if item_out:
+            out[str(item_id)] = item_out
+    return out
+
+
 def collect_results(pipeline) -> dict:
     """Достаёт и сериализует результаты инференса из пайплайна (classic/neiro)."""
     inference = getattr(pipeline, "classic_inference", None) or getattr(pipeline, "neiro_inference", None)
     results = getattr(inference, "results", None) if inference is not None else None
     return serialize_inference_results(results)
+
+
+def collect_training_results(pipeline) -> dict:
+    """Достаёт и сериализует результаты обучения из пайплайна (classic/neiro graduate)."""
+    graduate = getattr(pipeline, "classic_graduate", None) or getattr(pipeline, "neiro_graduate", None)
+    results = getattr(graduate, "results", None) if graduate is not None else None
+    return serialize_training_results(results)
