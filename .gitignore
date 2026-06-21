@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+sdist/
+wheels/
+
+# Окружения
+.venv/
+venv/
+env/
+.python-version
+
+# Кэши инструментов
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Артефакты выполнения
+data/
+plots/
+weights_classic/
+weights_neiro/
+*.log
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
