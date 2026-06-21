@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { baseUrl } from "./apiConsts";
 
-// LogStreamComponent будет принимать функцию для обновления логов из родительского компонента
+// LogStreamComponent пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 const LogStreamComponent = ({ onNewLog }) => {
-    const [logs, setLogs] = useState([]);
-
     useEffect(() => {
         const eventSource = new EventSource(`${baseUrl}/stream-logs`);
 
@@ -14,9 +12,8 @@ const LogStreamComponent = ({ onNewLog }) => {
 
         eventSource.onmessage = (event) => {
             console.log("Received log entry:", event.data);
-            setLogs((prevLogs) => [...prevLogs, event.data]);
 
-            // Отправляем новый лог родительскому компоненту через onNewLog
+            //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ onNewLog
             if (onNewLog) {
                 onNewLog(event.data);
             }
@@ -32,7 +29,7 @@ const LogStreamComponent = ({ onNewLog }) => {
         };
     }, [onNewLog]);
 
-    return null;  // Этот компонент не рендерит ничего, так как логируем в родительский компонент
+    return null;  // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 };
 
 export default LogStreamComponent;

@@ -7,6 +7,7 @@ import { sendClassicGraduate, sendNeiroGraduate } from "../API/services/graduate
 import { sendClassicInference, sendNeiroInference } from "../API/services/inference_services";
 import { sendSeasonAnalytic } from "../API/services/season_analytic_services";
 import LogStreamComponent from "../API/apiLogStreamComponent";
+import ForecastChart from "../components/ForecastChart";
 
 
 const QueryPage = () => {
@@ -40,6 +41,7 @@ const QueryPage = () => {
     }`);
     const [responseText, setResponseText] = useState(""); // State for response message
     const [files, setFiles] = useState([]); // State for storing selected files
+    const [resultData, setResultData] = useState(null); // РЎС‚СЂСѓРєС‚СѓСЂРёСЂРѕРІР°РЅРЅС‹Рµ СЂРµР·СѓР»СЊС‚Р°С‚С‹ РёРЅС„РµСЂРµРЅСЃР° РґР»СЏ РіСЂР°С„РёРєР°
         
     // Function to handle CSV file selection
     const handleFileChange = (e) => {
@@ -70,6 +72,7 @@ const QueryPage = () => {
 
     // Function to handle sending the query
     const handleSendQuery = async () => {
+        setResultData(null); // СЃР±СЂР°СЃС‹РІР°РµРј РіСЂР°С„РёРє РїРµСЂРµРґ РЅРѕРІС‹Рј Р·Р°РїСЂРѕСЃРѕРј
         try {
             const parsedRequest = JSON.parse(request);
 
@@ -78,10 +81,12 @@ const QueryPage = () => {
                     console.log("Sending Neiro Inference request...");
                     const response = await sendNeiroInference(parsedRequest);
                     setResponseText(JSON.stringify(response, null, 2));
+                    setResultData(response);
                 } else {
                     console.log("Sending Classic Inference request...");
                     const response = await sendClassicInference(parsedRequest);
                     setResponseText(JSON.stringify(response, null, 2));
+                    setResultData(response);
                 }
             } else if (parsedRequest.dataset && parsedRequest.graduate) {
                 if (parsedRequest.models_params) {
@@ -120,9 +125,9 @@ const QueryPage = () => {
         }
     };
 
-    // Функция, которая обновляет значение состояния запроса с новыми логами
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     const handleNewLog = (newLog) => {
-        setResponseText((prevRequest) => prevRequest + '\n' + newLog);  // Добавляем новый лог к существующему тексту
+        setResponseText((prevRequest) => prevRequest + '\n' + newLog);  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     };
 
     return (
@@ -189,13 +194,13 @@ const QueryPage = () => {
                             LogStream
                         </Text>
 
-                        {/* Компонент LogStreamComponent для получения новых логов */}
+                        {/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ LogStreamComponent пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ */}
                         <LogStreamComponent onNewLog={handleNewLog} />
 
                         {/* Ensure Textarea uses all available height */}
                         <Textarea
-                            value={responseText}  // Теперь мы используем состояние request
-                            onChange={(e) => setResponseText(e.target.value)}  // Обновляем состояние при изменении
+                            value={responseText}  // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ request
+                            onChange={(e) => setResponseText(e.target.value)}  // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                             height="500px"
                             bg="#2D2D2D"
                             color="#FFFFFF"
@@ -246,12 +251,17 @@ const QueryPage = () => {
                         buttonWidth="200px"
                         buttonHeight="44px"
                         onClickActions={{
-                            "Send CSV": handleSendCSV,     // Обработчик для кнопки "Send CSV"
-                            "Send Query": handleSendQuery, // Обработчик для кнопки "Send Query"
-                            "Load Zip": handleDownloadArchive // Обработчик для кнопки "Load Zip"
+                            "Send CSV": handleSendCSV,     // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ "Send CSV"
+                            "Send Query": handleSendQuery, // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ "Send Query"
+                            "Load Zip": handleDownloadArchive // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ "Load Zip"
                         }}
                     />
                 </HStack>
+
+                {/* Р”Р°С€Р±РѕСЂРґ: РіСЂР°С„РёРє РїСЂРѕРіРЅРѕР·Р° РїРѕ СЃС‚СЂСѓРєС‚СѓСЂРёСЂРѕРІР°РЅРЅС‹Рј СЂРµР·СѓР»СЊС‚Р°С‚Р°Рј РёРЅС„РµСЂРµРЅСЃР° */}
+                {resultData && resultData.results && (
+                    <ForecastChart results={resultData.results} />
+                )}
             </VStack>
         </Flex>
     );
