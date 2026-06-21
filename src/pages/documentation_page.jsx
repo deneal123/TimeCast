@@ -3,9 +3,6 @@ import { Flex, VStack, Text, Divider } from "@chakra-ui/react";
 import useWindowDimensions from "../hooks/window_dimensions";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 
-
-
-
 const classic_dataset = `
 
 <p style="margin-left: 20px"> <span style="color: green;">def</span> <span style="color: blue;">__init__</span>( </p>
@@ -34,8 +31,6 @@ const classic_dataset = `
 
 `;
 
-
-
 const classic_proccess = `
 
 <p style="margin-left: 20px"> <span style="color: green;">def</span> <span style="color: blue;">__init__</span>( </p>
@@ -57,8 +52,6 @@ const classic_proccess = `
 <p style="margin-left: 20px"> 4. <span style="color: blue;">visualise</span> method: Plots and saves graphs for the original and processed data, as well as their autocorrelations. </p>
 
 `;
-
-
 
 const classic_models = `
 
@@ -92,8 +85,6 @@ const classic_models = `
 
 `;
 
-
-
 const classic_graduate = `
 
 <span style="color: blue;">ClassicGraduate</span>:</br>
@@ -113,9 +104,6 @@ const classic_graduate = `
 <p style="margin-left: 20px"> 3. <span style="color: blue;">calc_optimum</span> method: Calculates the model with the given parameters, evaluates predictions, and returns metrics. </p>
 
 `;
-
-
-
 
 const classic_inference = `
 
@@ -139,8 +127,6 @@ const classic_inference = `
 <p style="margin-left: 20px"> 5. <span style="color: blue;">calc_feature</span> method: Performs predictions, checks data conformity, and returns model metrics. </p>
 
 `;
-
-
 
 const neiro_dataset = `
 
@@ -174,8 +160,6 @@ const neiro_dataset = `
 <p style="margin-left: 20px"> 1. <span style="color: blue;">Function</span>: Function with three conditions: estimate/future/train. </p>
 
 `;
-
-
 
 const neiro_graduate = `
 
@@ -253,8 +237,6 @@ CosineEmbeddingLoss, and special penalties for trend to calculate final loss fun
 
 `;
 
-
-
 const neiro_inference = `
 
 <p style="margin-left: 20px"> <span style="color: green;">def</span> <span style="color: blue;">__init__</span>( </p>
@@ -284,7 +266,6 @@ const neiro_inference = `
 
 `;
 
-
 const season_analytic_query = `
 
 <p style="margin-left: 20px"> { </p>
@@ -304,9 +285,6 @@ const season_analytic_query = `
 <p style="margin-left: 20px"> } </p>
 
 `;
-
-
-
 
 const classic_graduate_query = `
 
@@ -330,8 +308,6 @@ const classic_graduate_query = `
 
 `;
 
-
-
 const classic_inference_query = `
 
 <p style="margin-left: 20px"> { </p>
@@ -349,9 +325,6 @@ const classic_inference_query = `
 <p style="margin-left: 20px"> } </p>
 
 `;
-
-
-
 
 const neiro_graduate_query = `
 
@@ -381,8 +354,6 @@ const neiro_graduate_query = `
 <p style="margin-left: 20px"> } </p>
 
 `;
-
-
 
 const neiro_inference_query = `
 
@@ -414,358 +385,326 @@ const neiro_inference_query = `
 
 `;
 
-
-
-
-
-
 const DocumentPage = () => {
-    const { width } = useWindowDimensions();
+  const { width } = useWindowDimensions();
 
-    return (
-        <Flex
-            direction="column"
-            bg="transparent"
-            padding={25}
-            spacing="20px"
-            flexGrow={1}
-            align="center"
-            justify="flex-start" // Изменяем на "flex-start", чтобы контент не центрировался
-            width={width}
-            height="100%"
-            overflowX="hidden" // Отключение горизонтального скролла
-            overflowY="auto" // Включаем вертикальную прокрутку
-            paddingTop="150px" // Устанавливаем отступ сверху равный высоте header
+  return (
+    <Flex
+      direction="column"
+      bg="transparent"
+      padding={25}
+      spacing="20px"
+      flexGrow={1}
+      align="center"
+      justify="flex-start" // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ "flex-start", пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+      width={width}
+      height="100%"
+      overflowX="hidden" // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+      overflowY="auto" // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+      paddingTop="150px" // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ header
+    >
+      <VStack spacing={4} align="stretch" width="100%" maxW="1200px" height="100%">
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="308px"
         >
-            <VStack
-                spacing={4}
-                align="stretch"
-                width="100%"
-                maxW="1200px"
-                height="100%"
-            >
-
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="308px"
-                >
-                    SeasonAnalyticPipelineExampleQuery
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={season_analytic_query} />
-                </Flex>
-                <Divider />
-
-
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="308px"
-                >
-                    ClassicGraduatePipelineExampleQuery
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={classic_graduate_query} />
-                </Flex>
-                <Divider />
-
-
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="308px"
-                >
-                    ClassicInferencePipelineExampleQuery
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={classic_inference_query} />
-                </Flex>
-                <Divider />
-
-
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="308px"
-                >
-                    NeiroGraduatePipelineExampleQuery
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={neiro_graduate_query} />
-                </Flex>
-                <Divider />
-
-
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="308px"
-                >
-                    NeiroInferencePipelineExampleQuery
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={neiro_inference_query} />
-                </Flex>
-                <Divider />
-                
-                
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="308px"
-                >
-                    ClassicDataset
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={classic_dataset} />
-                </Flex>
-                <Divider />
-
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="308px"
-                >
-                    ClassicProccess
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={classic_proccess} />
-                </Flex>
-                <Divider />
-
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="308px"
-                >
-                    ClassicModels
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={classic_models} />
-                </Flex>
-                <Divider />
-
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="308px"
-                >
-                    ClassicGraduate
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={classic_graduate} />
-                </Flex>
-                <Divider />
-
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="308px"
-                >
-                    ClassicInference
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={classic_inference} />
-                </Flex>
-                <Divider />
-
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="308px"
-                >
-                    NeiroDataset + get_datasets
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={neiro_dataset} />
-                </Flex>
-                <Divider />
-
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="408px"
-                >
-                    NeiroGraduate + collate_fn + CustomLoss
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={neiro_graduate} />
-                </Flex>
-                <Divider />
-
-
-                <Text
-                    color="#FFFFFF"
-                    fontFamily="Inter"
-                    fontSize="42px"
-                    lineHeight="44px"
-                    fontWeight="0"
-                    width="308px"
-                >
-                    NeiroInference
-                </Text>
-                <Divider />
-                <Flex
-                    direction="column"
-                    width="100%"
-                    height="calc(100vh - 500px)"
-                    overflowY="auto"
-                    padding="16px"
-                    bg="gray.100"
-                >
-                    <MarkdownRenderer markdownText={neiro_inference} />
-                </Flex>
-                <Divider />
-
-
-            </VStack>
+          SeasonAnalyticPipelineExampleQuery
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={season_analytic_query} />
         </Flex>
-    );
+        <Divider />
+
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="308px"
+        >
+          ClassicGraduatePipelineExampleQuery
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={classic_graduate_query} />
+        </Flex>
+        <Divider />
+
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="308px"
+        >
+          ClassicInferencePipelineExampleQuery
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={classic_inference_query} />
+        </Flex>
+        <Divider />
+
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="308px"
+        >
+          NeiroGraduatePipelineExampleQuery
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={neiro_graduate_query} />
+        </Flex>
+        <Divider />
+
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="308px"
+        >
+          NeiroInferencePipelineExampleQuery
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={neiro_inference_query} />
+        </Flex>
+        <Divider />
+
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="308px"
+        >
+          ClassicDataset
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={classic_dataset} />
+        </Flex>
+        <Divider />
+
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="308px"
+        >
+          ClassicProccess
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={classic_proccess} />
+        </Flex>
+        <Divider />
+
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="308px"
+        >
+          ClassicModels
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={classic_models} />
+        </Flex>
+        <Divider />
+
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="308px"
+        >
+          ClassicGraduate
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={classic_graduate} />
+        </Flex>
+        <Divider />
+
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="308px"
+        >
+          ClassicInference
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={classic_inference} />
+        </Flex>
+        <Divider />
+
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="308px"
+        >
+          NeiroDataset + get_datasets
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={neiro_dataset} />
+        </Flex>
+        <Divider />
+
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="408px"
+        >
+          NeiroGraduate + collate_fn + CustomLoss
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={neiro_graduate} />
+        </Flex>
+        <Divider />
+
+        <Text
+          color="#FFFFFF"
+          fontFamily="Inter"
+          fontSize="42px"
+          lineHeight="44px"
+          fontWeight="0"
+          width="308px"
+        >
+          NeiroInference
+        </Text>
+        <Divider />
+        <Flex
+          direction="column"
+          width="100%"
+          height="calc(100vh - 500px)"
+          overflowY="auto"
+          padding="16px"
+          bg="gray.100"
+        >
+          <MarkdownRenderer markdownText={neiro_inference} />
+        </Flex>
+        <Divider />
+      </VStack>
+    </Flex>
+  );
 };
 
 export default DocumentPage;

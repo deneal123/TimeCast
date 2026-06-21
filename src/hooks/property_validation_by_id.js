@@ -1,6 +1,6 @@
 export default function usePropertyValidationById(
   mapPropertiesValidation,
-  setMapPropertiesValidation,
+  setMapPropertiesValidation
 ) {
   // Функция для смены статуса валидации у свойства в массиве listProperties, notation в данном случае значение false или true
   const helperSetListPropertiesValidation = (propertyId, notation) => {
@@ -78,10 +78,7 @@ export default function usePropertyValidationById(
     const newMapPropertiesValidation = new Map();
     properties.forEach((property) => {
       if (mapPropertiesValidation.has(property.id)) {
-        newMapPropertiesValidation.set(
-          property.id,
-          mapPropertiesValidation.get(property.id),
-        );
+        newMapPropertiesValidation.set(property.id, mapPropertiesValidation.get(property.id));
       } else {
         newMapPropertiesValidation.set(property.id, false);
       }

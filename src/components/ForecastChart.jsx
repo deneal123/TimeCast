@@ -61,7 +61,9 @@ const ForecastChart = ({ results }) => {
         {Object.entries(periods).map(([period, v]) => (
           <WrapItem key={period}>
             <Box bg="#2D2D2D" borderRadius="8px" px={3} py={2}>
-              <Text color="#FFBF00" fontWeight="bold">{period}</Text>
+              <Text color="#FFBF00" fontWeight="bold">
+                {period}
+              </Text>
               <Text color="#FFFFFF" fontSize="14px">
                 rmse: {v.rmse != null ? Number(v.rmse).toFixed(3) : "—"}
                 {"  "}r²: {v.r2 != null ? Number(v.r2).toFixed(3) : "—"}

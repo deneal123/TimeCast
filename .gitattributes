@@ -1,0 +1,4 @@
+# Файлы, исполняемые/читаемые в Linux-контейнерах — строго LF.
+*.sh         text eol=lf
+Dockerfile   text eol=lf
+*.conf       text eol=lf

@@ -12,5 +12,5 @@ root.render(
       <ColorModeScript initialColorMode={theme.config.initialColorMode} />
       <App />
     </ChakraProvider>
-  </CookiesProvider>,
+  </CookiesProvider>
 );

@@ -1,7 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 
 const PrivateRoutes = ({ userGroup }) => {
-
   let isAllowed = false;
 
   if (userGroup === "AUTH") {
