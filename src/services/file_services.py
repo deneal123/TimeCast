@@ -4,12 +4,10 @@ from fastapi import UploadFile, HTTPException, status
 from src.utils.write_file_into_server import write_file_into_server
 from src import path_to_project
 from datetime import datetime
-from env import Env
 import zipfile
 from src.utils.return_url_object import return_url_object
 from src.utils.custom_logging import setup_logging
 log = setup_logging()
-env = Env()
 
 
 
@@ -70,8 +68,8 @@ def get_zip_from_server(
 ) -> None:
 
     try:
-        path_to_plots = os.path.join(path_to_project(), env.__getattr__("PLOTS_PATH"))
-        path_to_zip = os.path.join(path_to_project(), env.__getattr__("ZIP_PATH"))
+        path_to_plots = os.path.join(path_to_project(), os.getenv("PLOTS_PATH", "public/plots"))
+        path_to_zip = os.path.join(path_to_project(), os.getenv("ZIP_PATH", "public/zip"))
         zip_filename = create_zip_with_unique_name(path_to_plots, path_to_zip)
         log.info("Url was successfully got")
         return {"url": f"{return_url_object(zip_filename, 'zip')}"}

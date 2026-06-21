@@ -11,7 +11,3 @@ def path_to_project():
 def path_to_logging():
     return os.path.join(project_path, 'src/logging.yaml')
 
-
-def path_to_env():
-    return os.path.join(project_path, '.env')
-

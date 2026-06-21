@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1
+# Backend TimeCast (dev). Контекст сборки = КОРЕНЬ репозитория.
+# В dev исходники монтируются томом (../backend/src), а reload включается через DEBUG=TRUE.
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app \
+    PIP_NO_CACHE_DIR=1
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl \
+ && rm -rf /var/lib/apt/lists/* \
+ && pip install --no-cache-dir uv
+
+WORKDIR /app
+
+RUN uv pip install --system 'torch>=2.0.0' --index-url https://download.pytorch.org/whl/cpu
+
+COPY timecast /opt/timecast
+RUN uv pip install --system /opt/timecast
+
+RUN uv pip install --system \
+    fastapi uvicorn python-multipart aiofiles python-dotenv pyyaml rich pydantic
+
+# Исходники (в dev перекрываются bind-маунтом ../backend/src для hot-reload).
+COPY backend/src /app/src
+COPY backend/docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+EXPOSE 8000
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["server"]

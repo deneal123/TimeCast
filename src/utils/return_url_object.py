@@ -1,7 +1,7 @@
-from env import Env
-env = Env()
+import os
 
 
 def return_url_object(filename: str, obj: str) -> str:
-    return (f"http://{env.__getattr__('HOST')}:{env.__getattr__('SERVER_PORT')}/server/"
-            f"public/{obj}/{filename}")
+    host = os.getenv("HOST", "localhost")
+    port = os.getenv("SERVER_PORT", "8000")
+    return f"http://{host}:{port}/server/public/{obj}/{filename}"

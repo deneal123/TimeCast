@@ -6,7 +6,7 @@ from fastapi.openapi.models import Tag as OpenApiTag
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from src.utils.custom_logging import setup_logging
-from env import Env
+from dotenv import load_dotenv
 from src import path_to_project
 from timecast.pydantic_models import (EntrySeasonAnalyticPipeline, EntryClassicGraduatePipeline,
                                          EntryClassicInferencePipeline, EntryNeiroGraduatePipeline,
@@ -23,7 +23,8 @@ import logging
 import warnings
 warnings.simplefilter("ignore", category=FutureWarning)
 
-env = Env()
+# Загружаем .env один раз при старте (python-dotenv вместо кастомного env.py).
+load_dotenv(os.path.join(path_to_project(), ".env"))
 log = setup_logging()
 
 
@@ -137,6 +138,12 @@ async def stream_logs():
 async def generate_log():
     log.info("This is a new log message!")  # Генерация тестового лога
     return {"message": "Log generated"}
+
+
+# Health-check для Docker/nginx (доступен как /server/health).
+@app_server.get("/health", tags=["Stream"])
+async def health():
+    return {"status": "ok"}
 
 
 
@@ -262,15 +269,11 @@ def run_server():
     with open(uvicorn_log_config, 'r') as f:
         uvicorn_config = yaml.safe_load(f.read())
         logging.config.dictConfig(uvicorn_config)
-    if env.__getattr__("DEBUG") == "TRUE":
-        reload = True
-    elif env.__getattr__("DEBUG") == "FALSE":
-        reload = False
-    else:
-        raise Exception("Not init debug mode in env file")
-    uvicorn.run("server:app", host=env.__getattr__("HOST"), port=int(env.__getattr__("SERVER_PORT")),
+    reload = os.getenv("DEBUG", "FALSE").upper() == "TRUE"
+    uvicorn.run("server:app",
+                host=os.getenv("HOST", "0.0.0.0"),
+                port=int(os.getenv("SERVER_PORT", "8000")),
                 log_config=uvicorn_log_config, reload=reload)
-    log_stream_handler = LogStreamHandler()
 
 
 if __name__ == "__main__":
