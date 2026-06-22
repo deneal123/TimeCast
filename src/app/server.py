@@ -15,6 +15,8 @@ from src.services.analytic_services import season_analytic_pipeline
 from src.services.classic_services import classic_graduate_pipeline, classic_inference_pipeline
 from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference_pipeline
 from src.services.file_services import upload_csv_to_server, get_zip_from_server
+from src.services.timeseries_services import timeseries_graduate_pipeline
+from pydantic import BaseModel
 from timecast import TimeCastError
 from timecast import configure_paths
 from fastapi.responses import StreamingResponse
@@ -206,6 +208,22 @@ async def classic_graduate(entry: EntryClassicGraduatePipeline):
     """
     try:
         return await classic_graduate_pipeline(entry)
+    except HTTPException as ex:
+        log.exception("Error", exc_info=ex)
+        raise ex
+
+
+class TimeSeriesGraduateRequest(BaseModel):
+    """Обобщённый запрос: любой временной ряд (tidy CSV) + параметры обучения."""
+    dataset: Dict  # поля EntryTimeSeriesDataset: source, [time_col, target_col, series_id_col, feature_cols]
+    graduate: Dict  # dictseasonal, models_params, [save_path_weights]
+
+
+@app_server.post("/timeseries_graduate/", response_model=Dict, tags=["Graduate"])
+async def timeseries_graduate(entry: TimeSeriesGraduateRequest):
+    """Обучение classic-моделей на ПРОИЗВОЛЬНОМ временном ряду (без привязки к домену)."""
+    try:
+        return await timeseries_graduate_pipeline(entry.dataset, entry.graduate)
     except HTTPException as ex:
         log.exception("Error", exc_info=ex)
         raise ex
