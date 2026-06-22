@@ -1,8 +1,13 @@
-from timecast.schemas import validate_with_pydantic, EntrySeasonAnalyticPipeline, EntryClassicProcess
-from timecast.season.process import ClassicProcess
-from timecast.pipelines._retail import load_retail_dataset
 from dataclasses import dataclass
+
 from timecast._internal.logging import setup_logging
+from timecast.pipelines._retail import load_retail_dataset
+from timecast.schemas import (
+    EntryClassicProcess,
+    EntrySeasonAnalyticPipeline,
+    validate_with_pydantic,
+)
+from timecast.season.process import ClassicProcess
 
 log = setup_logging()
 

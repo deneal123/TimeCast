@@ -1,7 +1,12 @@
-from timecast.schemas import validate_with_pydantic, EntryClassicInferencePipeline, EntryClassicInference
+from dataclasses import dataclass
+
 from timecast.inference.classic import ClassicInference
 from timecast.pipelines._retail import load_retail_dataset
-from dataclasses import dataclass
+from timecast.schemas import (
+    EntryClassicInference,
+    EntryClassicInferencePipeline,
+    validate_with_pydantic,
+)
 
 
 @dataclass

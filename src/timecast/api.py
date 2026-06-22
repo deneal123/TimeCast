@@ -19,69 +19,69 @@
         },
     })
 """
-from typing import Any, Dict
+from typing import Any
 
-from timecast.schemas import (
-    validate_with_pydantic,
-    EntrySeasonAnalyticPipeline,
-    EntryClassicGraduatePipeline,
-    EntryClassicInferencePipeline,
-    EntryNeiroGraduatePipeline,
-    EntryNeiroInferencePipeline,
-    EntryTimeSeriesDataset,
-    EntryClassicGraduate,
-    EntryClassicInference,
-    EntryNeiroGraduate,
-    EntryNeiroInference,
-)
 from timecast.data.timeseries import TimeSeriesDataset
-from timecast.training.classic import ClassicGraduate
 from timecast.inference.classic import ClassicInference
-from timecast.training.neiro import NeiroGraduate
 from timecast.inference.neiro import NeiroInference
-from timecast.pipelines.season_analytic import SeasonAnalyticPipeline
 from timecast.pipelines.classic_graduate import ClassicGraduatePipeline
 from timecast.pipelines.classic_inference import ClassicInferencePipeline
 from timecast.pipelines.neiro_graduate import NeiroGraduatePipeline
 from timecast.pipelines.neiro_inference import NeiroInferencePipeline
+from timecast.pipelines.season_analytic import SeasonAnalyticPipeline
+from timecast.schemas import (
+    EntryClassicGraduate,
+    EntryClassicGraduatePipeline,
+    EntryClassicInference,
+    EntryClassicInferencePipeline,
+    EntryNeiroGraduate,
+    EntryNeiroGraduatePipeline,
+    EntryNeiroInference,
+    EntryNeiroInferencePipeline,
+    EntrySeasonAnalyticPipeline,
+    EntryTimeSeriesDataset,
+    validate_with_pydantic,
+)
+from timecast.training.classic import ClassicGraduate
+from timecast.training.neiro import NeiroGraduate
 
 
-def season_analytic(entry: Dict[str, Any]) -> SeasonAnalyticPipeline:
+def season_analytic(entry: dict[str, Any]) -> SeasonAnalyticPipeline:
     """Сезонная декомпозиция рядов (тренд/сезон/остаток)."""
     pipeline = validate_with_pydantic(EntrySeasonAnalyticPipeline)(SeasonAnalyticPipeline)(entry=entry)
     pipeline.analyze()
     return pipeline
 
 
-def train_classic(entry: Dict[str, Any]) -> ClassicGraduatePipeline:
+def train_classic(entry: dict[str, Any]) -> ClassicGraduatePipeline:
     """Обучение классических (статистических) моделей sktime."""
     pipeline = validate_with_pydantic(EntryClassicGraduatePipeline)(ClassicGraduatePipeline)(entry=entry)
     pipeline.graduate()
     return pipeline
 
 
-def infer_classic(entry: Dict[str, Any]) -> ClassicInferencePipeline:
+def infer_classic(entry: dict[str, Any]) -> ClassicInferencePipeline:
     """Инференс классическими моделями."""
     pipeline = validate_with_pydantic(EntryClassicInferencePipeline)(ClassicInferencePipeline)(entry=entry)
     pipeline.inference()
     return pipeline
 
 
-def train_neiro(entry: Dict[str, Any]) -> NeiroGraduatePipeline:
+def train_neiro(entry: dict[str, Any]) -> NeiroGraduatePipeline:
     """Обучение нейросетевой модели (iTransformer)."""
     pipeline = validate_with_pydantic(EntryNeiroGraduatePipeline)(NeiroGraduatePipeline)(entry=entry)
     pipeline.graduate()
     return pipeline
 
 
-def infer_neiro(entry: Dict[str, Any]) -> NeiroInferencePipeline:
+def infer_neiro(entry: dict[str, Any]) -> NeiroInferencePipeline:
     """Инференс нейросетевой моделью."""
     pipeline = validate_with_pydantic(EntryNeiroInferencePipeline)(NeiroInferencePipeline)(entry=entry)
     pipeline.inference()
     return pipeline
 
 
-def train_classic_series(dataset: Dict[str, Any], graduate: Dict[str, Any]) -> ClassicGraduate:
+def train_classic_series(dataset: dict[str, Any], graduate: dict[str, Any]) -> ClassicGraduate:
     """Обучение классических моделей на ПРОИЗВОЛЬНОМ временном ряду (tidy CSV, без привязки к домену).
 
     dataset: поля EntryTimeSeriesDataset — source, [time_col, target_col, series_id_col, feature_cols].
@@ -107,7 +107,7 @@ def train_classic_series(dataset: Dict[str, Any], graduate: Dict[str, Any]) -> C
     return cg
 
 
-def infer_classic_series(dataset: Dict[str, Any], inference: Dict[str, Any]) -> ClassicInference:
+def infer_classic_series(dataset: dict[str, Any], inference: dict[str, Any]) -> ClassicInference:
     """Инференс классическими моделями на ПРОИЗВОЛЬНОМ временном ряду (tidy CSV, без привязки к домену).
 
     dataset: поля EntryTimeSeriesDataset — source, [time_col, target_col, series_id_col, feature_cols].
@@ -130,7 +130,7 @@ def infer_classic_series(dataset: Dict[str, Any], inference: Dict[str, Any]) -> 
     return ci
 
 
-def train_neiro_series(dataset: Dict[str, Any], graduate: Dict[str, Any]) -> NeiroGraduate:
+def train_neiro_series(dataset: dict[str, Any], graduate: dict[str, Any]) -> NeiroGraduate:
     """Обучение нейросети (iTransformer) на ПРОИЗВОЛЬНОМ временном ряду (tidy CSV).
 
     dataset: поля EntryTimeSeriesDataset — source, [time_col, target_col, series_id_col, feature_cols].
@@ -145,7 +145,7 @@ def train_neiro_series(dataset: Dict[str, Any], graduate: Dict[str, Any]) -> Nei
     return ng
 
 
-def infer_neiro_series(dataset: Dict[str, Any], inference: Dict[str, Any]) -> NeiroInference:
+def infer_neiro_series(dataset: dict[str, Any], inference: dict[str, Any]) -> NeiroInference:
     """Инференс нейросетью на ПРОИЗВОЛЬНОМ временном ряду (tidy CSV).
 
     dataset: поля EntryTimeSeriesDataset.

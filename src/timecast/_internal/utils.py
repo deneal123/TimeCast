@@ -1,18 +1,20 @@
-from sktime.performance_metrics.forecasting import MeanAbsoluteError, MeanAbsolutePercentageError
-from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error
-from scipy.stats import shapiro
-from scipy.stats import ttest_1samp
-from statsmodels.tsa.stattools import adfuller
-from statsmodels.stats.diagnostic import acorr_ljungbox, het_breuschpagan
-from statsmodels.tsa.seasonal import seasonal_decompose as decompose
-import statsmodels.api as sm
+import os
+import random
+
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 import torch
-import os
+from scipy.stats import shapiro, ttest_1samp
+from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
-import random
+from sktime.performance_metrics.forecasting import MeanAbsoluteError, MeanAbsolutePercentageError
+from statsmodels.stats.diagnostic import acorr_ljungbox, het_breuschpagan
+from statsmodels.tsa.seasonal import seasonal_decompose as decompose
+from statsmodels.tsa.stattools import adfuller
+
 from timecast._internal.logging import setup_logging
+
 log = setup_logging()
 
 

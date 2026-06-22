@@ -1,15 +1,17 @@
-from dataclasses import dataclass
-from timecast.schemas import EntryClassicProcess
-import pandas as pd
 import os
-from statsmodels.tsa.seasonal import seasonal_decompose
-from statsmodels.graphics import tsaplots
-from timecast._internal.io import save_plot_into_server
+from dataclasses import dataclass
+
 import matplotlib.pyplot as plt
-from timecast._internal.dirs import create_directories_if_not_exist
+import pandas as pd
+from statsmodels.graphics import tsaplots
+from statsmodels.tsa.seasonal import seasonal_decompose
 from tqdm import tqdm
-from timecast.config import get_paths
+
+from timecast._internal.dirs import create_directories_if_not_exist
+from timecast._internal.io import save_plot_into_server
 from timecast._internal.logging import setup_logging
+from timecast.config import get_paths
+from timecast.schemas import EntryClassicProcess
 
 log = setup_logging()
 
@@ -91,7 +93,7 @@ class ClassicProcess:
         dicttrend = {}
         dictseasonal = {}
 
-        for index, (seasonality, value) in enumerate(self.dictdecompose.items()):
+        for _index, (seasonality, value) in enumerate(self.dictdecompose.items()):
             sales_add = self.decompose_series(self.remove_outliers(series), value, 'additive')
             sales_mult = self.decompose_series(self.remove_outliers(series), value, 'multiplicative')
 

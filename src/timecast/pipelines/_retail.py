@@ -6,9 +6,9 @@
 import os
 
 from timecast.config import get_paths
-from timecast.exceptions import DataNotFoundError
 from timecast.data.classic import ClassicDataset
-from timecast.schemas import validate_with_pydantic, EntryClassicDataset
+from timecast.exceptions import DataNotFoundError
+from timecast.schemas import EntryClassicDataset, validate_with_pydantic
 
 
 def load_retail_dataset(dataset):

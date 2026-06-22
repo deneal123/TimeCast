@@ -1,23 +1,26 @@
-from dataclasses import dataclass
-from timecast.schemas import EntryClassicInference
-import pandas as pd
-import matplotlib.pyplot as plt
-import os
-import numpy as np
-from sktime.split import SingleWindowSplitter
-from timecast.models.classic import ClassicModel
-from timecast._internal.prepare import prepare_series_exog
 import json
-from sklearn.preprocessing import MinMaxScaler
-from timecast._internal.dirs import create_directories_if_not_exist
-from pathlib import Path
-from timecast._internal.io import save_plot_into_server, download_all_files_rep_hugging_face
-from sklearn.metrics import mean_squared_error, r2_score
-from tqdm import tqdm
+import os
 from copy import deepcopy
-from timecast.config import get_paths
-from timecast._internal.logging import setup_logging
+from dataclasses import dataclass
+from pathlib import Path
 from threading import Lock
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import MinMaxScaler
+from sktime.split import SingleWindowSplitter
+from tqdm import tqdm
+
+from timecast._internal.dirs import create_directories_if_not_exist
+from timecast._internal.io import download_all_files_rep_hugging_face, save_plot_into_server
+from timecast._internal.logging import setup_logging
+from timecast._internal.prepare import prepare_series_exog
+from timecast.config import get_paths
+from timecast.models.classic import ClassicModel
+from timecast.schemas import EntryClassicInference
+
 log = setup_logging()
 
 
@@ -79,7 +82,7 @@ class ClassicInference:
         log.info("Initializing models")
         self.load_models()
         with tqdm(total=len(self.dictmerge.items()), unit="ItemID") as pbar:
-            for index, (item_id, params) in enumerate(self.dictmerge.items()):
+            for _index, (item_id, params) in enumerate(self.dictmerge.items()):
                 log.info(f"Process {item_id}")
                 self.results[f"{item_id}"] = deepcopy(self.dictseasonal)
                 series, exogenous = prepare_series_exog(params, self.dictidx)
@@ -132,7 +135,7 @@ class ClassicInference:
                 # json_data = self.load_json_file(json_path)
 
                 if os.path.exists(json_path):
-                    with open(json_path, "r", encoding="utf-8") as json_file:
+                    with open(json_path, encoding="utf-8") as json_file:
                         json_data = json.loads(json_file.read())
                 else:
                     return {}
@@ -225,9 +228,9 @@ class ClassicInference:
 
     def evaluate(self, series, exogenous, item_id):
 
-        for index, ((period, val), (_, item_list)) in enumerate(
-                zip(self.dictseasonal.items(), self.dictmodels.items())):
-            item_json = [s for s in item_list if str(item_id) in s.keys()][0]
+        for _index, ((period, val), (_, item_list)) in enumerate(
+                zip(self.dictseasonal.items(), self.dictmodels.items(), strict=False)):
+            item_json = [s for s in item_list if str(item_id) in s][0]
             model, json = item_json[f'{item_id}']
             splitter = SingleWindowSplitter(fh=[i for i in range(val)],
                                             window_length=len(series) - val)

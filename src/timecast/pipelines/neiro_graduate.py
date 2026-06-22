@@ -1,7 +1,8 @@
-from timecast.schemas import validate_with_pydantic, EntryNeiroGraduatePipeline, EntryNeiroGraduate
-from timecast.training.neiro import NeiroGraduate
-from timecast.pipelines._retail import load_retail_dataset
 from dataclasses import dataclass
+
+from timecast.pipelines._retail import load_retail_dataset
+from timecast.schemas import EntryNeiroGraduate, EntryNeiroGraduatePipeline, validate_with_pydantic
+from timecast.training.neiro import NeiroGraduate
 
 
 @dataclass

@@ -1,8 +1,12 @@
-from timecast.schemas import validate_with_pydantic, EntryClassicGraduatePipeline, \
-    EntryClassicGraduate
-from timecast.training.classic import ClassicGraduate
-from timecast.pipelines._retail import load_retail_dataset
 from dataclasses import dataclass
+
+from timecast.pipelines._retail import load_retail_dataset
+from timecast.schemas import (
+    EntryClassicGraduate,
+    EntryClassicGraduatePipeline,
+    validate_with_pydantic,
+)
+from timecast.training.classic import ClassicGraduate
 
 
 @dataclass

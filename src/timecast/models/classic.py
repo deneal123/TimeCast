@@ -1,17 +1,20 @@
-from abc import ABC, abstractmethod
-import pandas as pd
+import json
 import os
+from abc import ABC, abstractmethod
+from concurrent.futures import ProcessPoolExecutor
+
+import numpy as np
+import pandas as pd
+from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.auto_reg import AutoREG
 from sktime.forecasting.ets import AutoETS
 from sktime.forecasting.fbprophet import Prophet
 from sktime.forecasting.tbats import TBATS
-from sktime.forecasting.arima import ARIMA
-import json
-import numpy as np
-from concurrent.futures import ProcessPoolExecutor
+
+from timecast._internal.dirs import create_directories_if_not_exist
 from timecast._internal.logging import setup_logging
 from timecast.config import DEFAULT_SEASONAL
-from timecast._internal.dirs import create_directories_if_not_exist
+
 log = setup_logging()
 
 
@@ -35,13 +38,12 @@ class ClassicModel(ABC):
         pass
 
     def fit_pred_async(self, train, test, exogenous, lock, future_or_estimate='estimate'):
-        with lock:
-            with ProcessPoolExecutor() as executor:
-                future = executor.submit(self.fit_pred, train, test, exogenous, future_or_estimate)
-                return future.result()
+        with lock, ProcessPoolExecutor() as executor:
+            future = executor.submit(self.fit_pred, train, test, exogenous, future_or_estimate)
+            return future.result()
 
     def fit_pred(self, train, test, exogenous, future_or_estimate='estimate'):
-        if isinstance(test, pd.DataFrame) or isinstance(test, pd.Series):
+        if isinstance(test, (pd.DataFrame, pd.Series)):
             period = len(test)
         elif isinstance(test, int):
             period = test
@@ -50,10 +52,7 @@ class ClassicModel(ABC):
             future_timestamps = pd.date_range(start=last_timestamp + pd.Timedelta(days=1), periods=period, freq='D')
             pd.DataFrame(0, index=future_timestamps, columns=exogenous_columns)
         self.model.fit(y=train)  # X=exogenous.loc[train.index].fillna(0))
-        if future_or_estimate == 'estimate':
-            pred = self.model.predict(fh=np.arange(0, period))
-            # X=exogenous.loc[test.index].fillna(0))
-        elif future_or_estimate == "future":
+        if future_or_estimate == 'estimate' or future_or_estimate == "future":
             pred = self.model.predict(fh=np.arange(0, period))
             # X=future_exogenous.fillna(0))
         return pred

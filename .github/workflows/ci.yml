@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [library]
+  pull_request:
+    branches: [library]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install (CPU torch из PyPI; GPU-индекс из pyproject — это uv-конфиг, pip его игнорирует)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install ruff pytest
+
+      - name: Lint (ruff)
+        run: ruff check src
+
+      - name: Tests (unit + e2e classic/neiro на CPU)
+        run: pytest

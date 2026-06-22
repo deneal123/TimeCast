@@ -1,10 +1,12 @@
-from timecast.schemas import validate_with_pydantic, EntryNeiroInferencePipeline, EntryNeiroInference
-from timecast.inference.neiro import NeiroInference
-from timecast.pipelines._retail import load_retail_dataset
 from dataclasses import dataclass
 
-
-
+from timecast.inference.neiro import NeiroInference
+from timecast.pipelines._retail import load_retail_dataset
+from timecast.schemas import (
+    EntryNeiroInference,
+    EntryNeiroInferencePipeline,
+    validate_with_pydantic,
+)
 
 
 @dataclass

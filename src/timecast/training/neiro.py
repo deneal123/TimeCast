@@ -1,26 +1,27 @@
 import os
-import torch
-import torch.optim as optim
-from tqdm import tqdm
-import numpy as np
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-from pathlib import Path
-from torch.utils.data import DataLoader
+from dataclasses import dataclass
 from datetime import datetime
 from functools import partial
-from dataclasses import dataclass
-from sklearn.preprocessing import MinMaxScaler
-from timecast.data.neiro import get_datasets, collate_fn
-from timecast.models.loss import CustomLoss
-from timecast._internal.utils import calculate_metrics_auto
-from timecast._internal.features import num_variates
-from timecast._internal.neiro_channels import is_process_batch, assemble_input
-from timecast._internal.dirs import create_directories_if_not_exist
-from timecast.schemas import EntryNeiroGraduate
-from timecast._internal.utils import save_model
+from pathlib import Path
+
+import numpy as np
+import torch
+import torch.optim as optim
 from iTransformer import iTransformer, iTransformerFFT
-from timecast.config import get_paths
+from sklearn.preprocessing import MinMaxScaler
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
+from timecast._internal.dirs import create_directories_if_not_exist
+from timecast._internal.features import num_variates
 from timecast._internal.logging import setup_logging
+from timecast._internal.neiro_channels import assemble_input, is_process_batch
+from timecast._internal.utils import calculate_metrics_auto, save_model
+from timecast.config import get_paths
+from timecast.data.neiro import collate_fn, get_datasets
+from timecast.models.loss import CustomLoss
+from timecast.schemas import EntryNeiroGraduate
 
 log = setup_logging()
 
@@ -85,7 +86,7 @@ class NeiroGraduate:
             self.pin_memory = False
 
     def graduate(self):
-        for index, (item_id, _) in enumerate(self.dictmerge.items()):
+        for _index, (item_id, _) in enumerate(self.dictmerge.items()):
             log.info(f"Processing: {item_id}")
             for period, value in self.dictseasonal.items():
                 log.info(f"Period: {period}")
@@ -203,7 +204,7 @@ class NeiroGraduate:
             model_name: ReduceLROnPlateau(
                 self.optimizers[model_name], mode='min', patience=2
             )
-            for model_name in self.models.keys()
+            for model_name in self.models
         }
 
     def load_checkpoint(self, item_id: str, period: int):
@@ -300,33 +301,32 @@ class NeiroGraduate:
             valid_loss = 0.0
 
             # Проходим по набору данных
-            with torch.no_grad():
-                with tqdm(total=len(self.test_loader)) as pbar_test:
-                    for index, batch in enumerate(self.test_loader):
+            with torch.no_grad(), tqdm(total=len(self.test_loader)) as pbar_test:
+                for index, batch in enumerate(self.test_loader):
 
-                        proccess = is_process_batch(batch)
+                    proccess = is_process_batch(batch)
 
-                        timeseries_test = assemble_input(batch['train'], proccess, self.device)
-                        timeseries_valid = assemble_input(batch['test'], proccess, self.device)
+                    timeseries_test = assemble_input(batch['train'], proccess, self.device)
+                    timeseries_valid = assemble_input(batch['test'], proccess, self.device)
 
-                        # Тестируем модель
-                        logits = torch.nan_to_num(model(timeseries_test)[period], nan=0.0)
+                    # Тестируем модель
+                    logits = torch.nan_to_num(model(timeseries_test)[period], nan=0.0)
 
-                        if proccess:
-                            loss = self.criterion(logits[:, :, :3], timeseries_valid[:, :, :3])
-                        else:
-                            loss = self.criterion(logits[:, :, :1], timeseries_valid[:, :, :1])
-                        valid_loss += loss.item() * self.batch_size
+                    if proccess:
+                        loss = self.criterion(logits[:, :, :3], timeseries_valid[:, :, :3])
+                    else:
+                        loss = self.criterion(logits[:, :, :1], timeseries_valid[:, :, :1])
+                    valid_loss += loss.item() * self.batch_size
 
-                        # Собираем предсказания и истинные значения
-                        all_y_true.append(timeseries_valid.cpu().detach().numpy())
-                        all_y_pred.append(logits.cpu().detach().numpy())
+                    # Собираем предсказания и истинные значения
+                    all_y_true.append(timeseries_valid.cpu().detach().numpy())
+                    all_y_pred.append(logits.cpu().detach().numpy())
 
-                        # Обновляем бар
-                        pbar_test.set_description(f"(Test) / {name_model}")
-                        pbar_test.unit = " sample"
-                        pbar_test.set_postfix(loss=valid_loss / ((index + 1) * self.batch_size))
-                        pbar_test.update(1)
+                    # Обновляем бар
+                    pbar_test.set_description(f"(Test) / {name_model}")
+                    pbar_test.unit = " sample"
+                    pbar_test.set_postfix(loss=valid_loss / ((index + 1) * self.batch_size))
+                    pbar_test.update(1)
 
             # После всех батчей вычисляем метрики
             all_y_true = np.concatenate(all_y_true, axis=0)

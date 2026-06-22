@@ -1,10 +1,21 @@
-from typing import Union, Optional, Type, Dict, List
-from pydantic import (BaseModel, Field, StrictStr, condecimal, StrictInt, StrictBool,
-                      ValidationError, root_validator, ConfigDict)
-from timecast.exceptions import ValidationFailedError
-import pandas as pd
 from functools import wraps
+
+import pandas as pd
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    StrictInt,
+    StrictStr,
+    ValidationError,
+    condecimal,
+    root_validator,
+)
+
 from timecast._internal.logging import setup_logging
+from timecast.exceptions import ValidationFailedError
+
 log = setup_logging()
 
 
@@ -38,12 +49,12 @@ def validate_with_pydantic(model_cls):
     return decorator
 
 
-def auto_generate_docstring(cls: Type[BaseModel]) -> Type[BaseModel]:
+def auto_generate_docstring(cls: type[BaseModel]) -> type[BaseModel]:
     """
     Декоратор для автоматического добавления docstring в классы Pydantic.
     """
 
-    def generate_docstring(model: Type[BaseModel]) -> str:
+    def generate_docstring(model: type[BaseModel]) -> str:
         """
         Генерация строки документации из описания полей модели Pydantic.
         """
@@ -83,20 +94,20 @@ class EntryClassicDataset(BaseModel):
                                        alias="shop_sales_prices",
                                        examples=["./data/shop_sales_prices.csv"],
                                        description="Путь к набору данных shop_sales_prices")
-    Plots: Optional[StrictBool] = Field(False,
+    Plots: StrictBool | None = Field(False,
                                         alias="plots",
                                         examples=[True],
                                         description="Строить графики временных рядов? Да/Нет")
-    SavePlots: Optional[StrictBool] = Field(True,
+    SavePlots: StrictBool | None = Field(True,
                                             alias="save_plots",
                                             examples=[True],
                                             description="Сохранять графики временных рядов? Да/Нет")
-    SavePathPlots: Optional[StrictStr] = Field(None,
+    SavePathPlots: StrictStr | None = Field(None,
                                                alias="save_path_plots",
                                                examples=["./plots"],
                                                description="Если сохраняем графики, то куда? Дефолтный путь ./plots")
 
-    exclude_fields: Optional[Dict[str, bool]] = None
+    exclude_fields: dict[str, bool] | None = None
 
     @root_validator(pre=True)
     def handle_excluded_fields(cls, values):
@@ -140,31 +151,31 @@ class EntryTimeSeriesDataset(BaseModel):
                               alias="source",
                               examples=["./data/series.csv"],
                               description="Путь к tidy-CSV (long): колонки time, target, [series_id], feature_*")
-    TimeCol: Optional[StrictStr] = Field("time",
+    TimeCol: StrictStr | None = Field("time",
                                          alias="time_col",
                                          examples=["time"],
                                          description="Имя колонки времени (дата/таймстамп)")
-    TargetCol: Optional[StrictStr] = Field("target",
+    TargetCol: StrictStr | None = Field("target",
                                            alias="target_col",
                                            examples=["target"],
                                            description="Имя колонки целевого значения")
-    IdCol: Optional[StrictStr] = Field(None,
+    IdCol: StrictStr | None = Field(None,
                                        alias="series_id_col",
                                        examples=["series_id"],
                                        description="Имя колонки идентификатора ряда (None → один ряд)")
-    FeatureCols: Optional[List[StrictStr]] = Field(None,
+    FeatureCols: list[StrictStr] | None = Field(None,
                                                    alias="feature_cols",
                                                    examples=[["price", "promo"]],
                                                    description="Колонки-фичи (None → все, кроме time/target/series_id)")
-    Plots: Optional[StrictBool] = Field(False,
+    Plots: StrictBool | None = Field(False,
                                         alias="plots",
                                         examples=[True],
                                         description="Строить графики? Да/Нет")
-    SavePlots: Optional[StrictBool] = Field(True,
+    SavePlots: StrictBool | None = Field(True,
                                             alias="save_plots",
                                             examples=[True],
                                             description="Сохранять графики? Да/Нет")
-    SavePathPlots: Optional[StrictStr] = Field(None,
+    SavePathPlots: StrictStr | None = Field(None,
                                                alias="save_path_plots",
                                                examples=["./plots"],
                                                description="Куда сохранять графики (дефолт ./plots)")
@@ -176,11 +187,11 @@ class EntryClassicProcess(BaseModel):
     Класс для валидации входных данных ClassicProcess
     """
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    DictMerge: Union[Dict[str, pd.DataFrame], StrictStr] = Field(...,
+    DictMerge: dict[str, pd.DataFrame] | StrictStr = Field(...,
                                                                  alias="dictmerge",
                                                                  examples=["Dict[str, pd.DataFrame]"],
                                                                  description="Словарь полученный методом ClassicDataset.dictmerge")
-    DictDecompose: Dict[str, StrictInt] = Field(...,
+    DictDecompose: dict[str, StrictInt] = Field(...,
                                                 alias="dictdecompose",
                                                 examples=[{
                                                     "week": 7,
@@ -188,27 +199,27 @@ class EntryClassicProcess(BaseModel):
                                                     "quarter": 90
                                                 }],
                                                 description="Словарь, по какому периоду будет осуществляться декомпозиция")
-    RemoveBound: Optional[Dict[str, StrictInt]] = Field(...,
+    RemoveBound: dict[str, StrictInt] | None = Field(...,
                                                         alias="remove_bound",
                                                         examples=[{
                                                             "lower_bound_factor": 5,
                                                             "upper_bound_factor": 5
                                                         }],
                                                         description="Границы выравнивания выбросов по медиане Q1 -+ bound_factor * IQR")
-    Plots: Optional[StrictBool] = Field(False,
+    Plots: StrictBool | None = Field(False,
                                         alias="plots",
                                         examples=[True],
                                         description="Строить графики предобработанных временных рядов? Да/Нет")
-    SavePlots: Optional[StrictBool] = Field(True,
+    SavePlots: StrictBool | None = Field(True,
                                             alias="save_plots",
                                             examples=[True],
                                             description="Сохранять графики временных рядов? Да/Нет")
-    SavePathPlots: Optional[StrictStr] = Field(None,
+    SavePathPlots: StrictStr | None = Field(None,
                                                alias="save_path_plots",
                                                examples=["./plots"],
                                                description="Если сохраняем графики, то куда? Дефолтный путь ./plots")
 
-    exclude_fields: Optional[Dict[str, bool]] = None
+    exclude_fields: dict[str, bool] | None = None
 
     @root_validator(pre=True)
     def handle_excluded_fields(cls, values):
@@ -232,15 +243,15 @@ class EntryClassicGraduate(BaseModel):
     Класс для валидации входных данных ClassicGraduate
     """
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    DictIdx: Union[Dict, StrictStr] = Field(...,
+    DictIdx: dict | StrictStr = Field(...,
                                             alias="dictidx",
                                             examples=["Dict"],
                                             description="Словарь полученный методом ClassicProcess.dictidx")
-    DictMerge: Union[Dict[str, pd.DataFrame], StrictStr] = Field(...,
+    DictMerge: dict[str, pd.DataFrame] | StrictStr = Field(...,
                                                                  alias="dictmerge",
                                                                  examples=["Dict[str, pd.DataFrame]"],
                                                                  description="Словарь полученный методом ClassicDataset.dictmerge")
-    DictSeasonal: Dict[str, StrictInt] = Field(...,
+    DictSeasonal: dict[str, StrictInt] = Field(...,
                                                alias="dictseasonal",
                                                examples=[{
                                                    "week": 7,
@@ -248,7 +259,7 @@ class EntryClassicGraduate(BaseModel):
                                                    "quater": 90
                                                }],
                                                description="Словарь диапазонов предсказаний, на какую дистанцию предсказывать?")
-    ModelsParams: Dict[str, tuple] = Field(...,
+    ModelsParams: dict[str, tuple] = Field(...,
                                            alias="models_params",
                                            examples=[{
                                                "AUTOARIMA": (3, 3, 0, 0, 1, 1, 'week'),
@@ -258,12 +269,12 @@ class EntryClassicGraduate(BaseModel):
                                                "TBATS": (None,)
                                            }],
                                            description="Словарь с моделями и параметрами, из которых будет выбираться лучшая модель")
-    SavePathWeights: Optional[StrictStr] = Field(None,
+    SavePathWeights: StrictStr | None = Field(None,
                                                  alias="save_path_weights",
                                                  examples=["./weights_classic"],
                                                  description="Если сохраняем веса, то куда? Дефолтный путь ./weights_classic")
 
-    exclude_fields: Optional[Dict[str, bool]] = None
+    exclude_fields: dict[str, bool] | None = None
 
     @root_validator(pre=True)
     def handle_excluded_fields(cls, values):
@@ -297,15 +308,15 @@ class EntryClassicInference(BaseModel):
     Класс для валидации входных данных ClassicInference
     """
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    DictIdx: Union[Dict, StrictStr] = Field(...,
+    DictIdx: dict | StrictStr = Field(...,
                                             alias="dictidx",
                                             examples=["Dict"],
                                             description="Словарь полученный методом ClassicProcess.dictidx")
-    DictMerge: Union[Dict[str, pd.DataFrame], StrictStr] = Field(...,
+    DictMerge: dict[str, pd.DataFrame] | StrictStr = Field(...,
                                                                  alias="dictmerge",
                                                                  examples=["Dict[str, pd.DataFrame]"],
                                                                  description="Словарь полученный методом ClassicDataset.dictmerge")
-    DictSeasonal: Dict[str, StrictInt] = Field(...,
+    DictSeasonal: dict[str, StrictInt] = Field(...,
                                                alias="dictseasonal",
                                                examples=[{
                                                    "week": 7,
@@ -318,24 +329,24 @@ class EntryClassicInference(BaseModel):
                                         examples=['estimate'],
                                         description=("Режим инференса, когда estimate оценивает последний кусок данных,"
                                                      "когда future делает предсказание в будущее"))
-    SavePathWeights: Optional[StrictStr] = Field(None,
+    SavePathWeights: StrictStr | None = Field(None,
                                                  alias="save_path_weights",
                                                  examples=["./weights_classic"],
                                                  description="Если сохраняем веса, то куда? Дефолтный путь ./weights_classic")
-    Plots: Optional[StrictBool] = Field(False,
+    Plots: StrictBool | None = Field(False,
                                         alias="plots",
                                         examples=[True],
                                         description="Строить графики предобработанных временных рядов? Да/Нет")
-    SavePlots: Optional[StrictBool] = Field(True,
+    SavePlots: StrictBool | None = Field(True,
                                             alias="save_plots",
                                             examples=[True],
                                             description="Сохранять графики временных рядов? Да/Нет")
-    SavePathPlots: Optional[StrictStr] = Field(None,
+    SavePathPlots: StrictStr | None = Field(None,
                                                alias="save_path_plots",
                                                examples=["./plots"],
                                                description="Если сохраняем графики, то куда? Дефолтный путь ./plots")
 
-    exclude_fields: Optional[Dict[str, bool]] = None
+    exclude_fields: dict[str, bool] | None = None
 
     @root_validator(pre=True)
     def handle_excluded_fields(cls, values):
@@ -369,15 +380,15 @@ class EntryNeiroInference(BaseModel):
     Класс для валидации входных данных NeiroInference
     """
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    DictIdx: Union[Dict, StrictStr] = Field(...,
+    DictIdx: dict | StrictStr = Field(...,
                                             alias="dictidx",
                                             examples=["Dict"],
                                             description="Словарь полученный методом ClassicProcess.dictidx")
-    DictMerge: Union[Dict[str, pd.DataFrame], StrictStr] = Field(...,
+    DictMerge: dict[str, pd.DataFrame] | StrictStr = Field(...,
                                                                  alias="dictmerge",
                                                                  examples=["Dict[str, pd.DataFrame]"],
                                                                  description="Словарь полученный методом ClassicDataset.dictmerge")
-    DictSeasonal: Dict[str, StrictInt] = Field(...,
+    DictSeasonal: dict[str, StrictInt] = Field(...,
                                                alias="dictseasonal",
                                                examples=[{
                                                    "week": 7,
@@ -385,7 +396,7 @@ class EntryNeiroInference(BaseModel):
                                                    "quater": 90
                                                }],
                                                description="Словарь диапазонов предсказаний, на какую дистанцию предсказывать?")
-    DictModels: Dict[str, Dict] = Field(...,
+    DictModels: dict[str, dict] = Field(...,
                                         alias="dictmodels",
                                         examples=[{
                                             "IF": {
@@ -413,48 +424,48 @@ class EntryNeiroInference(BaseModel):
                                         examples=['estimate'],
                                         description=("Режим инференса, когда estimate оценивает последний кусок данных,"
                                                      "когда future делает предсказание в будущее"))
-    SeqLen: Optional[StrictInt] = Field(365,
+    SeqLen: StrictInt | None = Field(365,
                                         alias="seq_len",
                                         examples=[365],
                                         description="Длина последовательности (lookback)")
-    PathWeights: Optional[StrictStr] = Field(None,
+    PathWeights: StrictStr | None = Field(None,
                                              alias="path_to_weights",
                                              examples=["./weights_neiro"],
                                              description="Если сохраняем веса, то куда? Дефолтный путь ./weights_neiro")
-    Plots: Optional[StrictBool] = Field(False,
+    Plots: StrictBool | None = Field(False,
                                         alias="plots",
                                         examples=[True],
                                         description="Строить графики временных рядов? Да/Нет")
-    SavePlots: Optional[StrictBool] = Field(True,
+    SavePlots: StrictBool | None = Field(True,
                                             alias="save_plots",
                                             examples=[True],
                                             description="Сохранять графики временных рядов? Да/Нет")
-    SavePathPlots: Optional[StrictStr] = Field(None,
+    SavePathPlots: StrictStr | None = Field(None,
                                                alias="save_path_plots",
                                                examples=["./plots"],
                                                description="Если сохраняем график, то куда? Дефолтный путь ./plots")
-    UseDevice: Optional[StrictStr] = Field('cuda',
+    UseDevice: StrictStr | None = Field('cuda',
                                            alias="use_device",
                                            examples=["cuda"],
                                            description="Какое устройство использовать? cpu/cuda")
-    NumWorkers: Optional[StrictInt] = Field(0,
+    NumWorkers: StrictInt | None = Field(0,
                                             alias="num_workers",
                                             examples=[0],
                                             description="Кол. используемых потоков при подгрузке данных DataLoader (0 это 1)")
-    PinMemory: Optional[StrictBool] = Field(False,
+    PinMemory: StrictBool | None = Field(False,
                                             alias="pin_memory",
                                             examples=[False],
                                             description="Если True ускоряет загрузку данных на видеокарте, для cpu всегда False")
-    DecomposePeriod: Optional[StrictInt] = Field(7,
+    DecomposePeriod: StrictInt | None = Field(7,
                                                  alias="decompose_period",
                                                  examples=[7],
                                                  description="Период сезонной декомпозиции ряда (база цикла), по умолчанию 7")
-    DecomposeModel: Optional[StrictStr] = Field("multiplicative",
+    DecomposeModel: StrictStr | None = Field("multiplicative",
                                                 alias="decompose_model",
                                                 examples=["multiplicative", "additive"],
                                                 description="Модель декомпозиции; для рядов с нулями/отрицательными — additive")
 
-    exclude_fields: Optional[Dict[str, bool]] = None
+    exclude_fields: dict[str, bool] | None = None
 
     @root_validator(pre=True)
     def handle_excluded_fields(cls, values):
@@ -488,15 +499,15 @@ class EntryNeiroGraduate(BaseModel):
     Класс для валидации входных данных NeiroGraduate
     """
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    DictIdx: Union[Dict, StrictStr] = Field(...,
+    DictIdx: dict | StrictStr = Field(...,
                                             alias="dictidx",
                                             examples=["Dict"],
                                             description="Словарь полученный методом ClassicProcess.dictidx")
-    DictMerge: Union[Dict[str, pd.DataFrame], StrictStr] = Field(...,
+    DictMerge: dict[str, pd.DataFrame] | StrictStr = Field(...,
                                                                  alias="dictmerge",
                                                                  examples=["Dict[str, pd.DataFrame]"],
                                                                  description="Словарь полученный методом ClassicDataset.dictmerge")
-    DictSeasonal: Dict[str, StrictInt] = Field(...,
+    DictSeasonal: dict[str, StrictInt] = Field(...,
                                                alias="dictseasonal",
                                                examples=[{
                                                    "week": 7,
@@ -504,7 +515,7 @@ class EntryNeiroGraduate(BaseModel):
                                                    "quater": 90
                                                }],
                                                description="Словарь диапазонов предсказаний, на какую дистанцию предсказывать?")
-    DictModels: Dict[str, Dict] = Field(...,
+    DictModels: dict[str, dict] = Field(...,
                                         alias="dictmodels",
                                         examples=[{
                                             "IF": {
@@ -527,64 +538,64 @@ class EntryNeiroGraduate(BaseModel):
                                             }
                                         }],
                                         description="Словарь с параметрами моделей")
-    SeqLen: Optional[StrictInt] = Field(365,
+    SeqLen: StrictInt | None = Field(365,
                                         alias="seq_len",
                                         examples=[365],
                                         description="Длина последовательности (lookback)")
-    TestSize: Optional[condecimal(ge=0.1, le=0.5, decimal_places=1)] = Field(0.3,
+    TestSize: condecimal(ge=0.1, le=0.5, decimal_places=1) | None = Field(0.3,
                                                                              alias="test_size",
                                                                              examples=[0.3],
                                                                              description="Доля тестовой выборки, которую не будет видеть модель")
-    StepLen: Optional[StrictInt] = Field(1,
+    StepLen: StrictInt | None = Field(1,
                                          alias="step_length",
                                          examples=[1],
                                          description="Кол. шагов, через которые будут браться срезы данных")
-    PathWeights: Optional[StrictStr] = Field(None,
+    PathWeights: StrictStr | None = Field(None,
                                              alias="path_to_weights",
                                              examples=["./weights_neiro"],
                                              description="Если сохраняем веса, то куда? Дефолтный путь ./weights_neiro")
-    UseDevice: Optional[StrictStr] = Field('cuda',
+    UseDevice: StrictStr | None = Field('cuda',
                                            alias="use_device",
                                            examples=["cuda"],
                                            description="Какое устройство использовать? cpu/cuda")
-    StartLerningRate: Optional[condecimal(ge=0.00000001, le=0.01, decimal_places=8)] = Field(0.0001,
+    StartLerningRate: condecimal(ge=1e-08, le=0.01, decimal_places=8) | None = Field(0.0001,
                                                                                              alias="start_learning_rate",
                                                                                              examples=[0.0001],
                                                                                              description="Начальная величина шага градиентного спуска")
-    BatchSize: Optional[StrictInt] = Field(10,
+    BatchSize: StrictInt | None = Field(10,
                                            alias="batch_size",
                                            examples=[10],
                                            description="Размер пакета при обучении")
-    NumWorkers: Optional[StrictInt] = Field(0,
+    NumWorkers: StrictInt | None = Field(0,
                                             alias="num_workers",
                                             examples=[0],
                                             description="Кол. используемых потоков при подгрузке данных DataLoader (0 это 1)")
-    PinMemory: Optional[StrictBool] = Field(False,
+    PinMemory: StrictBool | None = Field(False,
                                             alias="pin_memory",
                                             examples=[False],
                                             description="Если True ускоряет загрузку данных на видеокарте, для cpu всегда False")
-    NumEpochs: Optional[StrictInt] = Field(20,
+    NumEpochs: StrictInt | None = Field(20,
                                            alias="num_epochs",
                                            examples=[20],
                                            description="Количество эпох обучения для каждой модели")
-    NameOptimizer: Optional[StrictStr] = Field("Adam",
+    NameOptimizer: StrictStr | None = Field("Adam",
                                                alias="name_optimizer",
                                                examples=["Adam"],
                                                description="Название оптимизатора из доступных в torch.nn.optim")
-    Seed: Optional[StrictInt] = Field(17,
+    Seed: StrictInt | None = Field(17,
                                       alias="seed",
                                       examples=[17],
                                       description="Сажает зерно")
-    DecomposePeriod: Optional[StrictInt] = Field(7,
+    DecomposePeriod: StrictInt | None = Field(7,
                                                  alias="decompose_period",
                                                  examples=[7],
                                                  description="Период сезонной декомпозиции ряда (база цикла), по умолчанию 7")
-    DecomposeModel: Optional[StrictStr] = Field("multiplicative",
+    DecomposeModel: StrictStr | None = Field("multiplicative",
                                                 alias="decompose_model",
                                                 examples=["multiplicative", "additive"],
                                                 description="Модель декомпозиции; для рядов с нулями/отрицательными — additive")
 
-    exclude_fields: Optional[Dict[str, bool]] = None
+    exclude_fields: dict[str, bool] | None = None
 
     @root_validator(pre=True)
     def handle_excluded_fields(cls, values):

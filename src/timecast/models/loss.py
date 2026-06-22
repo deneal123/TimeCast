@@ -1,8 +1,6 @@
 import torch
 
 
-
-
 class CustomLoss(torch.nn.Module):
     def __init__(self, beta=1.0, delta=0.5, gamma=0.1, cosine_margin=0.0, special_penalty=1.0):
         """
@@ -15,7 +13,7 @@ class CustomLoss(torch.nn.Module):
         - cosine_margin: маржа для CosineEmbeddingLoss.
         - special_penalty: штраф для второй и последующих компонент.
         """
-        super(CustomLoss, self).__init__()
+        super().__init__()
         self.smooth_l1_loss = torch.nn.SmoothL1Loss(beta=beta)
         self.cosine_loss = torch.nn.CosineEmbeddingLoss(margin=cosine_margin)
         self.delta = delta
@@ -57,10 +55,7 @@ class CustomLoss(torch.nn.Module):
                 cosine_loss = 0.0
 
             # Специальный штраф для второй компоненты
-            if i > 1:
-                special_penalty = self.special_penalty
-            else:
-                special_penalty = 0.0
+            special_penalty = self.special_penalty if i > 1 else 0.0
                 
             # Итоговая функция потерь для компоненты с учетом специального штрафа
             component_loss = l1_loss + self.delta * penalty + self.gamma * cosine_loss + special_penalty

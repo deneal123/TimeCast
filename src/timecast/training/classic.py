@@ -1,17 +1,20 @@
-from dataclasses import dataclass
-from timecast.schemas import EntryClassicGraduate
-from tqdm import tqdm
-import numpy as np
-from sktime.forecasting.model_selection import ExpandingWindowSplitter
 import os
-from sklearn.metrics import r2_score, mean_squared_error
-from timecast.models.classic import ClassicModel
-from timecast._internal.prepare import prepare_series_exog
-from sklearn.preprocessing import MinMaxScaler
-from timecast._internal.dirs import create_directories_if_not_exist
+from dataclasses import dataclass
 from pathlib import Path
-from timecast.config import get_paths
+
+import numpy as np
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import MinMaxScaler
+from sktime.forecasting.model_selection import ExpandingWindowSplitter
+from tqdm import tqdm
+
+from timecast._internal.dirs import create_directories_if_not_exist
 from timecast._internal.logging import setup_logging
+from timecast._internal.prepare import prepare_series_exog
+from timecast.config import get_paths
+from timecast.models.classic import ClassicModel
+from timecast.schemas import EntryClassicGraduate
+
 log = setup_logging()
 
 
@@ -107,7 +110,7 @@ class ClassicGraduate:
                 best_tss = None
 
                 with tqdm(total=splitter.get_n_splits(series), unit="split") as pbar:
-                    for index, (train_indices, test_indices) in enumerate(splitter.split(series)):
+                    for _index, (train_indices, test_indices) in enumerate(splitter.split(series)):
 
                         train = series.iloc[train_indices]
                         test = series.iloc[test_indices]

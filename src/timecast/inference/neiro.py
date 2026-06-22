@@ -1,25 +1,27 @@
 import os
-import torch
-from tqdm import tqdm
+from copy import deepcopy
+from dataclasses import dataclass
+from functools import partial
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from torch.utils.data import DataLoader
-from functools import partial
-from dataclasses import dataclass
-from sklearn.preprocessing import MinMaxScaler
-import matplotlib.pyplot as plt
-from copy import deepcopy
-from timecast._internal.io import save_plot_into_server, download_all_files_rep_hugging_face
-from timecast.data.neiro import get_datasets, collate_fn
-from timecast._internal.utils import calculate_metrics_auto, convert_timeseries_to_dataframe
-from timecast._internal.features import num_variates
-from timecast._internal.neiro_channels import is_process_batch, assemble_input
-from timecast._internal.dirs import create_directories_if_not_exist
-from timecast.schemas import EntryNeiroInference
+import torch
 from iTransformer import iTransformer, iTransformerFFT
-from timecast.config import get_paths
+from sklearn.preprocessing import MinMaxScaler
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
+from timecast._internal.dirs import create_directories_if_not_exist
+from timecast._internal.features import num_variates
+from timecast._internal.io import download_all_files_rep_hugging_face, save_plot_into_server
 from timecast._internal.logging import setup_logging
+from timecast._internal.neiro_channels import assemble_input, is_process_batch
+from timecast._internal.utils import calculate_metrics_auto, convert_timeseries_to_dataframe
+from timecast.config import get_paths
+from timecast.data.neiro import collate_fn, get_datasets
+from timecast.schemas import EntryNeiroInference
 
 log = setup_logging()
 
@@ -103,7 +105,7 @@ class NeiroInference:
         log.info("Initialize models")
         self.load_models()
         with tqdm(total=len(self.dictmerge.items()), unit="ItemID") as pbar:
-            for index, (item_id, params) in enumerate(self.dictmerge.items()):
+            for _index, (item_id, _params) in enumerate(self.dictmerge.items()):
                 self.results[f"{item_id}"] = deepcopy(self.dictseasonal)
                 self.evaluate(item_id)
                 # Обновляем прогресс-бар
@@ -298,10 +300,10 @@ class NeiroInference:
 
     def evaluate(self, item_id: str):
 
-        for index, ((period, val), (_, item_list)) in enumerate(
-                zip(self.dictseasonal.items(), self.dictloadmodels.items())):
+        for _index, ((period, val), (_, item_list)) in enumerate(
+                zip(self.dictseasonal.items(), self.dictloadmodels.items(), strict=False)):
             self.get_loaders(item_id, val)
-            item_json = [s for s in item_list if str(item_id) in s.keys()][0]
+            item_json = [s for s in item_list if str(item_id) in s][0]
             model, name_model = item_json[f'{item_id}']
 
             preds = []
@@ -311,7 +313,7 @@ class NeiroInference:
 
             # Проходим по набору данных
             with torch.no_grad():
-                for jndex, batch in enumerate(self.test_loader):
+                for _jndex, batch in enumerate(self.test_loader):
 
                     proccess = is_process_batch(batch)
 
