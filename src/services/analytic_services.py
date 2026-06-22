@@ -8,6 +8,7 @@ log = setup_logging()
 
 async def season_analytic_pipeline(entry: EntrySeasonAnalyticPipeline) -> Dict:
     # CPU-bound работа библиотеки выполняется в отдельном потоке, чтобы не блокировать loop.
-    await asyncio.to_thread(timecast.season_analytic, entry)
+    pipeline = await asyncio.to_thread(timecast.season_analytic, entry)
+    results = timecast.collect_decomposition_results(pipeline)
     log.info("Success analyse")
-    return {"message": "Success analyse"}
+    return {"message": "Success analyse", "results": results}
