@@ -15,7 +15,10 @@ from src.services.analytic_services import season_analytic_pipeline
 from src.services.classic_services import classic_graduate_pipeline, classic_inference_pipeline
 from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference_pipeline
 from src.services.file_services import upload_csv_to_server, get_zip_from_server
-from src.services.timeseries_services import timeseries_graduate_pipeline
+from src.services.timeseries_services import (
+    timeseries_graduate_pipeline,
+    timeseries_inference_pipeline,
+)
 from pydantic import BaseModel
 from timecast import TimeCastError
 from timecast import configure_paths
@@ -219,11 +222,27 @@ class TimeSeriesGraduateRequest(BaseModel):
     graduate: Dict  # dictseasonal, models_params, [save_path_weights]
 
 
+class TimeSeriesInferenceRequest(BaseModel):
+    """Обобщённый запрос: любой временной ряд (tidy CSV) + параметры инференса."""
+    dataset: Dict  # поля EntryTimeSeriesDataset
+    inference: Dict  # dictseasonal, [future_or_estimate, save_path_weights, plots, ...]
+
+
 @app_server.post("/timeseries_graduate/", response_model=Dict, tags=["Graduate"])
 async def timeseries_graduate(entry: TimeSeriesGraduateRequest):
     """Обучение classic-моделей на ПРОИЗВОЛЬНОМ временном ряду (без привязки к домену)."""
     try:
         return await timeseries_graduate_pipeline(entry.dataset, entry.graduate)
+    except HTTPException as ex:
+        log.exception("Error", exc_info=ex)
+        raise ex
+
+
+@app_server.post("/timeseries_inference/", response_model=Dict, tags=["Inference"])
+async def timeseries_inference(entry: TimeSeriesInferenceRequest):
+    """Инференс classic-моделей на ПРОИЗВОЛЬНОМ временном ряду (без привязки к домену)."""
+    try:
+        return await timeseries_inference_pipeline(entry.dataset, entry.inference)
     except HTTPException as ex:
         log.exception("Error", exc_info=ex)
         raise ex
