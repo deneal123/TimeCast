@@ -31,10 +31,14 @@ from timecast.schemas import (
     EntryTimeSeriesDataset,
     EntryClassicGraduate,
     EntryClassicInference,
+    EntryNeiroGraduate,
+    EntryNeiroInference,
 )
 from timecast.data.timeseries import TimeSeriesDataset
 from timecast.training.classic import ClassicGraduate
 from timecast.inference.classic import ClassicInference
+from timecast.training.neiro import NeiroGraduate
+from timecast.inference.neiro import NeiroInference
 from timecast.pipelines.season_analytic import SeasonAnalyticPipeline
 from timecast.pipelines.classic_graduate import ClassicGraduatePipeline
 from timecast.pipelines.classic_inference import ClassicInferencePipeline
@@ -124,3 +128,33 @@ def infer_classic_series(dataset: Dict[str, Any], inference: Dict[str, Any]) -> 
     })
     ci.inference()
     return ci
+
+
+def train_neiro_series(dataset: Dict[str, Any], graduate: Dict[str, Any]) -> NeiroGraduate:
+    """Обучение нейросети (iTransformer) на ПРОИЗВОЛЬНОМ временном ряду (tidy CSV).
+
+    dataset: поля EntryTimeSeriesDataset — source, [time_col, target_col, series_id_col, feature_cols].
+    graduate: параметры EntryNeiroGraduate (dictseasonal, dictmodels, seq_len, test_size, ...) КРОМЕ
+    dictidx/dictmerge — они выводятся из dataset. num_variates вычисляется автоматически (3 + число фич).
+    """
+    ds = validate_with_pydantic(EntryTimeSeriesDataset)(TimeSeriesDataset)(entry=dataset)
+    ds.dataset()
+    entry = {**graduate, "dictidx": ds.dictidx, "dictmerge": ds.dictmerge}
+    ng = validate_with_pydantic(EntryNeiroGraduate)(NeiroGraduate)(entry=entry)
+    ng.graduate()
+    return ng
+
+
+def infer_neiro_series(dataset: Dict[str, Any], inference: Dict[str, Any]) -> NeiroInference:
+    """Инференс нейросетью на ПРОИЗВОЛЬНОМ временном ряду (tidy CSV).
+
+    dataset: поля EntryTimeSeriesDataset.
+    inference: параметры EntryNeiroInference (dictseasonal, dictmodels, seq_len, future_or_estimate, ...)
+    КРОМЕ dictidx/dictmerge — они выводятся из dataset.
+    """
+    ds = validate_with_pydantic(EntryTimeSeriesDataset)(TimeSeriesDataset)(entry=dataset)
+    ds.dataset()
+    entry = {**inference, "dictidx": ds.dictidx, "dictmerge": ds.dictmerge}
+    ni = validate_with_pydantic(EntryNeiroInference)(NeiroInference)(entry=entry)
+    ni.inference()
+    return ni

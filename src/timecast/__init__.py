@@ -29,7 +29,7 @@ from timecast.exceptions import TimeCastError, DataNotFoundError, ValidationFail
 # Высокоуровневый API
 from timecast.api import (season_analytic, train_classic, infer_classic,
                           train_neiro, infer_neiro, train_classic_series,
-                          infer_classic_series)
+                          infer_classic_series, train_neiro_series, infer_neiro_series)
 from timecast.results import (collect_results, serialize_inference_results,
                               collect_training_results, serialize_training_results,
                               collect_decomposition_results, serialize_decomposition_results)
@@ -37,6 +37,7 @@ from timecast.results import (collect_results, serialize_inference_results,
 __all__ = [  # высокоуровневый API
            'season_analytic', 'train_classic', 'infer_classic',
            'train_neiro', 'infer_neiro', 'train_classic_series', 'infer_classic_series',
+           'train_neiro_series', 'infer_neiro_series',
            'collect_results', 'serialize_inference_results',
            'collect_training_results', 'serialize_training_results',
            'collect_decomposition_results', 'serialize_decomposition_results',
