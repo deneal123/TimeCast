@@ -6,6 +6,7 @@ import os
 import numpy as np
 from sktime.split import SingleWindowSplitter
 from timecast.models.classic import ClassicModel
+from timecast._internal.prepare import prepare_series_exog
 import json
 from sklearn.preprocessing import MinMaxScaler
 from timecast._internal.dirs import create_directories_if_not_exist
@@ -81,23 +82,7 @@ class ClassicInference:
             for index, (item_id, params) in enumerate(self.dictmerge.items()):
                 log.info(f"Process {item_id}")
                 self.results[f"{item_id}"] = deepcopy(self.dictseasonal)
-                series = params['cnt']
-                date_id = params['date_id']
-                sell_price = params['sell_price']
-                event_name = params['event_name']
-                event_type = params['event_type']
-                cashback = params['cashback']
-                sell_price.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
-                event_name.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
-                event_type.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
-                cashback.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
-                exogenous = pd.DataFrame({
-                    "sell_price": sell_price,
-                    "event_name": event_name,
-                    "event_type": event_type,
-                    "cashback": cashback
-                })
-                series.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
+                series, exogenous = prepare_series_exog(params, self.dictidx)
                 log.info("Evaluating")
                 self.evaluate(series, exogenous, item_id)
                 # Обновляем прогресс-бар

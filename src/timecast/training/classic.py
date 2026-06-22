@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from timecast.schemas import EntryClassicGraduate
-import pandas as pd
 from tqdm import tqdm
 import numpy as np
 from sktime.forecasting.model_selection import ExpandingWindowSplitter
 import os
 from sklearn.metrics import r2_score, mean_squared_error
 from timecast.models.classic import ClassicModel
+from timecast._internal.prepare import prepare_series_exog
 from sklearn.preprocessing import MinMaxScaler
 from timecast._internal.dirs import create_directories_if_not_exist
 from pathlib import Path
@@ -42,26 +42,12 @@ class ClassicGraduate:
 
         self.results = {}
 
+    _prepare = staticmethod(prepare_series_exog)
+
     def graduate(self):
         for item_id, params in self.dictmerge.items():
             log.info(f"Process {item_id}")
-            series = params['cnt']
-            date_id = params['date_id']
-            sell_price = params['sell_price']
-            event_name = params['event_name']
-            event_type = params['event_type']
-            cashback = params['cashback']
-            series.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
-            sell_price.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
-            event_name.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
-            event_type.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
-            cashback.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
-            exogenous = pd.DataFrame({
-                "sell_price": sell_price,
-                "event_name": event_name,
-                "event_type": event_type,
-                "cashback": cashback
-            })
+            series, exogenous = self._prepare(params, self.dictidx)
 
             log.info("Training")
             best_models, best_params, best_rmses, best_r2s = self.train_model(series, exogenous, item_id)
