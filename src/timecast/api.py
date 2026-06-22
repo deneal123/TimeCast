@@ -21,7 +21,7 @@
 """
 from typing import Any, Dict
 
-from timecast.pydantic_models import (
+from timecast.schemas import (
     validate_with_pydantic,
     EntrySeasonAnalyticPipeline,
     EntryClassicGraduatePipeline,
@@ -29,11 +29,11 @@ from timecast.pydantic_models import (
     EntryNeiroGraduatePipeline,
     EntryNeiroInferencePipeline,
 )
-from timecast.SeasonAnalyticPipeline import SeasonAnalyticPipeline
-from timecast.ClassicGraduatePipeline import ClassicGraduatePipeline
-from timecast.ClassicInferencePipeline import ClassicInferencePipeline
-from timecast.NeiroGraduatePipeline import NeiroGraduatePipeline
-from timecast.NeiroInferencePipeline import NeiroInferencePipeline
+from timecast.pipelines.season_analytic import SeasonAnalyticPipeline
+from timecast.pipelines.classic_graduate import ClassicGraduatePipeline
+from timecast.pipelines.classic_inference import ClassicInferencePipeline
+from timecast.pipelines.neiro_graduate import NeiroGraduatePipeline
+from timecast.pipelines.neiro_inference import NeiroInferencePipeline
 
 
 def season_analytic(entry: Dict[str, Any]) -> SeasonAnalyticPipeline:

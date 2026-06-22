@@ -1,23 +1,22 @@
-from timecast.pydantic_models import validate_with_pydantic, EntrySeasonAnalyticPipeline, EntryClassicDataset, EntryClassicProcess
+from timecast.schemas import validate_with_pydantic, EntryClassicInferencePipeline, EntryClassicDataset, EntryClassicInference
 from timecast.exceptions import DataNotFoundError
-from timecast.ClassicDataset import ClassicDataset
-from timecast.ClassicProcess import ClassicProcess
+from timecast.data.classic import ClassicDataset
+from timecast.inference.classic import ClassicInference
 from dataclasses import dataclass
 from timecast.config import get_paths
-from timecast._logging import setup_logging
 import os
 
-log = setup_logging()
+
 
 
 @dataclass
-class SeasonAnalyticPipeline:
-    entry: EntrySeasonAnalyticPipeline
+class ClassicInferencePipeline:
+    entry: EntryClassicInferencePipeline
 
     def __post_init__(self):
         pass
 
-    def analyze(self):
+    def inference(self):
 
         dataset = self.entry.Dataset
 
@@ -45,17 +44,19 @@ class SeasonAnalyticPipeline:
         dictidx = self.classic_dataset.dictidx
         dictmerge = self.classic_dataset.dictmerge
 
-        proccess = self.entry.Process
+        inference = self.entry.Inference
 
-        self.classic_process = validate_with_pydantic(EntryClassicProcess)(ClassicProcess)(
+        self.classic_inference = validate_with_pydantic(EntryClassicInference)(ClassicInference)(
             entry={
+                "dictidx": dictidx,
                 "dictmerge": dictmerge,
-                "dictdecompose": proccess.DictDecompose,
-                "remove_bound": proccess.RemoveBound,
-                "plots": proccess.Plots,
-                "save_plots": proccess.SavePlots,
-                "save_path_plots": proccess.SavePathPlots
+                "dictseasonal": inference.DictSeasonal,
+                "future_or_estimate": inference.FutureOrEstimate,
+                "plots": inference.Plots,
+                "save_plots": inference.SavePlots,
+                "save_path_plots": inference.SavePathPlots,
+                "save_path_weights": inference.SavePathWeights
             }
         )
         
-        self.classic_process.process()
+        self.classic_inference.inference()

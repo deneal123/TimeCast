@@ -12,7 +12,7 @@ import torch
 import os
 from sklearn.preprocessing import MinMaxScaler
 import random
-from timecast._logging import setup_logging
+from timecast._internal.logging import setup_logging
 log = setup_logging()
 
 

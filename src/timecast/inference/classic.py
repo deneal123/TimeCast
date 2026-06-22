@@ -1,21 +1,21 @@
 from dataclasses import dataclass
-from timecast.pydantic_models import EntryClassicInference
+from timecast.schemas import EntryClassicInference
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import numpy as np
 from sktime.split import SingleWindowSplitter
-from timecast.ClassicModel import ClassicModel
+from timecast.models.classic import ClassicModel
 import json
 from sklearn.preprocessing import MinMaxScaler
-from timecast._dirs import create_directories_if_not_exist
+from timecast._internal.dirs import create_directories_if_not_exist
 from pathlib import Path
-from timecast._io import save_plot_into_server, download_all_files_rep_hugging_face
+from timecast._internal.io import save_plot_into_server, download_all_files_rep_hugging_face
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm
 from copy import deepcopy
 from timecast.config import get_paths
-from timecast._logging import setup_logging
+from timecast._internal.logging import setup_logging
 from threading import Lock
 log = setup_logging()
 

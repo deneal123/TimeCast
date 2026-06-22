@@ -10,15 +10,15 @@ from datetime import datetime
 from functools import partial
 from dataclasses import dataclass
 from sklearn.preprocessing import MinMaxScaler
-from timecast.NeiroDataset import get_datasets, collate_fn
-from timecast.CustomLoss import CustomLoss
-from timecast.utils import calculate_metrics_auto
-from timecast._dirs import create_directories_if_not_exist
-from timecast.pydantic_models import EntryNeiroGraduate
-from timecast.utils import save_model
+from timecast.data.neiro import get_datasets, collate_fn
+from timecast.models.loss import CustomLoss
+from timecast._internal.utils import calculate_metrics_auto
+from timecast._internal.dirs import create_directories_if_not_exist
+from timecast.schemas import EntryNeiroGraduate
+from timecast._internal.utils import save_model
 from iTransformer import iTransformer, iTransformerFFT
 from timecast.config import get_paths
-from timecast._logging import setup_logging
+from timecast._internal.logging import setup_logging
 
 log = setup_logging()
 

@@ -4,7 +4,7 @@ from pydantic import (BaseModel, Field, StrictStr, condecimal, StrictInt, Strict
 from timecast.exceptions import ValidationFailedError
 import pandas as pd
 from functools import wraps
-from timecast._logging import setup_logging
+from timecast._internal.logging import setup_logging
 log = setup_logging()
 
 

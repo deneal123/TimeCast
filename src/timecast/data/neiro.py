@@ -4,7 +4,7 @@ import torch
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sklearn.model_selection import train_test_split
 import pandas as pd
-from timecast.utils import seed_everything, dec_series
+from timecast._internal.utils import seed_everything, dec_series
 from sktime.split import SingleWindowSplitter
 
 

@@ -57,15 +57,20 @@ results = collect_results(pipeline)   # {item_id: {period: {rmse, r2, pred}}}
 
 ## Структура
 
-```
+```text
 timecast/
 ├── pyproject.toml
-├── src/timecast/        # пакет (src-layout)
-│   ├── api.py           # высокоуровневый API
-│   ├── config.py        # пути/константы
-│   ├── results.py       # сериализация результатов
-│   ├── exceptions.py    # доменные исключения
-│   └── ...              # Dataset / Model / Graduate / Inference / Pipeline
+├── src/timecast/         # пакет (src-layout), разбит по слоям
+│   ├── __init__.py       # публичный API (re-export)
+│   ├── api.py            # высокоуровневые функции (train_*/infer_*/season_analytic)
+│   ├── config.py         # пути/константы · exceptions.py · results.py · schemas.py
+│   ├── data/             # загрузка/датасеты (classic, neiro)
+│   ├── models/           # модели (classic + реестр, loss)
+│   ├── training/         # обучение (classic, neiro)
+│   ├── inference/        # инференс (classic, neiro)
+│   ├── season/           # сезонная декомпозиция (process)
+│   ├── pipelines/        # оркестраторы (classic/neiro graduate·inference, season_analytic)
+│   └── _internal/        # io, logging, dirs, utils
 └── tests/
 ```
 

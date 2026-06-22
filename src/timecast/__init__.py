@@ -1,4 +1,4 @@
-from timecast.pydantic_models import (EntryClassicDataset, EntryClassicProcess,
+from timecast.schemas import (EntryClassicDataset, EntryClassicProcess,
                                          EntryClassicGraduate, EntryClassicInference,
                                          EntryNeiroGraduate, EntryNeiroInference,
                                          EntrySeasonAnalyticPipeline,
@@ -7,18 +7,18 @@ from timecast.pydantic_models import (EntryClassicDataset, EntryClassicProcess,
                                          EntryNeiroGraduatePipeline,
                                          EntryNeiroInferencePipeline,
                                          validate_with_pydantic)
-from timecast.ClassicDataset import ClassicDataset
-from timecast.ClassicProcess import ClassicProcess
-from timecast.ClassicModel import ClassicModel
-from timecast.ClassicGraduate import ClassicGraduate
-from timecast.ClassicInference import ClassicInference
-from timecast.NeiroGraduate import NeiroGraduate
-from timecast.NeiroInference import NeiroInference
-from timecast.SeasonAnalyticPipeline import SeasonAnalyticPipeline
-from timecast.ClassicGraduatePipeline import ClassicGraduatePipeline
-from timecast.ClassicInferencePipeline import ClassicInferencePipeline
-from timecast.NeiroGraduatePipeline import NeiroGraduatePipeline
-from timecast.NeiroInferencePipeline import NeiroInferencePipeline
+from timecast.data.classic import ClassicDataset
+from timecast.season.process import ClassicProcess
+from timecast.models.classic import ClassicModel
+from timecast.training.classic import ClassicGraduate
+from timecast.inference.classic import ClassicInference
+from timecast.training.neiro import NeiroGraduate
+from timecast.inference.neiro import NeiroInference
+from timecast.pipelines.season_analytic import SeasonAnalyticPipeline
+from timecast.pipelines.classic_graduate import ClassicGraduatePipeline
+from timecast.pipelines.classic_inference import ClassicInferencePipeline
+from timecast.pipelines.neiro_graduate import NeiroGraduatePipeline
+from timecast.pipelines.neiro_inference import NeiroInferencePipeline
 
 # Конфигурация путей и доменные исключения
 from timecast.config import configure_paths, get_paths, LibraryPaths, DEFAULT_SEASONAL

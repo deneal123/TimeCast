@@ -1,23 +1,22 @@
-from timecast.pydantic_models import validate_with_pydantic, EntryNeiroInferencePipeline, EntryClassicDataset, EntryNeiroInference
+from timecast.schemas import validate_with_pydantic, EntryClassicGraduatePipeline, EntryClassicDataset, \
+    EntryClassicGraduate
 from timecast.exceptions import DataNotFoundError
-from timecast.ClassicDataset import ClassicDataset
-from timecast.NeiroInference import NeiroInference
+from timecast.data.classic import ClassicDataset
+from timecast.training.classic import ClassicGraduate
 from dataclasses import dataclass
 from timecast.config import get_paths
 import os
 
 
 
-
-
 @dataclass
-class NeiroInferencePipeline:
-    entry: EntryNeiroInferencePipeline
+class ClassicGraduatePipeline:
+    entry: EntryClassicGraduatePipeline
 
     def __post_init__(self):
         pass
 
-    def inference(self):
+    def graduate(self):
 
         dataset = self.entry.Dataset
 
@@ -45,24 +44,16 @@ class NeiroInferencePipeline:
         dictidx = self.classic_dataset.dictidx
         dictmerge = self.classic_dataset.dictmerge
 
-        inference = self.entry.Inference
+        graduate = self.entry.Graduate
 
-        self.neiro_inference = validate_with_pydantic(EntryNeiroInference)(NeiroInference)(
+        self.classic_graduate = validate_with_pydantic(EntryClassicGraduate)(ClassicGraduate)(
             entry={
                 "dictidx": dictidx,
                 "dictmerge": dictmerge,
-                "dictseasonal": inference.DictSeasonal,
-                "dictmodels": inference.DictModels,
-                "future_or_estimate": inference.FutureOrEstimate,
-                "sen_len": inference.SeqLen,
-                "path_to_weights": inference.PathWeights,
-                "plots": inference.Plots,
-                "save_plots": inference.SavePlots,
-                "save_path_plots": inference.SavePathPlots,
-                "pin_memory": inference.PinMemory,
-                "num_workers": inference.NumWorkers,
-                "use_device": inference.UseDevice
+                "dictseasonal": graduate.DictSeasonal,
+                "models_params": graduate.ModelsParams,
+                "save_path_weights": graduate.SavePathWeights
             }
         )
-        
-        self.neiro_inference.inference()
+
+        self.classic_graduate.graduate()

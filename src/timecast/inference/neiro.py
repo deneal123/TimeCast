@@ -10,14 +10,14 @@ from dataclasses import dataclass
 from sklearn.preprocessing import MinMaxScaler
 import matplotlib.pyplot as plt
 from copy import deepcopy
-from timecast._io import save_plot_into_server, download_all_files_rep_hugging_face
-from timecast.NeiroDataset import get_datasets, collate_fn
-from timecast.utils import calculate_metrics_auto, convert_timeseries_to_dataframe
-from timecast._dirs import create_directories_if_not_exist
-from timecast.pydantic_models import EntryNeiroInference
+from timecast._internal.io import save_plot_into_server, download_all_files_rep_hugging_face
+from timecast.data.neiro import get_datasets, collate_fn
+from timecast._internal.utils import calculate_metrics_auto, convert_timeseries_to_dataframe
+from timecast._internal.dirs import create_directories_if_not_exist
+from timecast.schemas import EntryNeiroInference
 from iTransformer import iTransformer, iTransformerFFT
 from timecast.config import get_paths
-from timecast._logging import setup_logging
+from timecast._internal.logging import setup_logging
 
 log = setup_logging()
 

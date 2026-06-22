@@ -1,15 +1,15 @@
 from dataclasses import dataclass
-from timecast.pydantic_models import EntryClassicProcess
+from timecast.schemas import EntryClassicProcess
 import pandas as pd
 import os
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics import tsaplots
-from timecast._io import save_plot_into_server
+from timecast._internal.io import save_plot_into_server
 import matplotlib.pyplot as plt
-from timecast._dirs import create_directories_if_not_exist
+from timecast._internal.dirs import create_directories_if_not_exist
 from tqdm import tqdm
 from timecast.config import get_paths
-from timecast._logging import setup_logging
+from timecast._internal.logging import setup_logging
 
 log = setup_logging()
 

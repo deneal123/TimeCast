@@ -9,9 +9,9 @@ from sktime.forecasting.arima import ARIMA
 import json
 import numpy as np
 from concurrent.futures import ProcessPoolExecutor
-from timecast._logging import setup_logging
+from timecast._internal.logging import setup_logging
 from timecast.config import DEFAULT_SEASONAL
-from timecast._dirs import create_directories_if_not_exist
+from timecast._internal.dirs import create_directories_if_not_exist
 log = setup_logging()
 
 

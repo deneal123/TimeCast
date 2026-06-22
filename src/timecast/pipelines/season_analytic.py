@@ -1,22 +1,23 @@
-from timecast.pydantic_models import validate_with_pydantic, EntryClassicGraduatePipeline, EntryClassicDataset, \
-    EntryClassicGraduate
+from timecast.schemas import validate_with_pydantic, EntrySeasonAnalyticPipeline, EntryClassicDataset, EntryClassicProcess
 from timecast.exceptions import DataNotFoundError
-from timecast.ClassicDataset import ClassicDataset
-from timecast.ClassicGraduate import ClassicGraduate
+from timecast.data.classic import ClassicDataset
+from timecast.season.process import ClassicProcess
 from dataclasses import dataclass
 from timecast.config import get_paths
+from timecast._internal.logging import setup_logging
 import os
 
+log = setup_logging()
 
 
 @dataclass
-class ClassicGraduatePipeline:
-    entry: EntryClassicGraduatePipeline
+class SeasonAnalyticPipeline:
+    entry: EntrySeasonAnalyticPipeline
 
     def __post_init__(self):
         pass
 
-    def graduate(self):
+    def analyze(self):
 
         dataset = self.entry.Dataset
 
@@ -44,16 +45,17 @@ class ClassicGraduatePipeline:
         dictidx = self.classic_dataset.dictidx
         dictmerge = self.classic_dataset.dictmerge
 
-        graduate = self.entry.Graduate
+        proccess = self.entry.Process
 
-        self.classic_graduate = validate_with_pydantic(EntryClassicGraduate)(ClassicGraduate)(
+        self.classic_process = validate_with_pydantic(EntryClassicProcess)(ClassicProcess)(
             entry={
-                "dictidx": dictidx,
                 "dictmerge": dictmerge,
-                "dictseasonal": graduate.DictSeasonal,
-                "models_params": graduate.ModelsParams,
-                "save_path_weights": graduate.SavePathWeights
+                "dictdecompose": proccess.DictDecompose,
+                "remove_bound": proccess.RemoveBound,
+                "plots": proccess.Plots,
+                "save_plots": proccess.SavePlots,
+                "save_path_plots": proccess.SavePathPlots
             }
         )
-
-        self.classic_graduate.graduate()
+        
+        self.classic_process.process()

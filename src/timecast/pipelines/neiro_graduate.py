@@ -1,7 +1,7 @@
-from timecast.pydantic_models import validate_with_pydantic, EntryClassicInferencePipeline, EntryClassicDataset, EntryClassicInference
+from timecast.schemas import validate_with_pydantic, EntryNeiroGraduatePipeline, EntryClassicDataset, EntryNeiroGraduate
 from timecast.exceptions import DataNotFoundError
-from timecast.ClassicDataset import ClassicDataset
-from timecast.ClassicInference import ClassicInference
+from timecast.data.classic import ClassicDataset
+from timecast.training.neiro import NeiroGraduate
 from dataclasses import dataclass
 from timecast.config import get_paths
 import os
@@ -10,13 +10,13 @@ import os
 
 
 @dataclass
-class ClassicInferencePipeline:
-    entry: EntryClassicInferencePipeline
+class NeiroGraduatePipeline:
+    entry: EntryNeiroGraduatePipeline
 
     def __post_init__(self):
         pass
 
-    def inference(self):
+    def graduate(self):
 
         dataset = self.entry.Dataset
 
@@ -44,19 +44,27 @@ class ClassicInferencePipeline:
         dictidx = self.classic_dataset.dictidx
         dictmerge = self.classic_dataset.dictmerge
 
-        inference = self.entry.Inference
+        graduate = self.entry.Graduate
 
-        self.classic_inference = validate_with_pydantic(EntryClassicInference)(ClassicInference)(
+        self.neiro_graduate = validate_with_pydantic(EntryNeiroGraduate)(NeiroGraduate)(
             entry={
                 "dictidx": dictidx,
                 "dictmerge": dictmerge,
-                "dictseasonal": inference.DictSeasonal,
-                "future_or_estimate": inference.FutureOrEstimate,
-                "plots": inference.Plots,
-                "save_plots": inference.SavePlots,
-                "save_path_plots": inference.SavePathPlots,
-                "save_path_weights": inference.SavePathWeights
+                "dictseasonal": graduate.DictSeasonal,
+                "dictmodels": graduate.DictModels,
+                "sen_len": graduate.SeqLen,
+                "test_size": graduate.TestSize,
+                "step_length": graduate.StepLen,
+                "path_to_weights": graduate.PathWeights,
+                "use_device": graduate.UseDevice,
+                "start_learning_rate": graduate.StartLerningRate,
+                "batch_size": graduate.BatchSize,
+                "num_workers": graduate.NumWorkers,
+                "pin_memory": graduate.PinMemory,
+                "num_epochs": graduate.NumEpochs,
+                "name_optimizer": graduate.NameOptimizer,
+                "seed": graduate.Seed
             }
         )
         
-        self.classic_inference.inference()
+        self.neiro_graduate.graduate()

@@ -6,7 +6,7 @@
 import os
 from io import BytesIO
 import requests
-from timecast._logging import setup_logging
+from timecast._internal.logging import setup_logging
 
 log = setup_logging()
 

@@ -1,17 +1,17 @@
 from dataclasses import dataclass
-from timecast.pydantic_models import EntryClassicGraduate
+from timecast.schemas import EntryClassicGraduate
 import pandas as pd
 from tqdm import tqdm
 import numpy as np
 from sktime.forecasting.model_selection import ExpandingWindowSplitter
 import os
 from sklearn.metrics import r2_score, mean_squared_error
-from timecast.ClassicModel import ClassicModel
+from timecast.models.classic import ClassicModel
 from sklearn.preprocessing import MinMaxScaler
-from timecast._dirs import create_directories_if_not_exist
+from timecast._internal.dirs import create_directories_if_not_exist
 from pathlib import Path
 from timecast.config import get_paths
-from timecast._logging import setup_logging
+from timecast._internal.logging import setup_logging
 log = setup_logging()
 
 

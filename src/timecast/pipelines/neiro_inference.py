@@ -1,7 +1,7 @@
-from timecast.pydantic_models import validate_with_pydantic, EntryNeiroGraduatePipeline, EntryClassicDataset, EntryNeiroGraduate
+from timecast.schemas import validate_with_pydantic, EntryNeiroInferencePipeline, EntryClassicDataset, EntryNeiroInference
 from timecast.exceptions import DataNotFoundError
-from timecast.ClassicDataset import ClassicDataset
-from timecast.NeiroGraduate import NeiroGraduate
+from timecast.data.classic import ClassicDataset
+from timecast.inference.neiro import NeiroInference
 from dataclasses import dataclass
 from timecast.config import get_paths
 import os
@@ -9,14 +9,15 @@ import os
 
 
 
+
 @dataclass
-class NeiroGraduatePipeline:
-    entry: EntryNeiroGraduatePipeline
+class NeiroInferencePipeline:
+    entry: EntryNeiroInferencePipeline
 
     def __post_init__(self):
         pass
 
-    def graduate(self):
+    def inference(self):
 
         dataset = self.entry.Dataset
 
@@ -44,27 +45,24 @@ class NeiroGraduatePipeline:
         dictidx = self.classic_dataset.dictidx
         dictmerge = self.classic_dataset.dictmerge
 
-        graduate = self.entry.Graduate
+        inference = self.entry.Inference
 
-        self.neiro_graduate = validate_with_pydantic(EntryNeiroGraduate)(NeiroGraduate)(
+        self.neiro_inference = validate_with_pydantic(EntryNeiroInference)(NeiroInference)(
             entry={
                 "dictidx": dictidx,
                 "dictmerge": dictmerge,
-                "dictseasonal": graduate.DictSeasonal,
-                "dictmodels": graduate.DictModels,
-                "sen_len": graduate.SeqLen,
-                "test_size": graduate.TestSize,
-                "step_length": graduate.StepLen,
-                "path_to_weights": graduate.PathWeights,
-                "use_device": graduate.UseDevice,
-                "start_learning_rate": graduate.StartLerningRate,
-                "batch_size": graduate.BatchSize,
-                "num_workers": graduate.NumWorkers,
-                "pin_memory": graduate.PinMemory,
-                "num_epochs": graduate.NumEpochs,
-                "name_optimizer": graduate.NameOptimizer,
-                "seed": graduate.Seed
+                "dictseasonal": inference.DictSeasonal,
+                "dictmodels": inference.DictModels,
+                "future_or_estimate": inference.FutureOrEstimate,
+                "sen_len": inference.SeqLen,
+                "path_to_weights": inference.PathWeights,
+                "plots": inference.Plots,
+                "save_plots": inference.SavePlots,
+                "save_path_plots": inference.SavePathPlots,
+                "pin_memory": inference.PinMemory,
+                "num_workers": inference.NumWorkers,
+                "use_device": inference.UseDevice
             }
         )
         
-        self.neiro_graduate.graduate()
+        self.neiro_inference.inference()
