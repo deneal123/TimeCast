@@ -1,7 +1,7 @@
 # Backend — TimeCast
 
 FastAPI-приложение для обучения и инференса моделей прогнозирования временных рядов.
-Версия API: **1.3.2** ([server.py:30](../backend/src/pipeline/server.py#L30)).
+Версия API: **1.3.2** ([server.py:30](../backend/src/app/server.py#L30)).
 
 ## Технологический стек
 
@@ -13,11 +13,9 @@ FastAPI-приложение для обучения и инференса мо�
 | Данные | `pandas`, `numpy`, `duckdb`, `scikit-learn` (MinMaxScaler, метрики) |
 | Веса моделей | HuggingFace Hub (`huggingface-hub`) |
 | Логи | `rich` + YAML-конфиг (`logging.yaml`) |
-| БД | `pymysql` (прямое подключение, **без ORM**) |
 
-> **Важно:** `requirements.txt` содержит ~150 пакетов (autots, darts, tensorflow/keras,
-> xgboost, optuna, prophet и т.д.), но реально импортируется лишь малая часть.
-> Большинство — транзитивные или неиспользуемые зависимости. См. [TODO.md](../TODO.md).
+> Backend — тонкий слой: данные/БД/ML живут в пакете `timecast`. Зависимости —
+> только через `pyproject.toml` (uv); `.env` читается через `python-dotenv`.
 
 ## Структура каталогов
 
@@ -26,24 +24,23 @@ FastAPI-приложение для обучения и инференса мо�
 
 ```text
 backend/                   # FastAPI-приложение поверх timecast
-├── pyproject.toml         # зависит от timecast (editable, ../timecast)
-├── env.py                 # класс Env — чтение/запись .env
-├── setup/                 # кастомный установщик окружения (legacy)
-├── requirements*.txt
+├── pyproject.toml         # зависит от timecast; зависимости через uv
+├── .env.example
 └── src/
-    ├── pipeline/server.py # точка входа FastAPI, маршруты, SSE-логи, перевод доменных ошибок
+    ├── app/server.py      # точка входа FastAPI, маршруты, SSE-логи, перевод доменных ошибок
     ├── services/          # тонкие адаптеры маршрут → публичный API timecast (через to_thread)
-    └── utils/             # логирование, хэширование, загрузка файлов, ссылки
+    │                      #   analytic / classic / neiro / file / timeseries (обобщённый ряд)
+    └── utils/             # логирование, загрузка файлов, ссылки
 ```
 
-> БД, `database/`, `repository/`, `create_sql.py`, `TimeCast.sql`, чужой `config.yaml`
-> удалены (см. история). Логика прогнозирования — в пакете `timecast` (см.
-> [architecture-target.md](architecture-target.md)).
+> Легаси удалено (`env.py`, `setup/`, `requirements*.txt`, БД/`database/`/`repository/`,
+> `create_sql.py`, скрипты). `.env` читается `python-dotenv`. Логика прогнозирования —
+> в пакете `timecast` (см. [architecture-target.md](architecture-target.md)).
 
 ## API-эндпоинты
 
 Все маршруты смонтированы под префиксом `/server`
-([server.py:35](../backend/src/pipeline/server.py#L35)). CORS открыт для всех источников.
+([server.py:35](../backend/src/app/server.py#L35)). CORS открыт для всех источников.
 
 | Метод | Путь | Тег | Назначение |
 |-------|------|-----|------------|
@@ -52,29 +49,35 @@ backend/                   # FastAPI-приложение поверх timecast
 | POST | `/upload_csv/` | File | Загрузка входных CSV |
 | GET | `/get_zip/` | File | Скачивание результатов архивом |
 | POST | `/season_analytic/` | Analytic | Сезонная декомпозиция ряда |
-| POST | `/classic_graduate/` | Graduate | Обучение статистических моделей |
-| POST | `/neiro_graduate/` | Graduate | Обучение нейросети (iTransformer) |
-| POST | `/classic_inference/` | Inference | Прогноз статистическими моделями |
-| POST | `/neiro_inference/` | Inference | Прогноз нейросетью |
+| POST | `/timeseries_graduate/` | Graduate | **Обобщённый ряд**: обучение classic (tidy-CSV) |
+| POST | `/timeseries_neiro_graduate/` | Graduate | **Обобщённый ряд**: обучение нейросети |
+| POST | `/timeseries_inference/` | Inference | **Обобщённый ряд**: прогноз classic |
+| POST | `/timeseries_neiro_inference/` | Inference | **Обобщённый ряд**: прогноз нейросетью |
+| POST | `/classic_graduate/` | Graduate | Retail: обучение статистических моделей |
+| POST | `/neiro_graduate/` | Graduate | Retail: обучение нейросети (iTransformer) |
+| POST | `/classic_inference/` | Inference | Retail: прогноз статистическими моделями |
+| POST | `/neiro_inference/` | Inference | Retail: прогноз нейросетью |
 
-Все POST принимают Pydantic-модели `Entry*Pipeline`
-([pydantic_models.py](../backend/src/library/pydantic_models.py)) и возвращают `Dict`.
+Обобщённые маршруты принимают тело `{dataset, graduate|inference}` (tidy-CSV, без
+привязки к домену); retail-маршруты — Pydantic-модели `Entry*Pipeline` из пакета
+`timecast`. Все POST возвращают `Dict`.
 
 ## Слои архитектуры
 
 ```
-Route (server.py)
-  → Service (services/*.py)        # async-обёртка + validate_with_pydantic
-    → Pipeline (library/*Pipeline.py)   # @dataclass-оркестратор: пути, загрузка данных
-      → Dataset + Model/Graduate/Inference   # ядро ML
+Route (app/server.py)
+  → Service (services/*.py)            # async-обёртка (to_thread) над публичным API timecast
+    → timecast.api                     # обобщённый: *_series(dataset, …) | retail: *Pipeline
+      → Dataset + Graduate/Inference   # ядро ML (в пакете timecast)
         → (DuckDB / CSV / HuggingFace)
 ```
 
-- **Service** — почти всегда один вызов пайплайна (`classic_services.py` и др.).
-- **Pipeline** — 5 dataclass-классов. Каждый сам собирает пути к трём CSV, проверяет
-  их наличие и поднимает `HTTPException` при отсутствии. **Код инициализации
-  дублируется на ~95 % между четырьмя пайплайнами.**
-- **`repository/` фактически пуст**, ORM-слоя нет.
+- **Service** — один вызов публичной функции `timecast` через `asyncio.to_thread`
+  (CPU/GPU-bound не блокирует event loop).
+- **Обобщённый путь** (`timeseries_services.py`) → `timecast.{train,infer}_{classic,neiro}_series`:
+  `TimeSeriesDataset` (tidy-CSV) → `*Graduate`/`*Inference` напрямую, без пайплайн-обёртки.
+- **Retail-путь** → `*Pipeline`-оркестраторы (валидация `Entry*Pipeline`, склейка 3 CSV).
+- Доменные исключения `timecast` переводятся в HTTP на краю FastAPI.
 
 ## Данные
 
@@ -89,6 +92,10 @@ Route (server.py)
   `env`/глобальные хелперы. См. [architecture-target.md](architecture-target.md).
 
 ## ML-пайплайны
+
+> Источник данных: **обобщённый** — `TimeSeriesDataset` (один tidy-CSV → ряды по
+> `series_id`); **retail** — `ClassicDataset`/`NeiroDataset` (3 CSV, `store → item`).
+> Дальше обучение/инференс одинаковы; retail-формат распознаётся автоматически.
 
 ### Classic (статистика)
 1. `ClassicDataset` — загрузка 3 CSV через DuckDB, склейка, группировка `store → item`.

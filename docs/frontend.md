@@ -45,14 +45,16 @@ JSON-запроса, отправка, просмотр живого лога о
 | Файл | Эндпоинты |
 |------|-----------|
 | `file_services.js` | `GET /get_zip`, `POST /upload_csv/` |
-| `graduate_services.js` | `POST /classic_graduate/`, `POST /neiro_graduate/` |
-| `inference_services.js` | `POST /classic_inference/`, `POST /neiro_inference/` |
+| `graduate_services.js` | `POST /classic_graduate/`, `POST /neiro_graduate/`, `POST /timeseries_graduate/`, `POST /timeseries_neiro_graduate/` |
+| `inference_services.js` + `graduate_services.js` | `POST /classic_inference/`, `POST /neiro_inference/`, `POST /timeseries_inference/`, `POST /timeseries_neiro_inference/` |
 | `season_analytic_services.js` | `POST /season_analytic/` |
 
 - **Выбор эндпоинта — по структуре JSON** на стороне фронта
   ([query_page.jsx](../frontend/src/pages/query_page.jsx)): наличие ключей
   `inference` / `graduate` / `proccess` и вложенных полей определяет, какой сервис
-  вызвать. Хрупко: опечатка в JSON ведёт не туда.
+  вызвать. Обобщённый ряд распознаётся по `dataset.source`, нейросеть — по
+  `dictmodels`. Хрупко: опечатка в JSON ведёт не туда — поэтому добавлен
+  **`GenericSeriesForm`** (конструктор запроса для tidy-CSV, заполняет textarea).
 - **Стрим логов**: `LogStreamComponent` открывает `EventSource` на `/stream-logs` и
   дописывает строки в `responseText`.
 
@@ -60,6 +62,10 @@ JSON-запроса, отправка, просмотр живого лога о
 
 | Компонент | Роль |
 |-----------|------|
+| `GenericSeriesForm` | Конструктор запроса для любого ряда (tidy-CSV) → заполняет textarea готовым JSON |
+| `ForecastChart` | График прогноза (инференс) |
+| `TrainingResults` | Таблица результатов обучения (best_model / RMSE / R²) |
+| `DecompositionChart` | Графики тренд / сезон / остаток (сезонная декомпозиция) |
 | `MenuComponent` | Меню с навигацией (`useNavigate`) |
 | `MenuActiveComponent` | Меню без навигации — только колбэки действий (Send CSV / Send Query / Load Zip) |
 | `Header` / `footer` | Шапка с логотипом, подвал |
