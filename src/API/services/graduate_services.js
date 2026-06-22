@@ -61,3 +61,30 @@ export async function sendNeiroGraduate(requestData) {
     throw error;
   }
 }
+
+/**
+ * Обобщённый ряд: POST /timeseries_graduate/ — обучение на любом tidy-CSV.
+ * Тело: { dataset: {source, ...}, graduate: {dictseasonal, models_params} }.
+ */
+export async function sendTimeSeriesGraduate(requestData) {
+  const API_ENDPOINT = `${baseUrl}/timeseries_graduate/`;
+
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error in timeseries graduate request:", error);
+    throw error;
+  }
+}

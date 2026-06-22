@@ -3,7 +3,11 @@ import { VStack, HStack, Box, Textarea, Text, Flex } from "@chakra-ui/react";
 import MenuActiveComponent from "../components/MenuActiveComponent";
 import useWindowDimensions from "../hooks/window_dimensions";
 import { fetchZipUrl, uploadCSVFiles } from "../API/services/file_services";
-import { sendClassicGraduate, sendNeiroGraduate } from "../API/services/graduate_services";
+import {
+  sendClassicGraduate,
+  sendNeiroGraduate,
+  sendTimeSeriesGraduate,
+} from "../API/services/graduate_services";
 import { sendClassicInference, sendNeiroInference } from "../API/services/inference_services";
 import { sendSeasonAnalytic } from "../API/services/season_analytic_services";
 import LogStreamComponent from "../API/apiLogStreamComponent";
@@ -100,6 +104,12 @@ const QueryPage = () => {
           setResponseText(JSON.stringify(response, null, 2));
           setResultData(response);
         }
+      } else if (parsedRequest.dataset && parsedRequest.dataset.source && parsedRequest.graduate) {
+        // Обобщённый ряд (tidy CSV, без привязки к домену).
+        console.log("Sending TimeSeries (generic) Graduate request...");
+        const response = await sendTimeSeriesGraduate(parsedRequest);
+        setResponseText(JSON.stringify(response, null, 2));
+        setResultData(response);
       } else if (parsedRequest.dataset && parsedRequest.graduate) {
         if (parsedRequest.models_params) {
           console.log("Sending Classic Graduate request...");
