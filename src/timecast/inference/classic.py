@@ -143,21 +143,6 @@ class ClassicInference:
 
         self.dictmodels = models_dict
 
-    # @staticmethod
-    # def load_json_file(json_path):
-    #     """
-    #     Асинхронно загружает данные из JSON-файла.
-    #
-    #     :param json_path: Путь к JSON-файлу.
-    #     :return: Данные из JSON-файла в виде Python-объекта.
-    #     """
-    #     if os.path.exists(json_path):
-    #         async with aio_open(json_path, "r", encoding="utf-8") as json_file:
-    #             content = json_file.read()  # Асинхронно читаем содержимое
-    #             return json.loads(content)       # Загружаем JSON из строки
-    #     else:
-    #         return {}  # Возвращаем пустой объект, если файл не существует
-
     def visualise(self):
         for item_id, periods in self.results.items():
             ncols = 3  # Количество столбцов
@@ -179,15 +164,7 @@ class ClassicInference:
 
                 # Восстановленный предсказанный ряд
                 pred = result['pred']
-                # pred['resid'] = self.minmax_resid.inverse_transform(pred['resid'].values.reshape(-1, 1)).flatten()
-                # pred['trend'] = self.minmax_trend.inverse_transform(pred['trend'].values.reshape(-1, 1)).flatten()
-                # pred['season'] = self.minmax_season.inverse_transform(pred['season'].values.reshape(-1, 1)).flatten()
-                pred_indexes = pred.index
-                # pred = self.minmax_series.inverse_transform(pred.values.reshape(-1, 1)).flatten()
-                pred = pd.Series(pred, name='pred', index=pred_indexes).clip(lower=0)
-
-                # Суммируем компоненты для получения восстановленного ряда
-                # pred = pd.Series(pred[['resid', 'trend', 'season']].sum(axis=1).clip(lower=0), name='series', index=pred.index)
+                pred = pd.Series(pred, name='pred', index=pred.index).clip(lower=0)
 
                 if self.future_or_estimate == 'estimate':
                     # Оценка
@@ -275,49 +252,12 @@ class ClassicInference:
             }
 
     def calc_feature(self, train, test, exogenous, model, period, item_id):
-
         if not self.without_test:
-
-            # train_len = len(train)
-            # series = pd.concat([train, test])
-
-            # resid, trend, season = dec_series(series, 7, 'additive') # additive
-
-            # resid[resid == 0.01] = 0.00001
-            # trend[trend == 0.01] = 0.00001
-            # season[season == 0.01] = 0.00001
-
-            # Нормализуем на объединенных данных
-            # resid = pd.Series(
-            #     self.minmax_resid.fit_transform(resid.values.reshape(-1, 1)).flatten(),
-            #     name='resid', index=resid.index
-            # )
-            # trend = pd.Series(
-            #     self.minmax_trend.fit_transform(trend.values.reshape(-1, 1)).flatten(),
-            #     name='trend', index=trend.index
-            # )
-            # season = pd.Series(
-            #     self.minmax_season.fit_transform(season.values.reshape(-1, 1)).flatten(),
-            #     name='season', index=season.index
-            # )
             # Масштабируем ВСЕ фичи (а не только sell_price) — поддержка любого ряда.
             for _col in exogenous.columns:
                 exogenous[_col] = self.minmax_sellprice.fit_transform(
                     exogenous[_col].values.reshape(-1, 1)
                 ).flatten()
-
-            # resid_train, resid_test = resid.iloc[:train_len], resid.iloc[train_len:]
-            # trend_train, trend_test = trend.iloc[:train_len], trend.iloc[train_len:]
-            # season_train, season_test = season.iloc[:train_len], season.iloc[train_len:]
-
-            # train = pd.concat([resid_train, trend_train, season_train], axis=1)
-            # test = pd.concat([resid_test, trend_test, season_test], axis=1)
-
-            # series = pd.Series(
-            #     self.minmax_series.fit_transform(series.values.reshape(-1, 1)).flatten(),
-            #     name='series', index=series.index
-            # )
-            # train, test = series.iloc[:train_len], series.iloc[train_len:]
 
             train.loc[train == 0.01] = 0.000001
             test.loc[test == 0.01] = 0.000001
@@ -326,34 +266,6 @@ class ClassicInference:
             r2 = r2_score(test, pred)
             return rmse, r2, pred, model
         else:
-            # series = train
-
-            # resid, trend, season = dec_series(series, 7, 'additive') # additive
-            # Нормализуем на объединенных данных
-            # resid = pd.Series(
-            #     self.minmax_resid.fit_transform(resid.values.reshape(-1, 1)).flatten(),
-            #     name='resid', index=resid.index
-            # )
-            # trend = pd.Series(
-            #     self.minmax_trend.fit_transform(trend.values.reshape(-1, 1)).flatten(),
-            #     name='trend', index=trend.index
-            # )
-            # season = pd.Series(
-            #     self.minmax_season.fit_transform(season.values.reshape(-1, 1)).flatten(),
-            #     name='season', index=season.index
-            # )
-            # exogenous['sell_price'] = self.minmax_sellprice.fit_transform(
-            #         exogenous['sell_price'].values.reshape(-1, 1)
-            #     ).flatten()
-            # train = pd.concat([resid, trend, season], axis=1)
-
-            # series = pd.Series(
-            #     self.minmax_series.fit_transform(series.values.reshape(-1, 1)).flatten(),
-            #     name='series', index=series.index
-            # )
-
-            # train = series
-
             train.loc[train == 0.01] = 0.000001
             pred = model.fit_pred_async(train, test, exogenous, self.lock, 'future')
             return None, None, pred, model

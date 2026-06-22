@@ -13,6 +13,8 @@ from copy import deepcopy
 from timecast._internal.io import save_plot_into_server, download_all_files_rep_hugging_face
 from timecast.data.neiro import get_datasets, collate_fn
 from timecast._internal.utils import calculate_metrics_auto, convert_timeseries_to_dataframe
+from timecast._internal.features import num_variates
+from timecast._internal.neiro_channels import is_process_batch, assemble_input
 from timecast._internal.dirs import create_directories_if_not_exist
 from timecast.schemas import EntryNeiroInference
 from iTransformer import iTransformer, iTransformerFFT
@@ -110,15 +112,13 @@ class NeiroInference:
         self.visualise()
 
     def get_models(self, period: int):
-        # Архитектура должна совпадать с обученной: декомпозиция (3) + число фич.
-        n_features = len(self.dictidx.get(
-            "feature_cols", ["sell_price", "event_name", "event_type", "cashback"]))
-        num_variates = 3 + n_features
+        # Архитектура должна совпадать с обученной (см. neiro_channels.num_variates).
+        nvar = num_variates(self.dictidx)
 
         for model_name, model_params in self.dictmodels.items():
             if model_name == "IFFT":
                 self.models[model_name] = iTransformerFFT(
-                    num_variates=num_variates,
+                    num_variates=nvar,
                     lookback_len=self.seq_len,
                     num_tokens_per_variate=model_params["num_tokens_per_variate"],
                     dim=model_params["dim"],
@@ -130,7 +130,7 @@ class NeiroInference:
                 ).to(self.device)
             elif model_name == "IF":
                 self.models[model_name] = iTransformer(
-                    num_variates=num_variates,
+                    num_variates=nvar,
                     lookback_len=self.seq_len,
                     num_tokens_per_variate=model_params["num_tokens_per_variate"],
                     dim=model_params["dim"],
@@ -309,61 +309,14 @@ class NeiroInference:
             with torch.no_grad():
                 for jndex, batch in enumerate(self.test_loader):
 
-                    if len(batch['train']) > 4:
-                        proccess = True
-                    else:
-                        proccess = False
+                    proccess = is_process_batch(batch)
 
-                    # Распаковка тренировочных данных    
                     timestamp_test = batch['train']["timestamp"]
-                    date_id_test = batch['train']["date_id"].to(self.device)
-                    series_test = batch['train']["series"].to(self.device)
-                    if proccess:
-                        resid_test = batch['train']["resid"].to(self.device)
-                        trend_test = batch['train']["trend"].to(self.device)
-                        season_test = batch['train']["season"].to(self.device)
-                        resid_test = resid_test.unsqueeze(-1)
-                        trend_test = trend_test.unsqueeze(-1)
-                        season_test = season_test.unsqueeze(-1)
-                    exogenous_test = batch['train']["exogenous"].to(self.device)
-                    # Добавляем третью ось (формат [batch, seq_length, 1])
-                    date_id_test = date_id_test.unsqueeze(-1)
-                    series_test = series_test.unsqueeze(-1)
-                    # Объединяем вдоль третьей оси
-                    if proccess:
-                        timeseries_test = torch.cat((resid_test,  # date_id_test,
-                                                     trend_test,
-                                                     season_test,
-                                                     exogenous_test), dim=-1)  # Формат [batch, seq_length, 8]
-                    else:
-                        timeseries_test = torch.cat((series_test,  # date_id_test,
-                                                     exogenous_test), dim=-1)  # Формат [batch, seq_length, 6]
+                    timeseries_test = assemble_input(batch['train'], proccess, self.device)
 
-                    # Распаковка валидационных данных
                     if self.future_or_estimate == 'estimate':
                         timestamp_valid = batch['test']["timestamp"]
-                        date_id_valid = batch['test']["date_id"].to(self.device)
-                        series_valid = batch['test']["series"].to(self.device)
-                        if proccess:
-                            resid_valid = batch['test']["resid"].to(self.device)
-                            trend_valid = batch['test']["trend"].to(self.device)
-                            season_valid = batch['test']["season"].to(self.device)
-                            resid_valid = resid_valid.unsqueeze(-1)
-                            trend_valid = trend_valid.unsqueeze(-1)
-                            season_valid = season_valid.unsqueeze(-1)
-                        exogenous_valid = batch['test']["exogenous"].to(self.device)
-                        # Добавляем третью ось (формат [batch, seq_length, 1])
-                        date_id_valid = date_id_valid.unsqueeze(-1)
-                        series_valid = series_valid.unsqueeze(-1)
-                        # Объединяем вдоль третьей оси
-                        if proccess:
-                            timeseries_valid = torch.cat((resid_valid,  # date_id_valid,
-                                                          trend_valid,
-                                                          season_valid,
-                                                          exogenous_valid), dim=-1)  # Формат [batch, seq_length, 8]
-                        else:
-                            timeseries_valid = torch.cat((series_valid,  # date_id_valid
-                                                          exogenous_valid), dim=-1)  # Формат [batch, seq_length, 6]
+                        timeseries_valid = assemble_input(batch['test'], proccess, self.device)
 
                     # Тестируем модель
                     logits = torch.nan_to_num(model(timeseries_test)[val], nan=0.0)

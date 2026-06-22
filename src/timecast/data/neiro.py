@@ -5,6 +5,7 @@ from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sklearn.model_selection import train_test_split
 import pandas as pd
 from timecast._internal.utils import seed_everything, dec_series
+from timecast._internal.features import feature_cols
 from sktime.split import SingleWindowSplitter
 from sklearn.preprocessing import MinMaxScaler
 
@@ -290,14 +291,10 @@ class NeiroDataset(Dataset):
     dictidx: dict
     metadata: list
 
-    # Доменные retail-фичи по умолчанию (если dictidx без 'feature_cols').
-    _RETAIL_FEATURES = ["sell_price", "event_name", "event_type", "cashback"]
-
     def __post_init__(self):
         self.datasets = []
-        # Унификация: обобщённый формат (TimeSeriesDataset) задаёт feature_cols в dictidx;
-        # иначе — доменный retail-набор.
-        self.feature_cols = list(self.dictidx.get("feature_cols") or self._RETAIL_FEATURES)
+        # Унификация: обобщённый формат задаёт feature_cols в dictidx, иначе retail-набор.
+        self.feature_cols = feature_cols(self.dictidx)
 
         for jndex, data in enumerate(self.metadata):
             self.part_datasets = {

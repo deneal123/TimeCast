@@ -7,16 +7,16 @@
 """
 import pandas as pd
 
-_RETAIL_FEATURES = ("sell_price", "event_name", "event_type", "cashback")
+from timecast._internal.features import RETAIL_FEATURES
 
 
 def prepare_series_exog(params, dictidx):
     if "feature_cols" in dictidx:
-        feature_cols = list(dictidx["feature_cols"])
+        cols = list(dictidx["feature_cols"])
         index = list(params["date"])
         series = params["target"].copy()
         series.index = index
-        exogenous = params[feature_cols].copy()
+        exogenous = params[cols].copy()
         exogenous.index = index
         return series, exogenous
 
@@ -24,7 +24,7 @@ def prepare_series_exog(params, dictidx):
     series = params["cnt"].copy()
     series.index = index
     cols = {}
-    for name in _RETAIL_FEATURES:
+    for name in RETAIL_FEATURES:
         col = params[name].copy()
         col.index = index
         cols[name] = col
