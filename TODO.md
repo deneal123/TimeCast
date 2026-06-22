@@ -136,9 +136,9 @@
 
 ## Этап E. Качество, упаковка, эксплуатация
 
-- [ ] Тесты библиотеки (pytest): unit на data/metrics + smoke на пайплайны с мок-данными.
-- [ ] Линт/формат: `ruff`+`black` (backend), `eslint`+`prettier` (frontend).
-- [ ] CI (GitHub Actions): установка, линт, тесты, сборка фронта, сборка пакета.
+- [x] Тесты библиотеки (pytest): 18 тестов — unit на data/metrics/serialize + e2e classic/neiro на CPU (маркер `slow`).
+- [x] Линт: `ruff` проходит полным конфигом (E,F,I,UP,B,SIM) в library и backend; `eslint` во frontend.
+- [x] CI (GitHub Actions): per-branch workflow'ы — library (ruff+pytest), backend (ruff), frontend (lint+build), dev (интеграция через сабмодули: линт+тесты+smoke бэкенда+сборка фронта).
 - [ ] Артефакты (веса/графики) — в объектное хранилище (S3/Selectel, `script/selectel_cloud.py`).
 - [ ] Dockerfile (api + статика) + `docker-compose`; healthcheck-эндпоинт.
 - [ ] Асинхронные задачи обучения (очередь arq/RQ) со статусом/прогрессом для дашборда.
