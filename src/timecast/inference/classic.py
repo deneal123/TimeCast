@@ -98,7 +98,8 @@ class ClassicInference:
         :param path_to_weights: Директория, где хранятся .zip и .json файлы моделей.
         :return: Словарь {период прогноза: [(модель, JSON-данные), ...]}
         """
-        models_dict = {"week": [], "month": [], "quater": []}
+        # Периоды берём из dictseasonal (поддержка произвольных ключей), а не жёстко.
+        models_dict = {period: [] for period in self.dictseasonal}
 
         # Проходим по всем файлам в директории
         for filename in os.listdir(self.path_to_weights):
@@ -164,12 +165,14 @@ class ClassicInference:
             fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(20, 5 * nrows))
             axes = axes.flatten()  # Упрощаем перебор осей
 
-            # Получаем данные из словаря
-            actual = self.dictmerge[item_id]['cnt']
-            sell_price = self.dictmerge[f'{item_id}']['sell_price']
-            date_id = self.dictmerge[f'{item_id}']['date_id']
-            actual.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
-            sell_price.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
+            # Получаем фактический ряд: generic — 'target' + 'date', retail — 'cnt' + idx2date.
+            generic = "feature_cols" in self.dictidx
+            actual = self.dictmerge[item_id]['target' if generic else 'cnt']
+            if generic:
+                actual.index = list(self.dictmerge[item_id]['date'])
+            else:
+                date_id = self.dictmerge[f'{item_id}']['date_id']
+                actual.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
 
             for idx, (period, result) in enumerate(periods.items()):
                 ax = axes[idx]
@@ -297,9 +300,11 @@ class ClassicInference:
             #     self.minmax_season.fit_transform(season.values.reshape(-1, 1)).flatten(),
             #     name='season', index=season.index
             # )
-            exogenous['sell_price'] = self.minmax_sellprice.fit_transform(
-                exogenous['sell_price'].values.reshape(-1, 1)
-            ).flatten()
+            # Масштабируем ВСЕ фичи (а не только sell_price) — поддержка любого ряда.
+            for _col in exogenous.columns:
+                exogenous[_col] = self.minmax_sellprice.fit_transform(
+                    exogenous[_col].values.reshape(-1, 1)
+                ).flatten()
 
             # resid_train, resid_test = resid.iloc[:train_len], resid.iloc[train_len:]
             # trend_train, trend_test = trend.iloc[:train_len], trend.iloc[train_len:]

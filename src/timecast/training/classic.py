@@ -52,21 +52,14 @@ class ClassicGraduate:
             log.info("Training")
             best_models, best_params, best_rmses, best_r2s = self.train_model(series, exogenous, item_id)
 
+            # Произвольные периоды сезонности — берём фактические ключи dictseasonal,
+            # а не жёстко week/month/quater (поддержка любого ряда).
             self.results[item_id] = {
-
-                'week': {'best_model': best_models['week'],
-                         'best_param': best_params['week'],
-                         'best_rmse': best_rmses['week'],
-                         'best_r2': best_r2s['week']},
-                'month': {'best_model': best_models['month'],
-                          'best_param': best_params['month'],
-                          'best_rmse': best_rmses['month'],
-                          'best_r2': best_r2s['month']},
-                'quater': {'best_model': best_models['quater'],
-                           'best_param': best_params['quater'],
-                           'best_rmse': best_rmses['quater'],
-                           'best_r2': best_r2s['quater']}
-
+                period: {'best_model': best_models[period],
+                         'best_param': best_params[period],
+                         'best_rmse': best_rmses[period],
+                         'best_r2': best_r2s[period]}
+                for period in self.dictseasonal
             }
 
             log.info(f"ItemID {item_id}, {self.results[item_id]}")

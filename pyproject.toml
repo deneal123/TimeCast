@@ -71,3 +71,6 @@ pretty = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "slow: end-to-end тесты с реальным обучением (sktime); запуск: pytest -m slow",
+]

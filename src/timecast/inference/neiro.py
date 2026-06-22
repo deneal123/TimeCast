@@ -168,7 +168,8 @@ class NeiroInference:
                                       drop_last=False)
 
     def load_models(self) -> dict[str, list[tuple[object, dict]]]:
-        models_dict = {"week": [], "month": [], "quater": []}
+        # Периоды из dictseasonal (произвольные ключи), а не жёстко week/month/quater.
+        models_dict = {period: [] for period in self.dictseasonal}
 
         # Проходим по всем файлам в директории
         for filename in os.listdir(self.path_to_weights):
