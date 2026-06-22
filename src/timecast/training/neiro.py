@@ -195,7 +195,7 @@ class NeiroGraduate:
         # Планировщики
         self.schedulers = {
             model_name: ReduceLROnPlateau(
-                self.optimizers[model_name], mode='min', patience=2, verbose=True
+                self.optimizers[model_name], mode='min', patience=2
             )
             for model_name in self.models.keys()
         }
