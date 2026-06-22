@@ -115,3 +115,43 @@ export async function sendTimeSeriesInference(requestData) {
     throw error;
   }
 }
+
+/** Обобщённый ряд: POST /timeseries_neiro_graduate/ — обучение нейросети на любом tidy-CSV. */
+export async function sendTimeSeriesNeiroGraduate(requestData) {
+  const API_ENDPOINT = `${baseUrl}/timeseries_neiro_graduate/`;
+
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestData),
+    });
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error in timeseries neiro graduate request:", error);
+    throw error;
+  }
+}
+
+/** Обобщённый ряд: POST /timeseries_neiro_inference/ — инференс нейросети на любом tidy-CSV. */
+export async function sendTimeSeriesNeiroInference(requestData) {
+  const API_ENDPOINT = `${baseUrl}/timeseries_neiro_inference/`;
+
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestData),
+    });
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error in timeseries neiro inference request:", error);
+    throw error;
+  }
+}

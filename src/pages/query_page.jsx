@@ -8,6 +8,8 @@ import {
   sendNeiroGraduate,
   sendTimeSeriesGraduate,
   sendTimeSeriesInference,
+  sendTimeSeriesNeiroGraduate,
+  sendTimeSeriesNeiroInference,
 } from "../API/services/graduate_services";
 import { sendClassicInference, sendNeiroInference } from "../API/services/inference_services";
 import { sendSeasonAnalytic } from "../API/services/season_analytic_services";
@@ -91,9 +93,12 @@ const QueryPage = () => {
       const parsedRequest = JSON.parse(request);
 
       if (parsedRequest.dataset && parsedRequest.dataset.source && parsedRequest.inference) {
-        // Обобщённый ряд (tidy CSV): инференс classic-моделей.
-        console.log("Sending TimeSeries (generic) Inference request...");
-        const response = await sendTimeSeriesInference(parsedRequest);
+        // Обобщённый ряд (tidy CSV): нейросеть, если dictmodels, иначе classic.
+        const isNeiro = !!parsedRequest.inference.dictmodels;
+        console.log(`Sending TimeSeries (generic) ${isNeiro ? "Neiro" : "Classic"} Inference request...`);
+        const response = isNeiro
+          ? await sendTimeSeriesNeiroInference(parsedRequest)
+          : await sendTimeSeriesInference(parsedRequest);
         setResponseText(JSON.stringify(response, null, 2));
         setResultData(response);
       } else if (parsedRequest.inference) {
@@ -112,9 +117,12 @@ const QueryPage = () => {
           setResultData(response);
         }
       } else if (parsedRequest.dataset && parsedRequest.dataset.source && parsedRequest.graduate) {
-        // Обобщённый ряд (tidy CSV, без привязки к домену).
-        console.log("Sending TimeSeries (generic) Graduate request...");
-        const response = await sendTimeSeriesGraduate(parsedRequest);
+        // Обобщённый ряд (tidy CSV): нейросеть, если dictmodels, иначе classic (models_params).
+        const isNeiro = !!parsedRequest.graduate.dictmodels;
+        console.log(`Sending TimeSeries (generic) ${isNeiro ? "Neiro" : "Classic"} Graduate request...`);
+        const response = isNeiro
+          ? await sendTimeSeriesNeiroGraduate(parsedRequest)
+          : await sendTimeSeriesGraduate(parsedRequest);
         setResponseText(JSON.stringify(response, null, 2));
         setResultData(response);
       } else if (parsedRequest.dataset && parsedRequest.graduate) {
