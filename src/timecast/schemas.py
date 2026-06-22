@@ -445,6 +445,14 @@ class EntryNeiroInference(BaseModel):
                                             alias="pin_memory",
                                             examples=[False],
                                             description="Если True ускоряет загрузку данных на видеокарте, для cpu всегда False")
+    DecomposePeriod: Optional[StrictInt] = Field(7,
+                                                 alias="decompose_period",
+                                                 examples=[7],
+                                                 description="Период сезонной декомпозиции ряда (база цикла), по умолчанию 7")
+    DecomposeModel: Optional[StrictStr] = Field("multiplicative",
+                                                alias="decompose_model",
+                                                examples=["multiplicative", "additive"],
+                                                description="Модель декомпозиции; для рядов с нулями/отрицательными — additive")
 
     exclude_fields: Optional[Dict[str, bool]] = None
 
@@ -567,6 +575,14 @@ class EntryNeiroGraduate(BaseModel):
                                       alias="seed",
                                       examples=[17],
                                       description="Сажает зерно")
+    DecomposePeriod: Optional[StrictInt] = Field(7,
+                                                 alias="decompose_period",
+                                                 examples=[7],
+                                                 description="Период сезонной декомпозиции ряда (база цикла), по умолчанию 7")
+    DecomposeModel: Optional[StrictStr] = Field("multiplicative",
+                                                alias="decompose_model",
+                                                examples=["multiplicative", "additive"],
+                                                description="Модель декомпозиции; для рядов с нулями/отрицательными — additive")
 
     exclude_fields: Optional[Dict[str, bool]] = None
 

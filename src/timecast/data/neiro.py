@@ -10,6 +10,13 @@ from sktime.split import SingleWindowSplitter
 from sklearn.preprocessing import MinMaxScaler
 
 
+# Параметры сезонной декомпозиции ряда внутри collate_fn (база сезонного цикла).
+# Дефолты соответствуют retail (недельный мультипликативный паттерн). Для рядов
+# с нулями/отрицательными значениями стоит передать model='additive'.
+DEFAULT_DECOMPOSE_PERIOD = 7
+DEFAULT_DECOMPOSE_MODEL = 'multiplicative'
+
+
 def _scale_features(exogenous):
     """MinMax-нормализация ВСЕХ колонок-фич (обобщённо вместо только sell_price)."""
     for _c in exogenous.columns:
@@ -24,7 +31,9 @@ def collate_fn(batch,
                minmax_sellprice=None,
                minmax_series=None,
                pdata=False,
-               without_test=False):
+               without_test=False,
+               decompose_period=DEFAULT_DECOMPOSE_PERIOD,
+               decompose_model=DEFAULT_DECOMPOSE_MODEL):
     if minmax_resid and minmax_trend and minmax_season and minmax_sellprice and minmax_series:
         process = True
     else:
@@ -81,7 +90,7 @@ def collate_fn(batch,
 
         if process:
             # Выполняем декомпозицию объединенных данных (или только train при without_test=True)
-            resid, trend, season = dec_series(combined_series, 7, 'multiplicative')
+            resid, trend, season = dec_series(combined_series, decompose_period, decompose_model)
 
             # Нормализуем на объединенных данных
             resid = pd.Series(

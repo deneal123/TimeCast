@@ -43,6 +43,8 @@ class NeiroInference:
         self.use_device = self.entry.UseDevice
         self.num_workers = self.entry.NumWorkers
         self.pin_memory = self.entry.PinMemory
+        self.decompose_period = self.entry.DecomposePeriod
+        self.decompose_model = self.entry.DecomposeModel
 
         if self.path_to_weights is None:
             self.path_to_weights = Path(get_paths().weights_neiro_dir)
@@ -162,7 +164,9 @@ class NeiroInference:
                                                          minmax_season=self.minmax_season,
                                                          minmax_sellprice=self.minmax_sellprice,
                                                          minmax_series=self.minmax_series,
-                                                         without_test=self.without_test),
+                                                         without_test=self.without_test,
+                                                         decompose_period=self.decompose_period,
+                                                         decompose_model=self.decompose_model),
                                       num_workers=self.num_workers,
                                       pin_memory=self.pin_memory,
                                       drop_last=False)

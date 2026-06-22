@@ -54,3 +54,30 @@ def test_neiro_series_generic_cpu_train_and_infer():
     res = timecast.serialize_inference_results(getattr(ni, "results", {}))
     assert "S0" in res
     assert "week" in res["S0"]
+
+
+@pytest.mark.slow
+def test_neiro_series_additive_decomposition_on_nonpositive_series():
+    """decompose_model='additive' позволяет обучаться на ряду с нулями/отрицательными
+    значениями, где дефолтная мультипликативная декомпозиция невалидна."""
+    d = tempfile.mkdtemp()
+    n = 160
+    rng = np.random.RandomState(1)
+    dates = pd.date_range("2022-01-01", periods=n, freq="D")
+    t = np.arange(n)
+    target = 2 * np.sin(2 * np.pi * t / 7) + rng.normal(0, 0.5, n)  # колеблется вокруг нуля
+    assert target.min() < 0
+    df = pd.DataFrame({"time": dates, "id": "S0", "target": target,
+                       "promo": (t % 7 == 0).astype(int)})
+    csv = os.path.join(d, "series.csv")
+    df.to_csv(csv, index=False)
+    timecast.configure_paths(weights_neiro_dir=os.path.join(d, "wn"))
+    dataset = {"source": csv, "time_col": "time", "target_col": "target",
+               "series_id_col": "id", "feature_cols": ["promo"]}
+
+    ng = timecast.train_neiro_series(dataset, {
+        "dictseasonal": {"week": 7}, "dictmodels": {"IFFT": _IFFT}, "seq_len": 30,
+        "use_device": "cpu", "num_workers": 0, "test_size": 0.3, "batch_size": 4,
+        "num_epochs": 1, "decompose_model": "additive"})
+    assert "IFFT" in ng.models
+    assert any(f.endswith(".pt") for f in os.listdir(os.path.join(d, "wn")))

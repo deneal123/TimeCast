@@ -48,6 +48,8 @@ class NeiroGraduate:
         self.num_epochs = self.entry.NumEpochs
         self.name_optimizer = self.entry.NameOptimizer
         self.seed = self.entry.Seed
+        self.decompose_period = self.entry.DecomposePeriod
+        self.decompose_model = self.entry.DecomposeModel
 
         if self.path_to_weights is None:
             self.path_to_weights = Path(get_paths().weights_neiro_dir)
@@ -132,7 +134,9 @@ class NeiroGraduate:
                                                           minmax_trend=self.minmax_trend,
                                                           minmax_season=self.minmax_season,
                                                           minmax_sellprice=self.minmax_sellprice,
-                                                          minmax_series=self.minmax_series),
+                                                          minmax_series=self.minmax_series,
+                                                          decompose_period=self.decompose_period,
+                                                          decompose_model=self.decompose_model),
                                        num_workers=self.num_workers,
                                        pin_memory=self.pin_memory,
                                        drop_last=True)
@@ -145,7 +149,9 @@ class NeiroGraduate:
                                                          minmax_trend=self.minmax_trend,
                                                          minmax_season=self.minmax_season,
                                                          minmax_sellprice=self.minmax_sellprice,
-                                                         minmax_series=self.minmax_series),
+                                                         minmax_series=self.minmax_series,
+                                                         decompose_period=self.decompose_period,
+                                                         decompose_model=self.decompose_model),
                                       num_workers=self.num_workers,
                                       pin_memory=self.pin_memory,
                                       drop_last=True)
