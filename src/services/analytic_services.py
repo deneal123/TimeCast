@@ -1,6 +1,6 @@
 import asyncio
 import timecast
-from timecast.pydantic_models import EntrySeasonAnalyticPipeline
+from timecast import EntrySeasonAnalyticPipeline
 from typing import Dict
 from src.utils.custom_logging import setup_logging
 log = setup_logging()

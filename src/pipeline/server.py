@@ -8,15 +8,15 @@ from fastapi.responses import JSONResponse
 from src.utils.custom_logging import setup_logging
 from dotenv import load_dotenv
 from src import path_to_project
-from timecast.pydantic_models import (EntrySeasonAnalyticPipeline, EntryClassicGraduatePipeline,
+from timecast import (EntrySeasonAnalyticPipeline, EntryClassicGraduatePipeline,
                                          EntryClassicInferencePipeline, EntryNeiroGraduatePipeline,
                                          EntryNeiroInferencePipeline)
 from src.services.analytic_services import season_analytic_pipeline
 from src.services.classic_services import classic_graduate_pipeline, classic_inference_pipeline
 from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference_pipeline
 from src.services.file_services import upload_csv_to_server, get_zip_from_server
-from timecast.exceptions import TimeCastError
-from timecast.config import configure_paths
+from timecast import TimeCastError
+from timecast import configure_paths
 from fastapi.responses import StreamingResponse
 import asyncio
 import logging
