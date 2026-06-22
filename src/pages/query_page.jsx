@@ -9,13 +9,15 @@ import { sendSeasonAnalytic } from "../API/services/season_analytic_services";
 import LogStreamComponent from "../API/apiLogStreamComponent";
 import ForecastChart from "../components/ForecastChart";
 import TrainingResults from "../components/TrainingResults";
+import DecompositionChart from "../components/DecompositionChart";
 
-// Различаем форму ответа: обучение (best_model) vs инференс (pred).
-const isTrainingResults = (results) => {
+// Различаем форму ответа по первому периоду первого item.
+const firstPeriodOf = (results) => {
   const firstItem = results && Object.values(results)[0];
-  const firstPeriod = firstItem && Object.values(firstItem)[0];
-  return !!(firstPeriod && "best_model" in firstPeriod);
+  return firstItem && Object.values(firstItem)[0];
 };
+const isTrainingResults = (results) => "best_model" in (firstPeriodOf(results) || {});
+const isDecompositionResults = (results) => "trend" in (firstPeriodOf(results) || {});
 
 const QueryPage = () => {
   const { width } = useWindowDimensions();
@@ -114,6 +116,7 @@ const QueryPage = () => {
         console.log("Sending Season Analytic request...");
         const response = await sendSeasonAnalytic(parsedRequest);
         setResponseText(JSON.stringify(response, null, 2));
+        setResultData(response);
       } else {
         setResponseText("Invalid Query structure. Please check the format.");
       }
@@ -274,13 +277,16 @@ const QueryPage = () => {
           />
         </HStack>
 
-        {/* Дашборд: инференс -> график прогноза (pred); обучение -> таблица лучших моделей */}
-        {resultData && resultData.results && isTrainingResults(resultData.results) ? (
-          <TrainingResults results={resultData.results} />
-        ) : (
-          resultData &&
-          resultData.results && <ForecastChart results={resultData.results} />
-        )}
+        {/* Дашборд: декомпозиция -> trend/seasonal/resid; обучение -> таблица; инференс -> прогноз */}
+        {resultData &&
+          resultData.results &&
+          (isDecompositionResults(resultData.results) ? (
+            <DecompositionChart results={resultData.results} />
+          ) : isTrainingResults(resultData.results) ? (
+            <TrainingResults results={resultData.results} />
+          ) : (
+            <ForecastChart results={resultData.results} />
+          ))}
       </VStack>
     </Flex>
   );
