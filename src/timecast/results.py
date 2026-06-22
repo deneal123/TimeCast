@@ -90,6 +90,29 @@ def serialize_training_results(results: dict) -> dict:
     return out
 
 
+def serialize_decomposition_results(results: dict) -> dict:
+    """results[item_id][period] = {trend, seasonal, resid} (pandas-серии) → списки.
+
+    Для дашборда сезонной декомпозиции (аддитивная модель).
+    """
+    out = {}
+    for item_id, periods in (results or {}).items():
+        if not isinstance(periods, dict):
+            continue
+        item_out = {}
+        for period, comp in periods.items():
+            if not isinstance(comp, dict):
+                continue
+            item_out[str(period)] = {
+                "trend": _to_jsonable(comp.get("trend")),
+                "seasonal": _to_jsonable(comp.get("seasonal")),
+                "resid": _to_jsonable(comp.get("resid")),
+            }
+        if item_out:
+            out[str(item_id)] = item_out
+    return out
+
+
 def collect_results(pipeline) -> dict:
     """Достаёт и сериализует результаты инференса из пайплайна (classic/neiro)."""
     inference = getattr(pipeline, "classic_inference", None) or getattr(pipeline, "neiro_inference", None)
@@ -102,3 +125,10 @@ def collect_training_results(pipeline) -> dict:
     graduate = getattr(pipeline, "classic_graduate", None) or getattr(pipeline, "neiro_graduate", None)
     results = getattr(graduate, "results", None) if graduate is not None else None
     return serialize_training_results(results)
+
+
+def collect_decomposition_results(pipeline) -> dict:
+    """Достаёт и сериализует декомпозицию из пайплайна сезонной аналитики."""
+    process = getattr(pipeline, "classic_process", None)
+    results = getattr(process, "results", None) if process is not None else None
+    return serialize_decomposition_results(results)

@@ -3,7 +3,8 @@ import numpy as np
 import pandas as pd
 
 from timecast.results import (serialize_inference_results, collect_results,
-                              serialize_training_results, collect_training_results)
+                              serialize_training_results, collect_training_results,
+                              serialize_decomposition_results, collect_decomposition_results)
 
 
 class _FakeModel:
@@ -91,3 +92,34 @@ def test_collect_training_results_from_pipeline():
     out = collect_training_results(_Pipeline())
     assert out["STORE_1_FOODS_1_001"]["week"]["best_model"] == "AUTOARIMA"
     assert collect_training_results(object()) == {}
+
+
+def _sample_decomposition():
+    return {
+        "STORE_1_FOODS_1_001": {
+            "week": {
+                "trend": pd.Series([10.0, 11.0, float("nan")]),
+                "seasonal": np.array([0.5, -0.5, 0.5]),
+                "resid": pd.Series([0.1, 0.0, -0.1]),
+            }
+        }
+    }
+
+
+def test_serialize_decomposition_results():
+    out = serialize_decomposition_results(_sample_decomposition())
+    comp = out["STORE_1_FOODS_1_001"]["week"]
+    assert comp["trend"] == [10.0, 11.0, None]  # NaN → None
+    assert comp["seasonal"] == [0.5, -0.5, 0.5]
+    assert comp["resid"] == [0.1, 0.0, -0.1]
+
+
+def test_collect_decomposition_results_from_pipeline():
+    class _Process:
+        results = _sample_decomposition()
+
+    class _Pipeline:
+        classic_process = _Process()
+
+    assert "STORE_1_FOODS_1_001" in collect_decomposition_results(_Pipeline())
+    assert collect_decomposition_results(object()) == {}

@@ -41,6 +41,8 @@ class ClassicProcess:
             "trend": None,
             "seasonal": None
         }
+        # Накопление декомпозиции по item для структурного ответа/дашборда.
+        self.results = {}
 
     def process(self):
         with tqdm(total=len(self.dictmerge.items())) as proccess_bar:
@@ -102,6 +104,16 @@ class ClassicProcess:
         self.dictstructparam["trend"] = dicttrend
         self.dictstructparam["seasonal"] = dictseasonal
         self.dictstructparam["series"] = series
+
+        # Сохраняем аддитивную декомпозицию (тренд/сезон/остаток) по периодам.
+        self.results[str(item_id)] = {
+            s: {
+                "trend": dicttrend[s][0],
+                "seasonal": dictseasonal[s][0],
+                "resid": dictredis[s][0],
+            }
+            for s in dicttrend
+        }
 
     def visualise(self, item: str, series: pd.DataFrame, redis: dict, trend: dict, seasonal: dict,
                         date_id: pd.DataFrame):
