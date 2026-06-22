@@ -224,10 +224,11 @@ class NeiroInference:
             for idx, (period, result) in enumerate(periods.items()):
                 ax = axes[idx]
 
-                # Восстановленный предсказанный ряд
+                # Восстановленный предсказанный ряд: декомпозиция -> resid+trend+season,
+                # иначе сам ряд. Проверяем по колонкам, а не по числу строк (был баг len>4).
                 pred = result['pred'][0]
 
-                if len(pred) > 4:
+                if 'resid' in pred.columns:
                     pred = pred.resid + pred.trend + pred.season
                 else:
                     pred = pred.series

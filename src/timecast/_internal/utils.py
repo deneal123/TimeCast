@@ -58,48 +58,23 @@ def convert_timeseries_to_dataframe(batch_size,
 
     for part in range(batch_size):
 
+        # Только целевые каналы (decomposition/series) нужны для восстановления прогноза.
+        # Каналы-фичи (позиции 3:/1:) идут на вход модели и в выход не реконструируются —
+        # извлекать их по фиксированным индексам нельзя (число фич произвольно).
+        timestamps = timestamp[part]
         if proccess:
-            # Извлекаем данные для текущего сэмпла
-            # date_id = timeseries[part, :, 0].cpu().detach().numpy()
-            # series = timeseries[part, :, 0].cpu().detach().numpy()
             resid = timeseries[part, :, 0].cpu().detach().numpy()
             trend = timeseries[part, :, 1].cpu().detach().numpy()
             season = timeseries[part, :, 2].cpu().detach().numpy()
-            sell_price = timeseries[part, :, 3].cpu().detach().numpy()
-            event_name = timeseries[part, :, 4].cpu().detach().numpy()
-            event_type = timeseries[part, :, 5].cpu().detach().numpy()
-            cashback = timeseries[part, :, 6].cpu().detach().numpy()
-        else:
-            # Извлекаем данные для текущего сэмпла
-            # date_id = timeseries[part, :, 0].cpu().detach().numpy()
-            series = timeseries[part, :, 0].cpu().detach().numpy()
-            sell_price = timeseries[part, :, 1].cpu().detach().numpy()
-            event_name = timeseries[part, :, 2].cpu().detach().numpy()
-            event_type = timeseries[part, :, 3].cpu().detach().numpy()
-            cashback = timeseries[part, :, 4].cpu().detach().numpy()
-
-        # Используем временные метки из `timestamp` для индекса
-        timestamps = timestamp[part]
-
-        # Формируем DataFrame для текущего сэмпла
-        if proccess:
             data = {
-                # 'series': series.flatten(),
                 'resid': minmax_resid.inverse_transform(resid.flatten().reshape(-1, 1)).flatten(),
                 'trend': minmax_trend.inverse_transform(trend.flatten().reshape(-1, 1)).flatten(),
                 'season': minmax_season.inverse_transform(season.flatten().reshape(-1, 1)).flatten(),
-                'sell_price': sell_price.flatten(),
-                'event_name': event_name.flatten(),
-                'event_type': event_type.flatten(),
-                'cashback': cashback.flatten(),
             }
         else:
+            series = timeseries[part, :, 0].cpu().detach().numpy()
             data = {
                 'series': minmax_series.inverse_transform(series.flatten().reshape(-1, 1)).flatten(),
-                'sell_price': sell_price.flatten(),
-                'event_name': event_name.flatten(),
-                'event_type': event_type.flatten(),
-                'cashback': cashback.flatten(),
             }
 
         df = pd.DataFrame(data)
