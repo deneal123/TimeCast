@@ -28,7 +28,11 @@ from timecast.schemas import (
     EntryClassicInferencePipeline,
     EntryNeiroGraduatePipeline,
     EntryNeiroInferencePipeline,
+    EntryTimeSeriesDataset,
+    EntryClassicGraduate,
 )
+from timecast.data.timeseries import TimeSeriesDataset
+from timecast.training.classic import ClassicGraduate
 from timecast.pipelines.season_analytic import SeasonAnalyticPipeline
 from timecast.pipelines.classic_graduate import ClassicGraduatePipeline
 from timecast.pipelines.classic_inference import ClassicInferencePipeline
@@ -69,3 +73,29 @@ def infer_neiro(entry: Dict[str, Any]) -> NeiroInferencePipeline:
     pipeline = validate_with_pydantic(EntryNeiroInferencePipeline)(NeiroInferencePipeline)(entry=entry)
     pipeline.inference()
     return pipeline
+
+
+def train_classic_series(dataset: Dict[str, Any], graduate: Dict[str, Any]) -> ClassicGraduate:
+    """Обучение классических моделей на ПРОИЗВОЛЬНОМ временном ряду (tidy CSV, без привязки к домену).
+
+    dataset: поля EntryTimeSeriesDataset — source, [time_col, target_col, series_id_col, feature_cols].
+    graduate: dictseasonal, models_params, [save_path_weights].
+    Пример::
+
+        train_classic_series(
+            {"source": "series.csv", "series_id_col": "id"},
+            {"dictseasonal": {"week": 7, "month": 30, "quater": 90},
+             "models_params": {"AUTOARIMA": (3, 3, 0, 0, 1, 1, "week")}},
+        )
+    """
+    ds = validate_with_pydantic(EntryTimeSeriesDataset)(TimeSeriesDataset)(entry=dataset)
+    ds.dataset()
+    cg = validate_with_pydantic(EntryClassicGraduate)(ClassicGraduate)(entry={
+        "dictidx": ds.dictidx,
+        "dictmerge": ds.dictmerge,
+        "dictseasonal": graduate["dictseasonal"],
+        "models_params": graduate["models_params"],
+        "save_path_weights": graduate.get("save_path_weights"),
+    })
+    cg.graduate()
+    return cg
