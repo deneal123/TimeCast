@@ -42,7 +42,6 @@ class SeasonAnalyticPipeline:
         )
 
         self.classic_dataset.dataset()
-        dictidx = self.classic_dataset.dictidx
         dictmerge = self.classic_dataset.dictmerge
 
         proccess = self.entry.Process

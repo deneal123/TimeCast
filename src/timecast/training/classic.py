@@ -136,7 +136,7 @@ class ClassicGraduate:
                         try:
                             rmse, r2, pred, tss = self.calc_optimum(train, test, exogenous, model, param, period,
                                                                     item_id)
-                        except ValueError as ve:
+                        except ValueError:
                             continue
 
                         rmse = round(rmse, 3)

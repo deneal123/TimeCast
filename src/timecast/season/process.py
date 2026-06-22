@@ -113,9 +113,9 @@ class ClassicProcess:
             seasonal_add, seasonal_mult = seasonal[seasonality]
 
             # Рассчитываем минимальные и максимальные значения для оси ординат
-            min_value = min(series.min(), redis_add.min(), redis_mult.min(), trend_add.min(), trend_mult.min(),
+            min(series.min(), redis_add.min(), redis_mult.min(), trend_add.min(), trend_mult.min(),
                             seasonal_add.min(), seasonal_mult.min())
-            max_value = max(series.max(), redis_add.max(), redis_mult.max(), trend_add.max(), trend_mult.max(),
+            max(series.max(), redis_add.max(), redis_mult.max(), trend_add.max(), trend_mult.max(),
                             seasonal_add.max(), seasonal_mult.max())
 
             # Создаем фигуру с 6 сабплотами

@@ -48,7 +48,7 @@ class ClassicModel(ABC):
             exogenous_columns = exogenous.columns
             last_timestamp = exogenous.index[-2]
             future_timestamps = pd.date_range(start=last_timestamp + pd.Timedelta(days=1), periods=period, freq='D')
-            future_exogenous = pd.DataFrame(0, index=future_timestamps, columns=exogenous_columns)
+            pd.DataFrame(0, index=future_timestamps, columns=exogenous_columns)
         self.model.fit(y=train)  # X=exogenous.loc[train.index].fillna(0))
         if future_or_estimate == 'estimate':
             pred = self.model.predict(fh=np.arange(0, period))

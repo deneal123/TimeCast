@@ -169,7 +169,7 @@ class NeiroInference:
         # Проходим по всем файлам в директории
         for filename in os.listdir(self.path_to_weights):
             # Получаем полный путь к файлу
-            full_path = os.path.join(self.path_to_weights, filename)
+            os.path.join(self.path_to_weights, filename)
 
             # Извлекаем имя модели и период из имени файла
             if filename.endswith(".pt"):

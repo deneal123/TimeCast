@@ -236,7 +236,7 @@ class NeiroGraduate:
                             proccess = False
 
                         # Распаковка тренировочных данных    
-                        timestamp_train = batch['train']["timestamp"]
+                        batch['train']["timestamp"]
                         date_id_train = batch['train']["date_id"].to(self.device)
                         series_train = batch['train']["series"].to(self.device)
                         if proccess:
@@ -261,7 +261,7 @@ class NeiroGraduate:
                                                           exogenous_train), dim=-1)  # Формат [batch, seq_length, 6]
 
                         # Распаковка валидационных данных
-                        timestamp_valid = batch['test']["timestamp"]
+                        batch['test']["timestamp"]
                         date_id_valid = batch['test']["date_id"].to(self.device)
                         series_valid = batch['test']["series"].to(self.device)
                         if proccess:
@@ -350,7 +350,7 @@ class NeiroGraduate:
                             proccess = False
 
                         # Распаковка тренировочных данных    
-                        timestamp_test = batch['train']["timestamp"]
+                        batch['train']["timestamp"]
                         date_id_test = batch['train']["date_id"].to(self.device)
                         series_test = batch['train']["series"].to(self.device)
                         if proccess:
@@ -375,7 +375,7 @@ class NeiroGraduate:
                                                          exogenous_test), dim=-1)  # Формат [batch, seq_length, 6]
 
                         # Распаковка валидационных данных
-                        timestamp_valid = batch['test']["timestamp"]
+                        batch['test']["timestamp"]
                         date_id_valid = batch['test']["date_id"].to(self.device)
                         series_valid = batch['test']["series"].to(self.device)
                         if proccess:

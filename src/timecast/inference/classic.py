@@ -118,7 +118,7 @@ class ClassicInference:
         # Проходим по всем файлам в директории
         for filename in os.listdir(self.path_to_weights):
             # Получаем полный путь к файлу
-            full_path = os.path.join(self.path_to_weights, filename)
+            os.path.join(self.path_to_weights, filename)
 
             # Извлекаем имя модели и период из имени файла
             if filename.endswith(".zip"):
@@ -130,7 +130,6 @@ class ClassicInference:
                 model_name = parts[0]
                 item_id = "_".join(parts[1:-2])
                 key = parts[-2]
-                prefix = f"{item_id}_{key}_{model_name}"
 
                 # Путь к JSON-файлу
                 json_filename = f"{filename}.json"
@@ -267,8 +266,6 @@ class ClassicInference:
             model, json = item_json[f'{item_id}']
             splitter = SingleWindowSplitter(fh=[i for i in range(val)],
                                             window_length=len(series) - val)
-            rmse_values = []
-            r2_values = []
 
             indices = list(splitter.split(series))
             train_indices = indices[0][0]
