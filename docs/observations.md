@@ -8,7 +8,7 @@
 | # | Наблюдение | Где | Серьёзность |
 |---|-----------|-----|-------------|
 | B1 | ✅ *Решено:* БД/ORM не использовались — вырезаны (`database/`, `repository/`, `create_sql.py`, `TimeCast.sql`, `pymysql`) | — | — |
-| B2 | Дублирование ~95 % кода инициализации между 4 пайплайнами (пути к CSV, проверки, валидация) | `library/*Pipeline.py` | высокая |
+| B2 | ✅ *Решено:* общий init-код 5 пайплайнов вынесен в `pipelines/_retail.py::load_retail_dataset` (попутно fix typo `sen_len`→`seq_len`) | `timecast/pipelines/` | — |
 | B3 | ✅ *Решено:* библиотека синхронна, сервисы вызывают её через `asyncio.to_thread`; заодно исправлен баг `await torch.load` | `services/*`, `timecast/*` | — |
 | B4 | ✅ *Решено:* `requirements.txt` прорежен (~150 → ~30); канон — `pyproject.toml` | `requirements.txt` | — |
 | B5 | ✅ *Решено:* чужой `config.yaml` и `path_to_config` удалены | — | — |
@@ -16,7 +16,7 @@
 | B7 | ✅ *Решено:* `upload_csv` проверяет расширение `.csv`, размер (≤50 МБ), пустоту; защита от path traversal (`basename`) | `services/file_services.py` | — |
 | B8 | ✅ *Частично:* сезонные константы → `config.DEFAULT_SEASONAL`; HF-репозитории всё ещё захардкожены | `timecast/*Inference.py` | низкая |
 | B9 | ✅ *Решено:* `ClassicProccess` → `ClassicProcess` (wire-алиас `proccess` сохранён) | `timecast/` | — |
-| B10 | Нет автотестов (только ручной `pipeline/test.py`) | весь backend | высокая |
+| B10 | ✅ *Решено:* в `timecast` 17 тестов (unit + e2e classic/neiro на CPU, маркер `slow`); `pytest -m "not slow"` для быстрого прогона | `timecast/tests/` | — |
 | B11 | `LogStreamHandler.emit` смешивает `asyncio.create_task` и `run_until_complete` — хрупко | `server.py:69-83` | средняя |
 | B12 | `GPU`-память (`clear_gpu_memory`) объявлена, но не вызывается в обучении/инференсе | `library/utils.py` | средняя |
 
