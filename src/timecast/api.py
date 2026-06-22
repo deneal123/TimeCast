@@ -30,9 +30,11 @@ from timecast.schemas import (
     EntryNeiroInferencePipeline,
     EntryTimeSeriesDataset,
     EntryClassicGraduate,
+    EntryClassicInference,
 )
 from timecast.data.timeseries import TimeSeriesDataset
 from timecast.training.classic import ClassicGraduate
+from timecast.inference.classic import ClassicInference
 from timecast.pipelines.season_analytic import SeasonAnalyticPipeline
 from timecast.pipelines.classic_graduate import ClassicGraduatePipeline
 from timecast.pipelines.classic_inference import ClassicInferencePipeline
@@ -99,3 +101,26 @@ def train_classic_series(dataset: Dict[str, Any], graduate: Dict[str, Any]) -> C
     })
     cg.graduate()
     return cg
+
+
+def infer_classic_series(dataset: Dict[str, Any], inference: Dict[str, Any]) -> ClassicInference:
+    """Инференс классическими моделями на ПРОИЗВОЛЬНОМ временном ряду (tidy CSV, без привязки к домену).
+
+    dataset: поля EntryTimeSeriesDataset — source, [time_col, target_col, series_id_col, feature_cols].
+    inference: dictseasonal, [future_or_estimate, save_path_weights, plots, save_plots, save_path_plots].
+    Веса должны быть обучены на ряду с той же структурой (см. train_classic_series).
+    """
+    ds = validate_with_pydantic(EntryTimeSeriesDataset)(TimeSeriesDataset)(entry=dataset)
+    ds.dataset()
+    ci = validate_with_pydantic(EntryClassicInference)(ClassicInference)(entry={
+        "dictidx": ds.dictidx,
+        "dictmerge": ds.dictmerge,
+        "dictseasonal": inference["dictseasonal"],
+        "future_or_estimate": inference.get("future_or_estimate", "estimate"),
+        "save_path_weights": inference.get("save_path_weights"),
+        "plots": inference.get("plots", False),
+        "save_plots": inference.get("save_plots", True),
+        "save_path_plots": inference.get("save_path_plots"),
+    })
+    ci.inference()
+    return ci
