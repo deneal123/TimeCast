@@ -20,3 +20,19 @@ async def timeseries_inference_pipeline(dataset: Dict, inference: Dict) -> Dict:
     results = timecast.serialize_inference_results(getattr(ci, "results", {}))
     log.info("Success timeseries inference")
     return {"message": "Success inference", "results": results}
+
+
+async def timeseries_neiro_graduate_pipeline(dataset: Dict, graduate: Dict) -> Dict:
+    # Обучение нейросети на произвольном ряду (GPU-bound — в отдельном потоке).
+    ng = await asyncio.to_thread(timecast.train_neiro_series, dataset, graduate)
+    results = timecast.serialize_training_results(getattr(ng, "results", {}))
+    log.info("Success timeseries neiro graduate")
+    return {"message": "Success graduate", "results": results}
+
+
+async def timeseries_neiro_inference_pipeline(dataset: Dict, inference: Dict) -> Dict:
+    # Инференс нейросети на произвольном ряду (GPU-bound — в отдельном потоке).
+    ni = await asyncio.to_thread(timecast.infer_neiro_series, dataset, inference)
+    results = timecast.serialize_inference_results(getattr(ni, "results", {}))
+    log.info("Success timeseries neiro inference")
+    return {"message": "Success inference", "results": results}

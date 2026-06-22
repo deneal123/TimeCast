@@ -18,6 +18,8 @@ from src.services.file_services import upload_csv_to_server, get_zip_from_server
 from src.services.timeseries_services import (
     timeseries_graduate_pipeline,
     timeseries_inference_pipeline,
+    timeseries_neiro_graduate_pipeline,
+    timeseries_neiro_inference_pipeline,
 )
 from pydantic import BaseModel
 from timecast import TimeCastError
@@ -243,6 +245,26 @@ async def timeseries_inference(entry: TimeSeriesInferenceRequest):
     """Инференс classic-моделей на ПРОИЗВОЛЬНОМ временном ряду (без привязки к домену)."""
     try:
         return await timeseries_inference_pipeline(entry.dataset, entry.inference)
+    except HTTPException as ex:
+        log.exception("Error", exc_info=ex)
+        raise ex
+
+
+@app_server.post("/timeseries_neiro_graduate/", response_model=Dict, tags=["Graduate"])
+async def timeseries_neiro_graduate(entry: TimeSeriesGraduateRequest):
+    """Обучение нейросети на ПРОИЗВОЛЬНОМ временном ряду (num_variates авто = 3 + число фич)."""
+    try:
+        return await timeseries_neiro_graduate_pipeline(entry.dataset, entry.graduate)
+    except HTTPException as ex:
+        log.exception("Error", exc_info=ex)
+        raise ex
+
+
+@app_server.post("/timeseries_neiro_inference/", response_model=Dict, tags=["Inference"])
+async def timeseries_neiro_inference(entry: TimeSeriesInferenceRequest):
+    """Инференс нейросети на ПРОИЗВОЛЬНОМ временном ряду (без привязки к домену)."""
+    try:
+        return await timeseries_neiro_inference_pipeline(entry.dataset, entry.inference)
     except HTTPException as ex:
         log.exception("Error", exc_info=ex)
         raise ex
