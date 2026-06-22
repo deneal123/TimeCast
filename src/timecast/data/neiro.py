@@ -6,6 +6,14 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 from timecast._internal.utils import seed_everything, dec_series
 from sktime.split import SingleWindowSplitter
+from sklearn.preprocessing import MinMaxScaler
+
+
+def _scale_features(exogenous):
+    """MinMax-нормализация ВСЕХ колонок-фич (обобщённо вместо только sell_price)."""
+    for _c in exogenous.columns:
+        exogenous[_c] = MinMaxScaler().fit_transform(exogenous[_c].values.reshape(-1, 1)).flatten()
+    return exogenous
 
 
 def collate_fn(batch,
@@ -112,16 +120,12 @@ def collate_fn(batch,
                 resid_train = torch.tensor(resid_train.values, dtype=torch.float32)
                 trend_train = torch.tensor(trend_train.values, dtype=torch.float32)
                 season_train = torch.tensor(season_train.values, dtype=torch.float32)
-            exogenous['sell_price'] = minmax_sellprice.fit_transform(
-                exogenous['sell_price'].values.reshape(-1, 1)
-            )
+            exogenous = _scale_features(exogenous)
             exogenous = torch.tensor(exogenous.values, dtype=torch.float32)
         else:
             series = pd.Series(minmax_series.fit_transform(series.values.reshape(-1, 1)).flatten(), name='series',
                                index=series.index)
-            exogenous['sell_price'] = minmax_sellprice.fit_transform(
-                exogenous['sell_price'].values.reshape(-1, 1)
-            ).flatten()
+            exogenous = _scale_features(exogenous)
 
         process_batch['train']['timestamp'].append(timestamp)
         process_batch['train']['date_id'].append(date_id if pdata else date_id)
@@ -148,16 +152,12 @@ def collate_fn(batch,
                     resid_test = torch.tensor(resid_test.values, dtype=torch.float32)
                     trend_test = torch.tensor(trend_test.values, dtype=torch.float32)
                     season_test = torch.tensor(season_test.values, dtype=torch.float32)
-                exogenous['sell_price'] = minmax_sellprice.fit_transform(
-                    exogenous['sell_price'].values.reshape(-1, 1)
-                )
+                exogenous = _scale_features(exogenous)
                 exogenous = torch.tensor(exogenous.values, dtype=torch.float32)
             else:
                 series = pd.Series(minmax_series.fit_transform(series.values.reshape(-1, 1)).flatten(), name='series',
                                    index=series.index)
-                exogenous['sell_price'] = minmax_sellprice.fit_transform(
-                    exogenous['sell_price'].values.reshape(-1, 1)
-                ).flatten()
+                exogenous = _scale_features(exogenous)
 
             process_batch['test']['timestamp'].append(timestamp)
             process_batch['test']['date_id'].append(date_id if pdata else date_id)
@@ -290,8 +290,14 @@ class NeiroDataset(Dataset):
     dictidx: dict
     metadata: list
 
+    # Доменные retail-фичи по умолчанию (если dictidx без 'feature_cols').
+    _RETAIL_FEATURES = ["sell_price", "event_name", "event_type", "cashback"]
+
     def __post_init__(self):
         self.datasets = []
+        # Унификация: обобщённый формат (TimeSeriesDataset) задаёт feature_cols в dictidx;
+        # иначе — доменный retail-набор.
+        self.feature_cols = list(self.dictidx.get("feature_cols") or self._RETAIL_FEATURES)
 
         for jndex, data in enumerate(self.metadata):
             self.part_datasets = {
@@ -309,31 +315,25 @@ class NeiroDataset(Dataset):
             self.datasets.append(self.part_datasets)
 
     def process_data(self, data):
+        """Извлекает (date_id, series, exogenous) — унифицировано для любого ряда.
 
-        """Общий метод для обработки train и test данных"""
-        series = data['cnt']
-        date_id = data['date_id']
-        sell_price = data['sell_price']
-        event_name = data['event_name']
-        event_type = data['event_type']
-        cashback = data['cashback']
+        Обобщённый формат (TimeSeriesDataset): target + feature_cols + date.
+        Доменный retail-формат (NeiroDataset из ClassicDataset): cnt + фикс. фичи + date_id.
+        """
+        date_id = data['date_id'].copy()
 
-        # Заменяем индексы на даты из словаря
-        timestamps = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
+        if "feature_cols" in self.dictidx:
+            timestamps = list(data['date'])
+            series = data['target'].copy()
+            exogenous = data[self.feature_cols].copy()
+        else:
+            timestamps = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
+            series = data['cnt'].copy()
+            exogenous = pd.DataFrame({col: data[col].copy() for col in self.feature_cols})
+
         date_id.index = timestamps
         series.index = timestamps
-        sell_price.index = timestamps
-        event_name.index = timestamps
-        event_type.index = timestamps
-        cashback.index = timestamps
-
-        exogenous = pd.DataFrame({
-            "sell_price": sell_price,
-            "event_name": event_name,
-            "event_type": event_type,
-            "cashback": cashback
-        })
-
+        exogenous.index = timestamps
         return date_id, series, exogenous
 
     def __len__(self) -> int:
@@ -367,7 +367,7 @@ class NeiroDataset(Dataset):
                     'date_id': pd.Series(date_id_train.values, name='date_id', index=timestamp_train),
                     'series': pd.Series(series_train.values, name='series', index=timestamp_train),
                     'exogenous': pd.DataFrame(exogenous_train.values,
-                                              columns=['sell_price', 'event_name', 'event_type', 'cashback'],
+                                              columns=self.feature_cols,
                                               index=timestamp_train)
                 },
                 'test': {
@@ -375,7 +375,7 @@ class NeiroDataset(Dataset):
                     'date_id': pd.Series(date_id_test.values, name='date_id', index=timestamp_test),
                     'series': pd.Series(series_test.values, name='series', index=timestamp_test),
                     'exogenous': pd.DataFrame(exogenous_test.values,
-                                              columns=['sell_price', 'event_name', 'event_type', 'cashback'],
+                                              columns=self.feature_cols,
                                               index=timestamp_test)
                 }
             }
@@ -386,7 +386,7 @@ class NeiroDataset(Dataset):
                     'date_id': pd.Series(date_id_train.values, name='date_id', index=timestamp_train),
                     'series': pd.Series(series_train.values, name='series', index=timestamp_train),
                     'exogenous': pd.DataFrame(exogenous_train.values,
-                                              columns=['sell_price', 'event_name', 'event_type', 'cashback'],
+                                              columns=self.feature_cols,
                                               index=timestamp_train)
                 },
                 'test': None

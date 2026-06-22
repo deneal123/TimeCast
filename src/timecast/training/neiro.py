@@ -311,13 +311,11 @@ class NeiroGraduate:
                 # После всех батчей вычисляем метрики
                 all_y_true = np.concatenate(all_y_true, axis=0)
                 all_y_pred = np.concatenate(all_y_pred, axis=0)
-                num_components = all_y_true.shape[-1]
-                if num_components == 7:
-                    all_y_true = all_y_true[..., :3]
-                    all_y_pred = all_y_pred[..., :3]
-                elif num_components == 5:
-                    all_y_true = all_y_true[..., :1]
-                    all_y_pred = all_y_pred[..., :1]
+                # Целевые компоненты: декомпозиция (3) при proccess, иначе сам ряд (1).
+                # Не зависит от числа фич (раньше было зашито num_components==7/5).
+                _k = 3 if proccess else 1
+                all_y_true = all_y_true[..., :_k]
+                all_y_pred = all_y_pred[..., :_k]
 
                 mae, rmse, r2 = calculate_metrics_auto(all_y_true, all_y_pred)
                 log.info(
@@ -421,13 +419,10 @@ class NeiroGraduate:
             # После всех батчей вычисляем метрики
             all_y_true = np.concatenate(all_y_true, axis=0)
             all_y_pred = np.concatenate(all_y_pred, axis=0)
-            num_components = all_y_true.shape[-1]
-            if num_components == 7:
-                all_y_true = all_y_true[..., :3]
-                all_y_pred = all_y_pred[..., :3]
-            elif num_components == 5:
-                all_y_true = all_y_true[..., :1]
-                all_y_pred = all_y_pred[..., :1]
+            # Целевые компоненты: декомпозиция (3) при proccess, иначе сам ряд (1).
+            _k = 3 if proccess else 1
+            all_y_true = all_y_true[..., :_k]
+            all_y_pred = all_y_pred[..., :_k]
 
             mae, rmse, r2 = calculate_metrics_auto(all_y_true, all_y_pred)
 

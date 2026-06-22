@@ -207,12 +207,14 @@ class NeiroInference:
             fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(20, 5 * nrows))
             axes = axes.flatten()  # Упрощаем перебор осей
 
-            # Получаем данные из словаря
-            actual = self.dictmerge[item_id]['cnt']
-            sell_price = self.dictmerge[f'{item_id}']['sell_price']
-            date_id = self.dictmerge[f'{item_id}']['date_id']
-            actual.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
-            sell_price.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
+            # Фактический ряд (унифицировано: generic target / retail cnt). sell_price был мёртв.
+            generic = "feature_cols" in self.dictidx
+            actual = self.dictmerge[item_id]['target' if generic else 'cnt']
+            date_id = self.dictmerge[item_id]['date_id']
+            if generic:
+                actual.index = list(self.dictmerge[item_id]['date'])
+            else:
+                actual.index = [self.dictidx['idx2date'][idx - 1] for idx in date_id]
 
             for idx, (period, result) in enumerate(periods.items()):
                 ax = axes[idx]
@@ -384,13 +386,10 @@ class NeiroInference:
                 # После всех батчей вычисляем метрики
                 all_y_true = np.concatenate(all_y_true, axis=0)
                 all_y_pred = np.concatenate(all_y_pred, axis=0)
-                num_components = all_y_true.shape[-1]
-                if num_components == 7:
-                    all_y_true = all_y_true[..., :3]
-                    all_y_pred = all_y_pred[..., :3]
-                elif num_components == 5:
-                    all_y_true = all_y_true[..., :1]
-                    all_y_pred = all_y_pred[..., :1]
+                # Целевые компоненты: декомпозиция (3) при proccess, иначе сам ряд (1).
+                _k = 3 if proccess else 1
+                all_y_true = all_y_true[..., :_k]
+                all_y_pred = all_y_pred[..., :_k]
 
                 mae, rmse, r2 = calculate_metrics_auto(all_y_true, all_y_pred)
 
