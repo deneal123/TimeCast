@@ -40,7 +40,7 @@ jobs:
       - name: Ruff (pyflakes)
         run: ruff check backend/src --select F
       - name: Import smoke
-        run: cd backend && PYTHONPATH=. python -c "import src.pipeline.server; print('backend import OK')"
+        run: cd backend && PYTHONPATH=. python -c "import src.app.server; print('backend import OK')"
 
   frontend:
     name: frontend (lint + build)

@@ -56,7 +56,7 @@ cd backend
 uv venv && uv pip install -e ../timecast \
   fastapi uvicorn python-multipart aiofiles python-dotenv pyyaml rich pydantic
 cp ../docker/.env.example .env             # HOST/SERVER_PORT/DEBUG/пути/CORS
-uv run uvicorn src.pipeline.server:app --host 0.0.0.0 --port 8000
+uv run uvicorn src.app.server:app --host 0.0.0.0 --port 8000
 ```
 API — под префиксом `/server`, Swagger — `/server/docs`, health — `/server/health`.
 Конфигурация только через `.env` (`python-dotenv`); БД не требуется (CSV + DuckDB).
