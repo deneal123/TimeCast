@@ -7,6 +7,7 @@ import {
   sendClassicGraduate,
   sendNeiroGraduate,
   sendTimeSeriesGraduate,
+  sendTimeSeriesInference,
 } from "../API/services/graduate_services";
 import { sendClassicInference, sendNeiroInference } from "../API/services/inference_services";
 import { sendSeasonAnalytic } from "../API/services/season_analytic_services";
@@ -89,7 +90,13 @@ const QueryPage = () => {
     try {
       const parsedRequest = JSON.parse(request);
 
-      if (parsedRequest.inference) {
+      if (parsedRequest.dataset && parsedRequest.dataset.source && parsedRequest.inference) {
+        // Обобщённый ряд (tidy CSV): инференс classic-моделей.
+        console.log("Sending TimeSeries (generic) Inference request...");
+        const response = await sendTimeSeriesInference(parsedRequest);
+        setResponseText(JSON.stringify(response, null, 2));
+        setResultData(response);
+      } else if (parsedRequest.inference) {
         if (
           parsedRequest.inference.dictmodels &&
           (parsedRequest.inference.dictmodels.IFFT || parsedRequest.inference.dictmodels.IF)

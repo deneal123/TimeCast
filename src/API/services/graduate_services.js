@@ -88,3 +88,30 @@ export async function sendTimeSeriesGraduate(requestData) {
     throw error;
   }
 }
+
+/**
+ * Обобщённый ряд: POST /timeseries_inference/ — инференс на любом tidy-CSV.
+ * Тело: { dataset: {source, ...}, inference: {dictseasonal, future_or_estimate} }.
+ */
+export async function sendTimeSeriesInference(requestData) {
+  const API_ENDPOINT = `${baseUrl}/timeseries_inference/`;
+
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error in timeseries inference request:", error);
+    throw error;
+  }
+}
