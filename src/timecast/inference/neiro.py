@@ -110,11 +110,15 @@ class NeiroInference:
         self.visualise()
 
     def get_models(self, period: int):
+        # Архитектура должна совпадать с обученной: декомпозиция (3) + число фич.
+        n_features = len(self.dictidx.get(
+            "feature_cols", ["sell_price", "event_name", "event_type", "cashback"]))
+        num_variates = 3 + n_features
 
         for model_name, model_params in self.dictmodels.items():
             if model_name == "IFFT":
                 self.models[model_name] = iTransformerFFT(
-                    num_variates=model_params["num_variates"],
+                    num_variates=num_variates,
                     lookback_len=self.seq_len,
                     num_tokens_per_variate=model_params["num_tokens_per_variate"],
                     dim=model_params["dim"],
@@ -126,7 +130,7 @@ class NeiroInference:
                 ).to(self.device)
             elif model_name == "IF":
                 self.models[model_name] = iTransformer(
-                    num_variates=model_params["num_variates"],
+                    num_variates=num_variates,
                     lookback_len=self.seq_len,
                     num_tokens_per_variate=model_params["num_tokens_per_variate"],
                     dim=model_params["dim"],
