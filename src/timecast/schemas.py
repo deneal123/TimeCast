@@ -1,4 +1,4 @@
-from typing import Union, Optional, Type, Dict
+from typing import Union, Optional, Type, Dict, List
 from pydantic import (BaseModel, Field, StrictStr, condecimal, StrictInt, StrictBool,
                       ValidationError, root_validator, ConfigDict)
 from timecast.exceptions import ValidationFailedError
@@ -127,6 +127,47 @@ class EntryClassicDataset(BaseModel):
                                        " is not provided or shop_sales_prices is not excluded.")
 
         return values
+
+
+@auto_generate_docstring
+class EntryTimeSeriesDataset(BaseModel):
+    """
+    Валидация обобщённого временного ряда: один tidy-CSV (long).
+    Колонки: time (дата), target (значение), опц. series_id, произвольные feature_*.
+    Не привязан к домену (магазины/товары — частный случай).
+    """
+    Source: StrictStr = Field(...,
+                              alias="source",
+                              examples=["./data/series.csv"],
+                              description="Путь к tidy-CSV (long): колонки time, target, [series_id], feature_*")
+    TimeCol: Optional[StrictStr] = Field("time",
+                                         alias="time_col",
+                                         examples=["time"],
+                                         description="Имя колонки времени (дата/таймстамп)")
+    TargetCol: Optional[StrictStr] = Field("target",
+                                           alias="target_col",
+                                           examples=["target"],
+                                           description="Имя колонки целевого значения")
+    IdCol: Optional[StrictStr] = Field(None,
+                                       alias="series_id_col",
+                                       examples=["series_id"],
+                                       description="Имя колонки идентификатора ряда (None → один ряд)")
+    FeatureCols: Optional[List[StrictStr]] = Field(None,
+                                                   alias="feature_cols",
+                                                   examples=[["price", "promo"]],
+                                                   description="Колонки-фичи (None → все, кроме time/target/series_id)")
+    Plots: Optional[StrictBool] = Field(False,
+                                        alias="plots",
+                                        examples=[True],
+                                        description="Строить графики? Да/Нет")
+    SavePlots: Optional[StrictBool] = Field(True,
+                                            alias="save_plots",
+                                            examples=[True],
+                                            description="Сохранять графики? Да/Нет")
+    SavePathPlots: Optional[StrictStr] = Field(None,
+                                               alias="save_path_plots",
+                                               examples=["./plots"],
+                                               description="Куда сохранять графики (дефолт ./plots)")
 
 
 @auto_generate_docstring

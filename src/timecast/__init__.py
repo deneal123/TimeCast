@@ -6,8 +6,10 @@ from timecast.schemas import (EntryClassicDataset, EntryClassicProcess,
                                          EntryClassicInferencePipeline,
                                          EntryNeiroGraduatePipeline,
                                          EntryNeiroInferencePipeline,
+                                         EntryTimeSeriesDataset,
                                          validate_with_pydantic)
 from timecast.data.classic import ClassicDataset
+from timecast.data.timeseries import TimeSeriesDataset
 from timecast.season.process import ClassicProcess
 from timecast.models.classic import ClassicModel
 from timecast.training.classic import ClassicGraduate
@@ -42,6 +44,7 @@ __all__ = [  # высокоуровневый API
            'TimeCastError', 'DataNotFoundError', 'ValidationFailedError',
            # модели/пайплайны (низкоуровневый доступ)
            'EntryClassicDataset',
+           'EntryTimeSeriesDataset',
            'EntryClassicProcess',
            'EntryClassicGraduate',
            'EntryClassicInference',
@@ -54,6 +57,7 @@ __all__ = [  # высокоуровневый API
            'EntryNeiroInferencePipeline',
            'validate_with_pydantic',
            'ClassicDataset',
+           'TimeSeriesDataset',
            'ClassicProcess',
            'ClassicModel',
            'ClassicGraduate',
