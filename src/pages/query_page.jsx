@@ -17,6 +17,7 @@ import LogStreamComponent from "../API/apiLogStreamComponent";
 import ForecastChart from "../components/ForecastChart";
 import TrainingResults from "../components/TrainingResults";
 import DecompositionChart from "../components/DecompositionChart";
+import GenericSeriesForm from "../components/GenericSeriesForm";
 
 // Различаем форму ответа по первому периоду первого item.
 const firstPeriodOf = (results) => {
@@ -200,10 +201,11 @@ const QueryPage = () => {
             <Text fontSize="24px" fontWeight="bold" color="#FFFFFF" mb={4}>
               Insert Query
             </Text>
+            <GenericSeriesForm onBuild={setRequest} />
             <Textarea
               value={request}
               onChange={(e) => setRequest(e.target.value)}
-              height="500px"
+              height="320px"
               bg="#2D2D2D"
               color="#FFFFFF"
               borderColor="#FF0032"
