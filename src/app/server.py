@@ -270,7 +270,7 @@ def run_server():
         uvicorn_config = yaml.safe_load(f.read())
         logging.config.dictConfig(uvicorn_config)
     reload = os.getenv("DEBUG", "FALSE").upper() == "TRUE"
-    uvicorn.run("server:app",
+    uvicorn.run("src.app.server:app",
                 host=os.getenv("HOST", "0.0.0.0"),
                 port=int(os.getenv("SERVER_PORT", "8000")),
                 log_config=uvicorn_log_config, reload=reload)

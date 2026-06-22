@@ -9,7 +9,7 @@ case "$1" in
   server)
     RELOAD=""
     if [ "${DEBUG}" = "TRUE" ]; then RELOAD="--reload"; fi
-    exec uvicorn src.pipeline.server:app --host 0.0.0.0 --port "${SERVER_PORT:-8000}" ${RELOAD}
+    exec uvicorn src.app.server:app --host 0.0.0.0 --port "${SERVER_PORT:-8000}" ${RELOAD}
     ;;
   celery)
     shift
