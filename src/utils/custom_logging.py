@@ -1,12 +1,11 @@
-import os
 import logging
+import os
 import time
-import sys
 
-from rich.theme import Theme
-from rich.logging import RichHandler
 from rich.console import Console
+from rich.logging import RichHandler
 from rich.pretty import install as pretty_install
+from rich.theme import Theme
 from rich.traceback import install as traceback_install
 
 log = None
@@ -22,15 +21,11 @@ def setup_logging(clean=False, debug=False):
         if clean and os.path.isfile('setup.log'):
             os.remove('setup.log')
         time.sleep(0.1)  # prevent race condition
-    except:
+    except OSError:
         pass
 
-    if sys.version_info >= (3, 9):
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s | %(levelname)s | %(pathname)s | %(message)s',
-                            filename='setup.log', filemode='a', encoding='utf-8', force=True)
-    else:
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s | %(levelname)s | %(pathname)s | %(message)s',
-                            filename='setup.log', filemode='a', force=True)
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s | %(levelname)s | %(pathname)s | %(message)s',
+                        filename='setup.log', filemode='a', encoding='utf-8', force=True)
 
     console = Console(log_time=True, log_time_format='%H:%M:%S-%f', theme=Theme({
         "traceback.border": "black",

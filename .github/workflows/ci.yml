@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [backend]
+  pull_request:
+    branches: [backend]
+
+# Backend зависит от пакета timecast (ветка library) и не публикуется на PyPI,
+# поэтому в standalone-ветке backend гоняем только линт. Интеграционная проверка
+# (импорт + TestClient) — в CI ветки dev, где timecast доступен как сабмодуль.
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install ruff
+
+      - name: Lint (ruff)
+        run: ruff check src

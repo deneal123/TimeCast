@@ -38,7 +38,8 @@ exclude = [".venv", "venv", "logs", "public", "src/notebooks"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
-ignore = ["E501"]
+# E501 — длина строк; B008 — Depends/File(...) в дефолтах аргументов это идиома FastAPI.
+ignore = ["E501", "B008"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]

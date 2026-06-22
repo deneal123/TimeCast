@@ -1,33 +1,38 @@
+import asyncio
+import logging
 import os
-from fastapi import FastAPI, HTTPException, Request, File, UploadFile
-from fastapi.staticfiles import StaticFiles
-from typing import Dict
-from fastapi.openapi.models import Tag as OpenApiTag
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from src.utils.custom_logging import setup_logging
+import warnings
+
 from dotenv import load_dotenv
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.models import Tag as OpenApiTag
+from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+from timecast import (
+    EntryClassicGraduatePipeline,
+    EntryClassicInferencePipeline,
+    EntryNeiroGraduatePipeline,
+    EntryNeiroInferencePipeline,
+    EntrySeasonAnalyticPipeline,
+    TimeCastError,
+    configure_paths,
+)
+
 from src import path_to_project
-from timecast import (EntrySeasonAnalyticPipeline, EntryClassicGraduatePipeline,
-                                         EntryClassicInferencePipeline, EntryNeiroGraduatePipeline,
-                                         EntryNeiroInferencePipeline)
 from src.services.analytic_services import season_analytic_pipeline
 from src.services.classic_services import classic_graduate_pipeline, classic_inference_pipeline
+from src.services.file_services import get_zip_from_server, upload_csv_to_server
 from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference_pipeline
-from src.services.file_services import upload_csv_to_server, get_zip_from_server
 from src.services.timeseries_services import (
     timeseries_graduate_pipeline,
     timeseries_inference_pipeline,
     timeseries_neiro_graduate_pipeline,
     timeseries_neiro_inference_pipeline,
 )
-from pydantic import BaseModel
-from timecast import TimeCastError
-from timecast import configure_paths
-from fastapi.responses import StreamingResponse
-import asyncio
-import logging
-import warnings
+from src.utils.custom_logging import setup_logging
+
 warnings.simplefilter("ignore", category=FutureWarning)
 
 # Загружаем .env один раз при старте (python-dotenv вместо кастомного env.py).
@@ -154,7 +159,7 @@ async def health():
 
 
 
-@app_server.post("/upload_csv/", response_model=Dict, tags=["File"])
+@app_server.post("/upload_csv/", response_model=dict, tags=["File"])
 async def upload_csv(files: list[UploadFile] = File(...)):
     """
     Route for upload csv files.
@@ -171,7 +176,7 @@ async def upload_csv(files: list[UploadFile] = File(...)):
 
 
 
-@app_server.get("/get_zip/", response_model=Dict, tags=["File"])
+@app_server.get("/get_zip/", response_model=dict, tags=["File"])
 async def get_zip():
     """
     Route for get zip file.
@@ -186,7 +191,7 @@ async def get_zip():
 
 
 
-@app_server.post("/season_analytic/", response_model=Dict, tags=["Analytic"])
+@app_server.post("/season_analytic/", response_model=dict, tags=["Analytic"])
 async def season_analytic(entry: EntrySeasonAnalyticPipeline):
     """
     Route for season analytic.
@@ -202,7 +207,7 @@ async def season_analytic(entry: EntrySeasonAnalyticPipeline):
         raise ex
 
 
-@app_server.post("/classic_graduate/", response_model=Dict, tags=["Graduate"])
+@app_server.post("/classic_graduate/", response_model=dict, tags=["Graduate"])
 async def classic_graduate(entry: EntryClassicGraduatePipeline):
     """
     Route for graduate of classical models.
@@ -220,17 +225,17 @@ async def classic_graduate(entry: EntryClassicGraduatePipeline):
 
 class TimeSeriesGraduateRequest(BaseModel):
     """Обобщённый запрос: любой временной ряд (tidy CSV) + параметры обучения."""
-    dataset: Dict  # поля EntryTimeSeriesDataset: source, [time_col, target_col, series_id_col, feature_cols]
-    graduate: Dict  # dictseasonal, models_params, [save_path_weights]
+    dataset: dict  # поля EntryTimeSeriesDataset: source, [time_col, target_col, series_id_col, feature_cols]
+    graduate: dict  # dictseasonal, models_params, [save_path_weights]
 
 
 class TimeSeriesInferenceRequest(BaseModel):
     """Обобщённый запрос: любой временной ряд (tidy CSV) + параметры инференса."""
-    dataset: Dict  # поля EntryTimeSeriesDataset
-    inference: Dict  # dictseasonal, [future_or_estimate, save_path_weights, plots, ...]
+    dataset: dict  # поля EntryTimeSeriesDataset
+    inference: dict  # dictseasonal, [future_or_estimate, save_path_weights, plots, ...]
 
 
-@app_server.post("/timeseries_graduate/", response_model=Dict, tags=["Graduate"])
+@app_server.post("/timeseries_graduate/", response_model=dict, tags=["Graduate"])
 async def timeseries_graduate(entry: TimeSeriesGraduateRequest):
     """Обучение classic-моделей на ПРОИЗВОЛЬНОМ временном ряду (без привязки к домену)."""
     try:
@@ -240,7 +245,7 @@ async def timeseries_graduate(entry: TimeSeriesGraduateRequest):
         raise ex
 
 
-@app_server.post("/timeseries_inference/", response_model=Dict, tags=["Inference"])
+@app_server.post("/timeseries_inference/", response_model=dict, tags=["Inference"])
 async def timeseries_inference(entry: TimeSeriesInferenceRequest):
     """Инференс classic-моделей на ПРОИЗВОЛЬНОМ временном ряду (без привязки к домену)."""
     try:
@@ -250,7 +255,7 @@ async def timeseries_inference(entry: TimeSeriesInferenceRequest):
         raise ex
 
 
-@app_server.post("/timeseries_neiro_graduate/", response_model=Dict, tags=["Graduate"])
+@app_server.post("/timeseries_neiro_graduate/", response_model=dict, tags=["Graduate"])
 async def timeseries_neiro_graduate(entry: TimeSeriesGraduateRequest):
     """Обучение нейросети на ПРОИЗВОЛЬНОМ временном ряду (num_variates авто = 3 + число фич)."""
     try:
@@ -260,7 +265,7 @@ async def timeseries_neiro_graduate(entry: TimeSeriesGraduateRequest):
         raise ex
 
 
-@app_server.post("/timeseries_neiro_inference/", response_model=Dict, tags=["Inference"])
+@app_server.post("/timeseries_neiro_inference/", response_model=dict, tags=["Inference"])
 async def timeseries_neiro_inference(entry: TimeSeriesInferenceRequest):
     """Инференс нейросети на ПРОИЗВОЛЬНОМ временном ряду (без привязки к домену)."""
     try:
@@ -270,7 +275,7 @@ async def timeseries_neiro_inference(entry: TimeSeriesInferenceRequest):
         raise ex
 
 
-@app_server.post("/neiro_graduate/", response_model=Dict, tags=["Graduate"])
+@app_server.post("/neiro_graduate/", response_model=dict, tags=["Graduate"])
 async def neiro_graduate(entry: EntryNeiroGraduatePipeline):
     """
     Route for graduate of neiro models.
@@ -286,7 +291,7 @@ async def neiro_graduate(entry: EntryNeiroGraduatePipeline):
         raise ex
 
 
-@app_server.post("/classic_inference/", response_model=Dict, tags=["Inference"])
+@app_server.post("/classic_inference/", response_model=dict, tags=["Inference"])
 async def classic_inference(entry: EntryClassicInferencePipeline):
     """
     Route for inference of classical models.
@@ -302,7 +307,7 @@ async def classic_inference(entry: EntryClassicInferencePipeline):
         raise ex
 
 
-@app_server.post("/neiro_inference/", response_model=Dict, tags=["Inference"])
+@app_server.post("/neiro_inference/", response_model=dict, tags=["Inference"])
 async def neiro_inference(entry: EntryNeiroInferencePipeline):
     """
     Route for inference of neiro models.
@@ -321,11 +326,13 @@ async def neiro_inference(entry: EntryNeiroInferencePipeline):
 
 def run_server():
     import logging
+
     import uvicorn
     import yaml
+
     from src import path_to_logging
     uvicorn_log_config = path_to_logging()
-    with open(uvicorn_log_config, 'r') as f:
+    with open(uvicorn_log_config) as f:
         uvicorn_config = yaml.safe_load(f.read())
         logging.config.dictConfig(uvicorn_config)
     reload = os.getenv("DEBUG", "FALSE").upper() == "TRUE"

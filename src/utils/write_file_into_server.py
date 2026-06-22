@@ -1,7 +1,10 @@
 import os
+
 from aiofiles import open as aio_open
+
 from src import path_to_project
 from src.utils.custom_logging import setup_logging
+
 log = setup_logging()
 
 

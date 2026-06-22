@@ -1,12 +1,14 @@
 import os
-from typing import Dict, Optional
-from fastapi import UploadFile, HTTPException, status
-from src.utils.write_file_into_server import write_file_into_server
-from src import path_to_project
-from datetime import datetime
 import zipfile
-from src.utils.return_url_object import return_url_object
+from datetime import datetime
+
+from fastapi import HTTPException, UploadFile, status
+
+from src import path_to_project
 from src.utils.custom_logging import setup_logging
+from src.utils.return_url_object import return_url_object
+from src.utils.write_file_into_server import write_file_into_server
+
 log = setup_logging()
 
 
@@ -33,7 +35,7 @@ def _validate_upload(file: UploadFile) -> str:
 
 async def upload_csv_to_server(
         files: list[UploadFile]
-) -> Dict:
+) -> dict:
 
     if not files:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Файлы не переданы")
@@ -58,7 +60,7 @@ async def upload_csv_to_server(
         except Exception as ex:
             log.error(ex)
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                detail="Files not uploaded")
+                                detail="Files not uploaded") from ex
 
     log.info(f"CSV uploaded: {saved}")
     return {"message": "CSV was successfully uploaded", "files": saved}
@@ -75,14 +77,15 @@ def get_zip_from_server(
         return {"url": f"{return_url_object(zip_filename, 'zip')}"}
     except Exception as ex:
         log.error(ex)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Zip not send")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Zip not send") from ex
 
 
 
 def create_zip_with_unique_name(
         source_dir: str,  # Исходная директория, откуда будут собраны файлы
         destination_dir: str,  # Директория, куда будет сохранен zip-архив
-        zip_prefix: Optional[str] = "archive"  # Префикс для имени архива
+        zip_prefix: str | None = "archive"  # Префикс для имени архива
 ) -> str:
     """
     Собирает все файлы из исходной директории и сохраняет их в другой директории в формате .zip с уникальным именем.
@@ -119,5 +122,5 @@ def create_zip_with_unique_name(
         log.error(f"Ошибка при создании ZIP архива: {ex}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при создании ZIP архива."
-        )
+            detail="Ошибка при создании ZIP архива.",
+        ) from ex
