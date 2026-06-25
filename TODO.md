@@ -128,7 +128,8 @@
       `collect_decomposition_results` (trend/seasonal/resid); routing по `trend`-ключу.
 - [x] Унифицировать HTTP-клиент — все сервисы переведены на `Instance` (axios); интерсептор
       разворачивает `response.data` и нормализует FastAPI-detail в читаемый `Error.message`.
-- [ ] Явный выбор операции в UI вместо парсинга формы JSON на фронте.
+- [x] Явный выбор операции в UI — `detectOp` показывает бейдж с именем операции; retail-шаблоны
+      (4 кнопки) заполняют JSON; `GenericSeriesForm` расширен режимом `decompose`.
 - [ ] Вынести контент документации из кода в `.md`/бэкенд.
 - [x] Error boundary + loading — `ErrorBoundary` оборачивает `RouterProvider`; `isLoading` блокирует
       кнопку "Send Query" и показывает индикатор; ошибки API попадают в responseText.
