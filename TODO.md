@@ -148,7 +148,9 @@
 - [ ] Артефакты (веса/графики) — в объектное хранилище (S3/Selectel, `script/selectel_cloud.py`).
 - [x] Dockerfile (api + статика) + `docker-compose`; healthcheck-эндпоинт — реализовано
       (`backend/docker/`, `frontend/docker/`, `docker/docker-compose*.yaml`, `/server/health`).
-- [ ] Асинхронные задачи обучения (очередь arq/RQ) со статусом/прогрессом для дашборда.
+- [x] Асинхронные задачи обучения — `BackgroundTasks` + `TaskStore` (in-memory, совместим с Redis);
+      4 `*/queue/` POST-эндпоинта + `/tasks/` GET; фронт: `task_services.js`, `TaskStatusPanel`
+      (polling 2.5s, badge статуса, результат по завершению); 8 тестов в `backend/tests/`.
 
 ---
 
