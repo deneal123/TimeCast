@@ -6,7 +6,7 @@
 
 ## Целевая архитектура
 
-```
+```text
 ┌──────────────────────────────────────────────┐
 │  timecast/  (pip-пакет, чистый Python API)     │  ← ЯДРО И ПРОДУКТ
 │  data · models · training · inference · season │
@@ -26,6 +26,7 @@
 ```
 
 **Принятые решения:**
+
 - Библиотека → отдельный pip-устанавливаемый пакет с чистым API.
 - Дашборд → развиваем существующий React + Plotly; FastAPI остаётся тонким API-слоем.
 - БД → **вырезана** (см. «Сделано»).
@@ -130,7 +131,8 @@
       разворачивает `response.data` и нормализует FastAPI-detail в читаемый `Error.message`.
 - [x] Явный выбор операции в UI — `detectOp` показывает бейдж с именем операции; retail-шаблоны
       (4 кнопки) заполняют JSON; `GenericSeriesForm` расширен режимом `decompose`.
-- [ ] Вынести контент документации из кода в `.md`/бэкенд.
+- [x] Вынести контент документации — `public/docs/api.md` (Markdown с таблицами + code blocks);
+      `documentation_page.jsx` 710→55 строк, фетчит файл через `fetch` + показывает спиннер.
 - [x] Error boundary + loading — `ErrorBoundary` оборачивает `RouterProvider`; `isLoading` блокирует
       кнопку "Send Query" и показывает индикатор; ошибки API попадают в responseText.
 
@@ -144,7 +146,8 @@
 - [x] Линт: `ruff` проходит полным конфигом (E,F,I,UP,B,SIM) в library и backend; `eslint` во frontend.
 - [x] CI (GitHub Actions): per-branch workflow'ы — library (ruff+pytest), backend (ruff), frontend (lint+build), dev (интеграция через сабмодули: линт+тесты+smoke бэкенда+сборка фронта).
 - [ ] Артефакты (веса/графики) — в объектное хранилище (S3/Selectel, `script/selectel_cloud.py`).
-- [ ] Dockerfile (api + статика) + `docker-compose`; healthcheck-эндпоинт.
+- [x] Dockerfile (api + статика) + `docker-compose`; healthcheck-эндпоинт — реализовано
+      (`backend/docker/`, `frontend/docker/`, `docker/docker-compose*.yaml`, `/server/health`).
 - [ ] Асинхронные задачи обучения (очередь arq/RQ) со статусом/прогрессом для дашборда.
 
 ---
