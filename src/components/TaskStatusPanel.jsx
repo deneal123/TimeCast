@@ -1,14 +1,25 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Box, Badge, Text, HStack, Divider, Link, UnorderedList, ListItem } from "@chakra-ui/react";
+import {
+  Box,
+  Badge,
+  Text,
+  HStack,
+  Divider,
+  Link,
+  Flex,
+  Spinner,
+  Icon,
+} from "@chakra-ui/react";
+import { ExternalLinkIcon, WarningIcon, CheckCircleIcon, TimeIcon } from "@chakra-ui/icons";
 import { getTask } from "../API/services/task_services";
 import ForecastChart from "./ForecastChart";
 import TrainingResults from "./TrainingResults";
 
-const STATUS_COLOR = {
-  pending: "gray",
-  running: "yellow",
-  done: "green",
-  failed: "red",
+const STATUS_META = {
+  pending: { color: "gray",   scheme: "gray",   icon: TimeIcon,        label: "В очереди" },
+  running: { color: "#FFBF00", scheme: "yellow", icon: null,            label: "Выполняется" },
+  done:    { color: "#48BB78", scheme: "green",  icon: CheckCircleIcon, label: "Готово" },
+  failed:  { color: "#FF8888", scheme: "red",    icon: WarningIcon,     label: "Ошибка" },
 };
 
 const POLL_INTERVAL_MS = 2500;
@@ -41,64 +52,146 @@ const TaskStatusPanel = ({ taskId, onResultReady }) => {
 
   if (!record) return null;
 
-  const isTraining = record.result && "best_model" in (Object.values(Object.values(record.result)[0] ?? {})[0] ?? {});
+  const meta = STATUS_META[record.status] ?? STATUS_META.pending;
+  const isTraining =
+    record.result &&
+    "best_model" in
+      (Object.values(Object.values(Object.values(record.result)[0] ?? {})[0] ?? {})[0] ?? {});
+
+  const artifacts = record.result?.artifacts ?? [];
 
   return (
-    <Box border="2px solid #FF0032" borderRadius="10px" p={5} bg="#1A1A1A" mt={4} w="100%">
-      <HStack mb={3} justify="space-between">
-        <Text color="#FFFFFF" fontWeight="bold" fontSize="18px">
-          Задача {record.task_id}
-        </Text>
+    <Box
+      bg="#141820"
+      border="1px solid #2A2E36"
+      borderRadius="14px"
+      overflow="hidden"
+      mt={5}
+      w="100%"
+    >
+      {/* Header */}
+      <HStack
+        px={5}
+        py={3}
+        bg="#0F1218"
+        borderBottom="1px solid #2A2E36"
+        justify="space-between"
+      >
         <HStack spacing={3}>
-          <Badge colorScheme={STATUS_COLOR[record.status] ?? "gray"} fontSize="13px" px={2}>
-            {record.status}
-          </Badge>
-          <Text color="#888" fontSize="12px">
-            {record.operation}
+          <Text color="#FFFFFF" fontWeight="600" fontSize="15px">
+            Задача
           </Text>
+          <Text color="#555" fontSize="12px" fontFamily="monospace">
+            {record.task_id}
+          </Text>
+        </HStack>
+        <HStack spacing={3}>
+          <Badge colorScheme={meta.scheme} fontSize="11px" px={2} borderRadius="6px">
+            {record.operation}
+          </Badge>
+          <Badge colorScheme={meta.scheme} fontSize="11px" px={2} borderRadius="6px">
+            {meta.label}
+          </Badge>
         </HStack>
       </HStack>
 
-      {record.status === "running" && (
-        <Text color="#FFBF00" fontSize="13px">Обучение выполняется…</Text>
-      )}
-      {record.status === "failed" && (
-        <Text color="#FF0032" fontSize="13px">{record.error}</Text>
-      )}
+      {/* Status body */}
+      <Box px={5} py={4}>
+        {record.status === "running" && (
+          <HStack spacing={3} color="#FFBF00">
+            <Spinner size="sm" color="#FFBF00" thickness="2px" />
+            <Text fontSize="13px">Обучение выполняется…</Text>
+          </HStack>
+        )}
 
+        {record.status === "pending" && (
+          <HStack spacing={3} color="#888">
+            <Spinner size="sm" color="#888" thickness="2px" />
+            <Text fontSize="13px">Ожидание в очереди…</Text>
+          </HStack>
+        )}
+
+        {record.status === "failed" && (
+          <Flex
+            align="flex-start"
+            gap={3}
+            bg="#1A0A0A"
+            border="1px solid #FF003244"
+            borderRadius="10px"
+            p={4}
+          >
+            <Icon as={WarningIcon} color="#FF8888" mt="2px" flexShrink={0} />
+            <Text color="#FF8888" fontSize="13px" fontFamily="monospace">
+              {record.error || "Неизвестная ошибка"}
+            </Text>
+          </Flex>
+        )}
+
+        {/* Timestamps */}
+        {(record.created_at || record.updated_at) && (
+          <HStack mt={3} spacing={4}>
+            {record.created_at && (
+              <Text color="#444" fontSize="11px">
+                Создана: {new Date(record.created_at).toLocaleTimeString()}
+              </Text>
+            )}
+            {record.updated_at && record.updated_at !== record.created_at && (
+              <Text color="#444" fontSize="11px">
+                Обновлена: {new Date(record.updated_at).toLocaleTimeString()}
+              </Text>
+            )}
+          </HStack>
+        )}
+
+        {/* Artifacts */}
+        {artifacts.length > 0 && (
+          <>
+            <Divider borderColor="#2A2E36" my={4} />
+            <Text color="#555" fontSize="11px" fontWeight="600" letterSpacing="0.08em" mb={2}>
+              АРТЕФАКТЫ S3 ({artifacts.length})
+            </Text>
+            <Flex direction="column" gap={1}>
+              {artifacts.map((a) => (
+                <HStack
+                  key={a.key}
+                  px={3}
+                  py={2}
+                  bg="#0D1017"
+                  borderRadius="8px"
+                  justify="space-between"
+                >
+                  <Link
+                    href={`/server/tasks/${record.task_id}/artifacts/${encodeURIComponent(a.key)}`}
+                    isExternal
+                    color="#FFBF00"
+                    fontSize="12px"
+                    fontFamily="monospace"
+                    _hover={{ color: "#FFD540" }}
+                  >
+                    {a.key.split("/").slice(-2).join("/")}
+                    <Icon as={ExternalLinkIcon} ml={1} boxSize="10px" />
+                  </Link>
+                  <Text color="#444" fontSize="11px" flexShrink={0}>
+                    {(a.size / 1024).toFixed(1)} KB
+                  </Text>
+                </HStack>
+              ))}
+            </Flex>
+          </>
+        )}
+      </Box>
+
+      {/* Result charts */}
       {record.status === "done" && record.result && (
         <>
-          <Divider my={3} borderColor="#444" />
-          {isTraining ? (
-            <TrainingResults results={record.result.results ?? record.result} />
-          ) : (
-            <ForecastChart results={record.result.results ?? record.result} />
-          )}
-
-          {record.result.artifacts?.length > 0 && (
-            <Box mt={4}>
-              <Text color="#888" fontSize="12px" mb={1}>
-                Артефакты S3 ({record.result.artifacts.length}):
-              </Text>
-              <UnorderedList spacing={1} styleType="none" m={0}>
-                {record.result.artifacts.map((a) => (
-                  <ListItem key={a.key}>
-                    <Link
-                      color="#FFBF00"
-                      fontSize="12px"
-                      href={`/server/tasks/${record.task_id}/artifacts/${encodeURIComponent(a.key)}`}
-                      isExternal
-                    >
-                      {a.key.split("/").slice(-2).join("/")}
-                    </Link>
-                    <Text as="span" color="#555" fontSize="11px" ml={2}>
-                      {(a.size / 1024).toFixed(1)} KB
-                    </Text>
-                  </ListItem>
-                ))}
-              </UnorderedList>
-            </Box>
-          )}
+          <Divider borderColor="#2A2E36" />
+          <Box p={5}>
+            {isTraining ? (
+              <TrainingResults results={record.result.results ?? record.result} />
+            ) : (
+              <ForecastChart results={record.result.results ?? record.result} />
+            )}
+          </Box>
         </>
       )}
     </Box>

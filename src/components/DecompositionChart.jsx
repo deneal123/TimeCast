@@ -1,15 +1,93 @@
 import React, { useMemo, useState } from "react";
 import createPlotlyComponent from "react-plotly.js/factory";
 import Plotly from "plotly.js-dist-min";
-import { Box, Text, Select, HStack } from "@chakra-ui/react";
+import { Box, Text, Select, HStack, Badge, Flex, SimpleGrid } from "@chakra-ui/react";
 
 const Plot = createPlotlyComponent(Plotly);
 
-/**
- * Сезонная декомпозиция (аддитивная): тренд / сезон / остаток.
- * Контракт: results = { item_id: { period: { trend, seasonal, resid } } }
- * (см. timecast.serialize_decomposition_results).
- */
+const COMPONENTS = [
+  { key: "trend",    color: "#FF0032", label: "Тренд" },
+  { key: "seasonal", color: "#FFBF00", label: "Сезонность" },
+  { key: "resid",    color: "#00B5D8", label: "Остаток" },
+];
+
+const PLOT_LAYOUT = {
+  autosize: true,
+  height: 380,
+  paper_bgcolor: "#141820",
+  plot_bgcolor: "#0D1017",
+  font: { color: "#888", size: 12, family: "Inter, sans-serif" },
+  margin: { l: 60, r: 20, t: 16, b: 50 },
+  xaxis: {
+    title: { text: "Шаг", font: { color: "#555", size: 12 } },
+    gridcolor: "#1E2330",
+    linecolor: "#2A2E36",
+    zerolinecolor: "#2A2E36",
+    tickfont: { color: "#666" },
+  },
+  yaxis: {
+    title: { text: "Значение", font: { color: "#555", size: 12 } },
+    gridcolor: "#1E2330",
+    linecolor: "#2A2E36",
+    zerolinecolor: "#2A2E36",
+    tickfont: { color: "#666" },
+  },
+  legend: {
+    orientation: "h",
+    y: -0.15,
+    bgcolor: "transparent",
+    borderwidth: 0,
+    font: { color: "#888", size: 12 },
+  },
+  hovermode: "x unified",
+  hoverlabel: { bgcolor: "#1A1D21", bordercolor: "#2A2E36", font: { color: "#FFFFFF" } },
+};
+
+const SELECT_STYLE = {
+  bg: "#0D1017",
+  color: "#E8E8E8",
+  border: "1px solid #2A2E36",
+  borderRadius: "8px",
+  size: "sm",
+  _hover: { borderColor: "#444" },
+  sx: { option: { background: "#1A1D21" } },
+};
+
+const StatCard = ({ label, color, values }) => {
+  if (!Array.isArray(values) || !values.length) return null;
+  const nums = values.filter((v) => typeof v === "number");
+  const min = Math.min(...nums).toFixed(2);
+  const max = Math.max(...nums).toFixed(2);
+  const mean = (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(2);
+
+  return (
+    <Box
+      bg="#0D1017"
+      border="1px solid #2A2E36"
+      borderLeft={`3px solid ${color}`}
+      borderRadius="10px"
+      px={4}
+      py={3}
+    >
+      <Text color={color} fontWeight="600" fontSize="13px" mb={1}>
+        {label}
+      </Text>
+      <HStack spacing={3}>
+        {[["min", min], ["mean", mean], ["max", max]].map(([k, v]) => (
+          <Box key={k}>
+            <Text color="#444" fontSize="10px" fontWeight="600" letterSpacing="0.06em">
+              {k.toUpperCase()}
+            </Text>
+            <Text color="#AAAAAA" fontSize="12px" fontFamily="monospace">
+              {v}
+            </Text>
+          </Box>
+        ))}
+      </HStack>
+    </Box>
+  );
+};
+
 const DecompositionChart = ({ results }) => {
   const items = useMemo(() => Object.keys(results || {}), [results]);
   const [selItem, setSelItem] = useState("");
@@ -21,81 +99,98 @@ const DecompositionChart = ({ results }) => {
   const period = periods.includes(selPeriod) ? selPeriod : periods[0];
   const comp = (results[itemId] || {})[period] || {};
 
-  const xOf = (arr) => (Array.isArray(arr) ? arr.map((_, i) => i + 1) : []);
-  const traces = [
-    { key: "trend", color: "#FF0032" },
-    { key: "seasonal", color: "#FFBF00" },
-    { key: "resid", color: "#00B5D8" },
-  ]
+  const xOf = (arr) => arr.map((_, i) => i + 1);
+  const traces = COMPONENTS
     .filter(({ key }) => Array.isArray(comp[key]) && comp[key].length > 0)
-    .map(({ key, color }) => ({
+    .map(({ key, color, label }) => ({
       x: xOf(comp[key]),
       y: comp[key],
       type: "scatter",
       mode: "lines",
-      name: key,
+      name: label,
       line: { color, width: 2 },
     }));
 
   return (
-    <Box border="2px solid #FF0032" borderRadius="10px" p={5} bg="#1A1A1A" mt={5} w="100%">
-      <HStack mb={3} justify="space-between" align="center" spacing={4}>
-        <Text fontSize="22px" fontWeight="bold" color="#FFFFFF">
-          Декомпозиция — {itemId}
-        </Text>
+    <Box
+      bg="#141820"
+      border="1px solid #2A2E36"
+      borderRadius="14px"
+      overflow="hidden"
+      mt={5}
+      w="100%"
+    >
+      {/* Header */}
+      <HStack
+        px={5}
+        py={3}
+        bg="#0F1218"
+        borderBottom="1px solid #2A2E36"
+        justify="space-between"
+      >
+        <HStack spacing={3}>
+          <Text color="#FFFFFF" fontWeight="600" fontSize="15px">
+            Сезонная декомпозиция
+          </Text>
+          <Badge colorScheme="purple" fontSize="11px" px={2} borderRadius="6px">
+            decompose
+          </Badge>
+        </HStack>
         <HStack spacing={3}>
           <Select
-            w="220px"
+            {...SELECT_STYLE}
+            w="200px"
             value={itemId}
             onChange={(e) => setSelItem(e.target.value)}
-            bg="#2D2D2D"
-            color="#FFFFFF"
-            borderColor="#FF0032"
           >
             {items.map((id) => (
-              <option key={id} value={id} style={{ color: "#000" }}>
+              <option key={id} value={id}>
                 {id}
               </option>
             ))}
           </Select>
-          <Select
-            w="140px"
-            value={period}
-            onChange={(e) => setSelPeriod(e.target.value)}
-            bg="#2D2D2D"
-            color="#FFFFFF"
-            borderColor="#FF0032"
-          >
-            {periods.map((p) => (
-              <option key={p} value={p} style={{ color: "#000" }}>
-                {p}
-              </option>
-            ))}
-          </Select>
+          {periods.length > 1 && (
+            <Select
+              {...SELECT_STYLE}
+              w="130px"
+              value={period}
+              onChange={(e) => setSelPeriod(e.target.value)}
+            >
+              {periods.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </Select>
+          )}
         </HStack>
       </HStack>
 
-      {traces.length ? (
-        <Plot
-          data={traces}
-          layout={{
-            autosize: true,
-            height: 460,
-            paper_bgcolor: "#1A1A1A",
-            plot_bgcolor: "#2D2D2D",
-            font: { color: "#FFFFFF" },
-            margin: { l: 55, r: 20, t: 20, b: 45 },
-            xaxis: { title: "Шаг", gridcolor: "#444" },
-            yaxis: { title: "Значение", gridcolor: "#444" },
-            legend: { orientation: "h" },
-          }}
-          style={{ width: "100%" }}
-          useResizeHandler
-          config={{ displayModeBar: false, responsive: true }}
-        />
-      ) : (
-        <Text color="#AAA">Нет данных декомпозиции для отображения.</Text>
-      )}
+      {/* Stat cards */}
+      <SimpleGrid columns={[1, 3]} spacing={3} px={5} pt={4} pb={2}>
+        {COMPONENTS.map(({ key, color, label }) => (
+          <StatCard key={key} label={label} color={color} values={comp[key]} />
+        ))}
+      </SimpleGrid>
+
+      {/* Chart */}
+      <Box px={3} pb={4}>
+        {traces.length ? (
+          <Plot
+            data={traces}
+            layout={PLOT_LAYOUT}
+            style={{ width: "100%" }}
+            useResizeHandler
+            config={{ displayModeBar: false, responsive: true }}
+          />
+        ) : (
+          <Flex align="center" justify="center" h="200px">
+            <Text color="#444" fontSize="14px">
+              Нет данных декомпозиции
+            </Text>
+          </Flex>
+        )}
+      </Box>
     </Box>
   );
 };
