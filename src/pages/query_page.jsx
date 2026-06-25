@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   HStack,
   Box,
@@ -20,6 +20,7 @@ import {
   DeleteIcon,
   TimeIcon,
   CheckIcon,
+  RepeatClockIcon,
 } from "@chakra-ui/icons";
 import useWindowDimensions from "../hooks/window_dimensions";
 import { fetchZipUrl, uploadCSVFiles } from "../API/services/file_services";
@@ -111,6 +112,26 @@ const RETAIL_TEMPLATES = {
 };
 
 // ---------------------------------------------------------------------------
+// History helpers (localStorage)
+// ---------------------------------------------------------------------------
+
+const HISTORY_KEY = "timecast_query_history";
+const HISTORY_MAX = 8;
+
+const loadHistory = () => {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); }
+  catch { return []; }
+};
+
+const saveToHistory = (query) => {
+  try {
+    const prev = loadHistory().filter((q) => q !== query);
+    const next = [query, ...prev].slice(0, HISTORY_MAX);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+  } catch {}
+};
+
+// ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
@@ -187,8 +208,34 @@ const QueryPage = () => {
   const [resultData, setResultData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [queueTaskId, setQueueTaskId] = useState(null);
+  const [history, setHistory] = useState(loadHistory);
+  const [showHistory, setShowHistory] = useState(false);
 
   const detectedOp = useMemo(() => detectOp(request), [request]);
+
+  // Persist successful queries to localStorage history
+  const pushHistory = useCallback((q) => {
+    saveToHistory(q);
+    setHistory(loadHistory());
+  }, []);
+
+  // Keyboard shortcuts: Ctrl+Enter → Send Query, Ctrl+Shift+Enter → Queue
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === "Enter" && e.ctrlKey && !e.shiftKey && !isLoading) {
+        e.preventDefault();
+        handleSendQuery();
+      }
+      if (e.key === "Enter" && e.ctrlKey && e.shiftKey) {
+        e.preventDefault();
+        handleQueueTraining();
+      }
+      if (e.key === "Escape") setShowHistory(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, request]);
 
   // --- Handlers ---
 
@@ -254,10 +301,26 @@ const QueryPage = () => {
       }
       setResponseText(JSON.stringify(response, null, 2));
       setResultData(response);
+      pushHistory(request);
     } catch (error) {
       setResponseText(`Ошибка: ${error.message || "Запрос не выполнен."}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Tab key inserts 2 spaces in the JSON textarea
+  const handleTextareaKeyDown = (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const ta = e.target;
+      const { selectionStart: s, selectionEnd: end } = ta;
+      const newVal = request.substring(0, s) + "  " + request.substring(end);
+      setRequest(newVal);
+      // Restore cursor position after React re-render
+      requestAnimationFrame(() => {
+        ta.selectionStart = ta.selectionEnd = s + 2;
+      });
     }
   };
 
@@ -318,12 +381,66 @@ const QueryPage = () => {
               ))}
             </Wrap>
 
-            <Text fontSize="12px" color="#555" mb={2} fontWeight="600" letterSpacing="0.08em">
-              JSON
-            </Text>
+            <HStack justify="space-between" mb={2}>
+              <Text fontSize="12px" color="#555" fontWeight="600" letterSpacing="0.08em">
+                JSON
+              </Text>
+              <HStack spacing={2}>
+                <Text fontSize="11px" color="#333">
+                  Ctrl+Enter → отправить
+                </Text>
+                {history.length > 0 && (
+                  <Tooltip label="История запросов" placement="top" hasArrow>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      color="#555"
+                      _hover={{ color: "#FFBF00" }}
+                      leftIcon={<Icon as={RepeatClockIcon} />}
+                      onClick={() => setShowHistory((v) => !v)}
+                    >
+                      История
+                    </Button>
+                  </Tooltip>
+                )}
+              </HStack>
+            </HStack>
+
+            {/* History dropdown */}
+            {showHistory && history.length > 0 && (
+              <Box
+                bg="#0D1017"
+                border="1px solid #2A2E36"
+                borderRadius="10px"
+                mb={2}
+                maxH="180px"
+                overflowY="auto"
+              >
+                {history.map((q, i) => {
+                  const preview = q.replace(/\s+/g, " ").slice(0, 80);
+                  return (
+                    <Box
+                      key={i}
+                      px={3}
+                      py={2}
+                      cursor="pointer"
+                      borderBottom={i < history.length - 1 ? "1px solid #1A1D21" : "none"}
+                      _hover={{ bg: "#141820" }}
+                      onClick={() => { setRequest(q); setShowHistory(false); }}
+                    >
+                      <Text color="#888" fontSize="11px" fontFamily="monospace" noOfLines={1}>
+                        {preview}
+                      </Text>
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+
             <Textarea
               value={request}
               onChange={(e) => setRequest(e.target.value)}
+              onKeyDown={handleTextareaKeyDown}
               h="220px"
               bg="#0D1017"
               color="#E8E8E8"
