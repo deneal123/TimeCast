@@ -145,7 +145,11 @@
 - [x] Тесты библиотеки (pytest): 18 тестов — unit на data/metrics/serialize + e2e classic/neiro на CPU (маркер `slow`).
 - [x] Линт: `ruff` проходит полным конфигом (E,F,I,UP,B,SIM) в library и backend; `eslint` во frontend.
 - [x] CI (GitHub Actions): per-branch workflow'ы — library (ruff+pytest), backend (ruff), frontend (lint+build), dev (интеграция через сабмодули: линт+тесты+smoke бэкенда+сборка фронта).
-- [ ] Артефакты (веса/графики) — в объектное хранилище (S3/Selectel, `script/selectel_cloud.py`).
+- [x] Артефакты (веса/графики) — в объектное хранилище (S3/Selectel/MinIO):
+      `backend/src/services/storage_service.py` (`StorageService.from_env()`, `upload_dir`,
+      `presigned_url`); `boto3` в `[dependency-groups.cloud]` (опционально);
+      `_run_task` загружает веса+графики после DONE и добавляет `artifacts` в result;
+      S3_ENDPOINT/S3_BUCKET/S3_ACCESS_KEY/S3_SECRET_KEY в `.env.example`; 4 unit-теста.
 - [x] Dockerfile (api + статика) + `docker-compose`; healthcheck-эндпоинт — реализовано
       (`backend/docker/`, `frontend/docker/`, `docker/docker-compose*.yaml`, `/server/health`).
 - [x] Асинхронные задачи обучения — `BackgroundTasks` + `TaskStore` (in-memory, совместим с Redis);
