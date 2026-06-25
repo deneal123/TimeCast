@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Box, Badge, Text, HStack, Divider } from "@chakra-ui/react";
+import { Box, Badge, Text, HStack, Divider, Link, UnorderedList, ListItem } from "@chakra-ui/react";
 import { getTask } from "../API/services/task_services";
 import ForecastChart from "./ForecastChart";
 import TrainingResults from "./TrainingResults";
@@ -73,6 +73,31 @@ const TaskStatusPanel = ({ taskId, onResultReady }) => {
             <TrainingResults results={record.result.results ?? record.result} />
           ) : (
             <ForecastChart results={record.result.results ?? record.result} />
+          )}
+
+          {record.result.artifacts?.length > 0 && (
+            <Box mt={4}>
+              <Text color="#888" fontSize="12px" mb={1}>
+                Артефакты S3 ({record.result.artifacts.length}):
+              </Text>
+              <UnorderedList spacing={1} styleType="none" m={0}>
+                {record.result.artifacts.map((a) => (
+                  <ListItem key={a.key}>
+                    <Link
+                      color="#FFBF00"
+                      fontSize="12px"
+                      href={`/server/tasks/${record.task_id}/artifacts/${encodeURIComponent(a.key)}`}
+                      isExternal
+                    >
+                      {a.key.split("/").slice(-2).join("/")}
+                    </Link>
+                    <Text as="span" color="#555" fontSize="11px" ml={2}>
+                      {(a.size / 1024).toFixed(1)} KB
+                    </Text>
+                  </ListItem>
+                ))}
+              </UnorderedList>
+            </Box>
           )}
         </>
       )}

@@ -278,3 +278,106 @@ NeiroInference(entry: EntryNeiroInference(
 | `load_models` | Загрузка весов (.pt) из файловой системы |
 | `visualise` | Графики факт/прогноз |
 | `evaluate` | Оценка метрик (MAE, RMSE, R²) |
+
+---
+
+## Generic TimeSeries — произвольный временной ряд
+
+Эндпоинты для работы с CSV без привязки к розничному домену.
+
+### POST /server/timeseries_graduate/
+
+```json
+{
+  "dataset": {
+    "source": "path/to/data.csv",
+    "time_col": "date",
+    "target_col": "sales",
+    "series_id_col": "store"
+  },
+  "graduate": {
+    "dictseasonal": { "week": 7, "month": 30 },
+    "models_params": { "AUTOREG": [7, "week"] }
+  }
+}
+```
+
+### POST /server/timeseries_neiro_graduate/
+
+```json
+{
+  "dataset": { "source": "data.csv", "time_col": "date", "target_col": "value" },
+  "graduate": {
+    "dictseasonal": { "week": 7 },
+    "dictmodels": { "IF": { "depth": 4, "dim": 256, "dim_head": 64, "heads": 4,
+                             "num_tokens_per_variate": 1, "num_variates": 3 } }
+  }
+}
+```
+
+### POST /server/timeseries_inference/  и  /server/timeseries_neiro_inference/
+
+```json
+{
+  "dataset": { "source": "data.csv", "time_col": "date", "target_col": "value" },
+  "inference": {
+    "dictseasonal": { "week": 7 },
+    "future_or_estimate": "estimate"
+  }
+}
+```
+
+---
+
+## Асинхронная очередь обучения
+
+Каждый `*/graduate/` эндпоинт имеет парный `*/graduate/queue/`, который возвращает `task_id`
+немедленно и выполняет обучение фоном.
+
+### POST /server/classic_graduate/queue/
+
+Тело запроса — идентично `POST /server/classic_graduate/`. Ответ:
+
+```json
+{ "task_id": "a3f2b1c04d8e", "status": "pending" }
+```
+
+Аналогично для `/neiro_graduate/queue/`, `/timeseries_graduate/queue/`,
+`/timeseries_neiro_graduate/queue/`.
+
+### GET /server/tasks/
+
+Список всех задач (новые первыми):
+
+```json
+[
+  {
+    "task_id": "a3f2b1c04d8e",
+    "operation": "classic_graduate",
+    "status": "done",
+    "created_at": "2026-06-25T12:00:00Z",
+    "updated_at": "2026-06-25T12:03:00Z",
+    "result": { "results": { ... } },
+    "error": null
+  }
+]
+```
+
+### GET /server/tasks/{task_id}
+
+Статус и результат конкретной задачи. Поля `status`: `pending` → `running` → `done` | `failed`.
+
+Если настроено S3-хранилище (переменные `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY`,
+`S3_SECRET_KEY`), поле `result` дополняется массивом артефактов:
+
+```json
+{
+  "result": {
+    "results": { ... },
+    "artifacts": [
+      { "key": "a3f2b1c04d8e/weights/classic/model.pkl", "size": 24576 },
+      { "key": "a3f2b1c04d8e/plots/forecast.png",         "size": 102400 }
+    ]
+  }
+}
+```
