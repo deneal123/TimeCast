@@ -60,6 +60,7 @@ def serialize_inference_results(results: dict) -> dict:
                 "rmse": _to_jsonable(r.get("rmse")),
                 "r2": _to_jsonable(r.get("r2")),
                 "pred": _to_jsonable(r.get("pred")),
+                "actual": _to_jsonable(r.get("actual")),
             }
         if item_out:
             out[str(item_id)] = item_out

@@ -230,17 +230,8 @@ class NeiroInference:
             for idx, (period, result) in enumerate(periods.items()):
                 ax = axes[idx]
 
-                # Восстановленный предсказанный ряд: декомпозиция -> resid+trend+season,
-                # иначе сам ряд. Проверяем по колонкам, а не по числу строк (был баг len>4).
-                pred = result['pred'][0]
-
-                if 'resid' in pred.columns:
-                    pred = pred.resid + pred.trend + pred.season
-                else:
-                    pred = pred.series
-
-                # Заменяем все значения ниже 0 на 0
-                pred = pred.clip(lower=0.0)
+                # pred уже pd.Series (reconstructed в evaluate).
+                pred = result['pred']
 
                 if self.future_or_estimate == 'estimate':
                     rmse = result['rmse']
@@ -347,6 +338,25 @@ class NeiroInference:
                         all_y_true.append(timeseries_valid.cpu().detach().numpy())
                         all_y_pred.append(logits.cpu().detach().numpy())
 
+            # Восстанавливаем прогноз как 1D Series (resid+trend+season или series).
+            pred_df = preds[0][0]
+            if 'resid' in pred_df.columns:
+                pred_series = (pred_df['resid'] + pred_df['trend'] + pred_df['season']).clip(lower=0.0)
+            else:
+                pred_series = pred_df['series'].clip(lower=0.0)
+
+            # actual: последние val точек оригинального ряда (только для estimate).
+            actual_test = None
+            if self.future_or_estimate == 'estimate':
+                generic = "feature_cols" in self.dictidx
+                actual_full = self.dictmerge[item_id]['target' if generic else 'cnt'].copy()
+                if generic:
+                    actual_full.index = list(self.dictmerge[item_id]['date'])
+                else:
+                    _date_id = self.dictmerge[item_id]['date_id']
+                    actual_full.index = [self.dictidx['idx2date'][i - 1] for i in _date_id]
+                actual_test = actual_full.iloc[-val:]
+
             if self.future_or_estimate == 'estimate':
                 # После всех батчей вычисляем метрики
                 all_y_true = np.concatenate(all_y_true, axis=0)
@@ -360,11 +370,13 @@ class NeiroInference:
 
                 self.results[f"{item_id}"][f'{period}'] = {
                     "rmse": rmse,
-                    "pred": preds[0],
+                    "pred": pred_series,
+                    "actual": actual_test,
                     "model": name_model
                 }
             else:
                 self.results[f"{item_id}"][f'{period}'] = {
-                    "pred": preds[0],
+                    "pred": pred_series,
+                    "actual": None,
                     "model": name_model
                 }

@@ -14,10 +14,12 @@ class _FakeModel:
 def _sample_results():
     return {
         "STORE_1_FOODS_1_001": {
-            # classic-style: rmse + r2 + pandas-серия с NaN + несериализуемая модель
+            # classic-style: rmse + r2 + pandas-серия с NaN + actual + несериализуемая модель
             "week": {"rmse": np.float64(1.5), "r2": 0.8,
-                     "pred": pd.Series([1.0, 2.0, np.nan]), "model": _FakeModel()},
-            # neiro-style: без r2, ndarray-предсказание, model — строка
+                     "pred": pd.Series([1.0, 2.0, np.nan]),
+                     "actual": pd.Series([1.1, 1.9, 2.5]),
+                     "model": _FakeModel()},
+            # neiro-style: без r2/actual, ndarray-предсказание, model — строка
             "month": {"rmse": 2.0, "pred": np.array([3.0, 4.0]), "model": "AUTOARIMA"},
             # незаполненный период — int из dictseasonal → отбрасывается
             "quater": 90,
@@ -32,8 +34,11 @@ def test_serialize_is_json_safe():
     assert item["week"]["pred"] == [1.0, 2.0, None]
     assert item["week"]["rmse"] == 1.5
     assert item["week"]["r2"] == 0.8
-    # отсутствующий r2 → None; модель не попадает в вывод
+    # actual сериализован в список
+    assert item["week"]["actual"] == [1.1, 1.9, 2.5]
+    # отсутствующий r2/actual → None; модель не попадает в вывод
     assert item["month"]["r2"] is None
+    assert item["month"]["actual"] is None
     assert item["month"]["pred"] == [3.0, 4.0]
     assert "model" not in item["month"]
     # незаполненный период отброшен

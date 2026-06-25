@@ -248,6 +248,7 @@ class ClassicInference:
                 "rmse": rmse,
                 "r2": r2,
                 "pred": pred,
+                "actual": test if not self.without_test else None,
                 "model": model
             }
 
