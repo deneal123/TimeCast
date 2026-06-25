@@ -359,6 +359,23 @@ async def get_task(task_id: str):
     return _task_to_dict(record)
 
 
+@app_server.get("/tasks/{task_id}/artifacts/{key:path}", tags=["Tasks"])
+async def download_artifact(task_id: str, key: str):
+    """Возвращает presigned URL для скачивания артефакта из S3 (redirect)."""
+    from fastapi.responses import RedirectResponse
+
+    if storage is None:
+        raise HTTPException(status_code=503, detail="S3 не настроен")
+    record = task_store.get(task_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"Task {task_id!r} not found")
+    try:
+        url = await asyncio.to_thread(storage.presigned_url, key)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return RedirectResponse(url=url)
+
+
 async def _upload_artifacts(task_id: str) -> list[dict]:
     """Загружает веса и графики в S3 после завершения обучения (если S3 настроен)."""
     if storage is None:
