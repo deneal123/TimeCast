@@ -4,7 +4,7 @@ import os
 import warnings
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.models import Tag as OpenApiTag
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -25,6 +25,7 @@ from src.services.analytic_services import season_analytic_pipeline
 from src.services.classic_services import classic_graduate_pipeline, classic_inference_pipeline
 from src.services.file_services import get_zip_from_server, upload_csv_to_server
 from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference_pipeline
+from src.services.task_store import TaskStatus, task_store
 from src.services.timeseries_services import (
     timeseries_graduate_pipeline,
     timeseries_inference_pipeline,
@@ -97,6 +98,7 @@ ServerFileTag = OpenApiTag(name="File", description="Operations file")
 ServerAnalyticTag = OpenApiTag(name="Analytic", description="Operations analytic")
 ServerGraduateTag = OpenApiTag(name="Graduate", description="Operations graduate")
 ServerInferenceTag = OpenApiTag(name="Inference", description="Operations inference")
+ServerTaskTag = OpenApiTag(name="Tasks", description="Async training queue")
 
 # Настройка документации с тегами
 app_server.openapi_tags = [
@@ -104,7 +106,8 @@ app_server.openapi_tags = [
     ServerFileTag.model_dump(),
     ServerAnalyticTag.model_dump(),
     ServerGraduateTag.model_dump(),
-    ServerInferenceTag.model_dump()
+    ServerInferenceTag.model_dump(),
+    ServerTaskTag.model_dump(),
 ]
 
 
@@ -322,6 +325,88 @@ async def neiro_inference(entry: EntryNeiroInferencePipeline):
         log.exception("Error", exc_info=ex)
         raise ex
 
+
+
+# ---------------------------------------------------------------------------
+# Async task queue — обучение без блокировки HTTP-соединения
+# ---------------------------------------------------------------------------
+
+def _task_to_dict(t) -> dict:
+    return {
+        "task_id": t.task_id,
+        "operation": t.operation,
+        "status": t.status,
+        "created_at": t.created_at,
+        "updated_at": t.updated_at,
+        "result": t.result,
+        "error": t.error,
+    }
+
+
+@app_server.get("/tasks/", response_model=list, tags=["Tasks"])
+async def list_tasks():
+    """Список всех задач (по убыванию времени создания)."""
+    return [_task_to_dict(t) for t in task_store.list_all()]
+
+
+@app_server.get("/tasks/{task_id}", response_model=dict, tags=["Tasks"])
+async def get_task(task_id: str):
+    """Статус конкретной задачи."""
+    record = task_store.get(task_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"Task {task_id!r} not found")
+    return _task_to_dict(record)
+
+
+async def _run_task(task_id: str, coro):
+    """Запускает корутину-пайплайн как фоновую задачу, обновляя task_store."""
+    task_store.update(task_id, status=TaskStatus.RUNNING)
+    try:
+        result = await coro
+        task_store.update(task_id, status=TaskStatus.DONE, result=result)
+    except Exception as exc:
+        log.exception("Background task failed", exc_info=exc)
+        task_store.update(task_id, status=TaskStatus.FAILED, error=str(exc))
+
+
+@app_server.post("/classic_graduate/queue/", response_model=dict, tags=["Tasks"])
+async def queue_classic_graduate(entry: EntryClassicGraduatePipeline,
+                                 background_tasks: BackgroundTasks):
+    """Постановка classic-обучения в очередь. Возвращает task_id немедленно."""
+    task_id = task_store.create("classic_graduate")
+    background_tasks.add_task(_run_task, task_id, classic_graduate_pipeline(entry))
+    return {"task_id": task_id, "status": "pending"}
+
+
+@app_server.post("/neiro_graduate/queue/", response_model=dict, tags=["Tasks"])
+async def queue_neiro_graduate(entry: EntryNeiroGraduatePipeline,
+                               background_tasks: BackgroundTasks):
+    """Постановка нейро-обучения (retail) в очередь."""
+    task_id = task_store.create("neiro_graduate")
+    background_tasks.add_task(_run_task, task_id, neiro_graduate_pipeline(entry))
+    return {"task_id": task_id, "status": "pending"}
+
+
+@app_server.post("/timeseries_graduate/queue/", response_model=dict, tags=["Tasks"])
+async def queue_timeseries_graduate(entry: TimeSeriesGraduateRequest,
+                                    background_tasks: BackgroundTasks):
+    """Постановка classic-обучения (generic tidy CSV) в очередь."""
+    task_id = task_store.create("timeseries_graduate")
+    background_tasks.add_task(
+        _run_task, task_id, timeseries_graduate_pipeline(entry.dataset, entry.graduate)
+    )
+    return {"task_id": task_id, "status": "pending"}
+
+
+@app_server.post("/timeseries_neiro_graduate/queue/", response_model=dict, tags=["Tasks"])
+async def queue_timeseries_neiro_graduate(entry: TimeSeriesGraduateRequest,
+                                          background_tasks: BackgroundTasks):
+    """Постановка нейро-обучения (generic tidy CSV) в очередь."""
+    task_id = task_store.create("timeseries_neiro_graduate")
+    background_tasks.add_task(
+        _run_task, task_id, timeseries_neiro_graduate_pipeline(entry.dataset, entry.graduate)
+    )
+    return {"task_id": task_id, "status": "pending"}
 
 
 def run_server():
