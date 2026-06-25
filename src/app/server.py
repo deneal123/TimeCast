@@ -25,6 +25,7 @@ from src.services.analytic_services import season_analytic_pipeline
 from src.services.classic_services import classic_graduate_pipeline, classic_inference_pipeline
 from src.services.file_services import get_zip_from_server, upload_csv_to_server
 from src.services.neiro_services import neiro_graduate_pipeline, neiro_inference_pipeline
+from src.services.storage_service import storage
 from src.services.task_store import TaskStatus, task_store
 from src.services.timeseries_services import (
     timeseries_graduate_pipeline,
@@ -358,11 +359,37 @@ async def get_task(task_id: str):
     return _task_to_dict(record)
 
 
+async def _upload_artifacts(task_id: str) -> list[dict]:
+    """Загружает веса и графики в S3 после завершения обучения (если S3 настроен)."""
+    if storage is None:
+        return []
+    from timecast import get_paths
+
+    paths = get_paths()
+    results: list[dict] = []
+    for label, dir_path in [
+        ("weights/classic", paths.weights_classic_dir),
+        ("weights/neiro", paths.weights_neiro_dir),
+        ("plots", paths.plots_dir),
+    ]:
+        if dir_path:
+            uploaded = await asyncio.to_thread(
+                storage.upload_dir, dir_path, f"{task_id}/{label}"
+            )
+            results.extend(uploaded)
+    if results:
+        log.info("Task %s: загружено %d артефактов в S3", task_id, len(results))
+    return results
+
+
 async def _run_task(task_id: str, coro):
     """Запускает корутину-пайплайн как фоновую задачу, обновляя task_store."""
     task_store.update(task_id, status=TaskStatus.RUNNING)
     try:
         result = await coro
+        artifacts = await _upload_artifacts(task_id)
+        if artifacts:
+            result = {**result, "artifacts": artifacts}
         task_store.update(task_id, status=TaskStatus.DONE, result=result)
     except Exception as exc:
         log.exception("Background task failed", exc_info=exc)
