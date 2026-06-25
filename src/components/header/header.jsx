@@ -1,52 +1,86 @@
 import React from "react";
 import logo from "./../../images/logo.svg";
-import { Flex, Image, Text } from "@chakra-ui/react";
-import MenuComponent from "../../components/MenuComponent";
-import useWindowDimensions from "../../hooks/window_dimensions";
+import { Flex, Image, Text, HStack, Button } from "@chakra-ui/react";
+import { useNavigate, useLocation } from "react-router-dom";
+
+const NAV_LINKS = [
+  { label: "Главная", path: "/main" },
+  { label: "Дашборд", path: "/query" },
+  { label: "Документация", path: "/documentation" },
+];
 
 const Header = ({ showMenu = false, hideButtons = false, menuButtons = [] }) => {
-  const { width } = useWindowDimensions();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const visibleLinks = menuButtons.length > 0
+    ? NAV_LINKS.filter((l) => menuButtons.some((m) => m.path === l.path))
+    : NAV_LINKS;
 
   return (
     <Flex
       as="header"
-      position="absolute"
-      width={width}
-      height="100px"
-      left="50%"
-      transform="translateX(-50%)"
-      top="0"
-      bg="#2C3135"
+      position="sticky"
+      top={0}
+      zIndex={100}
+      w="100%"
+      h="64px"
+      bg="#1A1D21"
+      borderBottom="1px solid #FFFFFF0F"
       align="center"
       justify="space-between"
+      px={[4, 6, 10]}
+      backdropFilter="blur(12px)"
+      flexShrink={0}
     >
-      {/* Логотип и название TimeCast */}
+      {/* Logo + title */}
       <Flex
-        position="absolute"
-        left="76px"
-        top="50%"
-        transform="translateY(-50%)"
         align="center"
-        gap="8px"
+        gap="10px"
+        cursor="pointer"
+        onClick={() => navigate("/main")}
+        _hover={{ opacity: 0.85 }}
+        transition="opacity 0.2s"
       >
-        <Image src={logo} boxSize="44px" alt="Logo" />
-        <Text fontFamily="Inter" fontWeight="0" fontSize="18px" lineHeight="22px" color="#FFFFFF">
+        <Image src={logo} boxSize="32px" alt="Logo" />
+        <Text
+          fontFamily="Inter"
+          fontWeight="700"
+          fontSize="18px"
+          bgGradient="linear(to-r, #FF0032, #FFBF00)"
+          bgClip="text"
+          color="transparent"
+          letterSpacing="-0.02em"
+        >
           TimeCast
         </Text>
       </Flex>
 
-      {/* Условное отображение MenuComponent */}
-      {showMenu && (
-        <Flex position="absolute" right="76px" top="50%" transform="translateY(-50%)">
-          <MenuComponent
-            isHorizontal={true}
-            showTitle={false}
-            buttonWidth={"150px"}
-            buttonHeight={"44px"}
-            hideButtons={hideButtons}
-            buttons={menuButtons}
-          />
-        </Flex>
+      {/* Navigation */}
+      {showMenu && !hideButtons && (
+        <HStack spacing={1}>
+          {visibleLinks.map(({ label, path }) => {
+            const isActive = location.pathname === path;
+            return (
+              <Button
+                key={path}
+                size="sm"
+                variant="ghost"
+                color={isActive ? "#FFBF00" : "#888888"}
+                fontWeight={isActive ? "600" : "400"}
+                borderBottom={isActive ? "2px solid #FFBF00" : "2px solid transparent"}
+                borderRadius={0}
+                px={4}
+                h="64px"
+                _hover={{ color: "#FFFFFF", bg: "transparent" }}
+                transition="all 0.15s"
+                onClick={() => navigate(path)}
+              >
+                {label}
+              </Button>
+            );
+          })}
+        </HStack>
       )}
     </Flex>
   );
