@@ -36,7 +36,7 @@ const GenericSeriesForm = ({ onBuild }) => {
   const [timeCol, setTimeCol] = useState("");
   const [targetCol, setTargetCol] = useState("");
   const [featureCols, setFeatureCols] = useState("");
-  const [mode, setMode] = useState("graduate"); // graduate | inference
+  const [mode, setMode] = useState("graduate"); // graduate | inference | decompose
   const [model, setModel] = useState("classic"); // classic | neiro
   const [seasonal, setSeasonal] = useState("week:7, month:30, quater:90");
   const [futureOrEstimate, setFutureOrEstimate] = useState("estimate");
@@ -66,7 +66,9 @@ const GenericSeriesForm = ({ onBuild }) => {
     const isNeiro = model === "neiro";
 
     let payload;
-    if (mode === "graduate") {
+    if (mode === "decompose") {
+      payload = { dataset, proccess: { dictdecompose: dictseasonal } };
+    } else if (mode === "graduate") {
       const graduate = { dictseasonal };
       if (isNeiro) {
         graduate.dictmodels = { IFFT: { ...IFFT_DEFAULT } };
@@ -134,15 +136,20 @@ const GenericSeriesForm = ({ onBuild }) => {
           <option style={{ color: "#000" }} value="inference">
             inference
           </option>
-        </Select>
-        <Select {...fieldStyle} value={model} onChange={(e) => setModel(e.target.value)}>
-          <option style={{ color: "#000" }} value="classic">
-            classic
-          </option>
-          <option style={{ color: "#000" }} value="neiro">
-            neiro
+          <option style={{ color: "#000" }} value="decompose">
+            decompose
           </option>
         </Select>
+        {mode !== "decompose" && (
+          <Select {...fieldStyle} value={model} onChange={(e) => setModel(e.target.value)}>
+            <option style={{ color: "#000" }} value="classic">
+              classic
+            </option>
+            <option style={{ color: "#000" }} value="neiro">
+              neiro
+            </option>
+          </Select>
+        )}
       </HStack>
       <Input
         {...fieldStyle}
@@ -150,30 +157,32 @@ const GenericSeriesForm = ({ onBuild }) => {
         value={seasonal}
         onChange={(e) => setSeasonal(e.target.value)}
       />
-      <HStack>
-        {mode === "inference" && (
-          <Select
-            {...fieldStyle}
-            value={futureOrEstimate}
-            onChange={(e) => setFutureOrEstimate(e.target.value)}
-          >
-            <option style={{ color: "#000" }} value="estimate">
-              estimate
-            </option>
-            <option style={{ color: "#000" }} value="future">
-              future
-            </option>
-          </Select>
-        )}
-        {model === "neiro" && (
-          <Input
-            {...fieldStyle}
-            placeholder="seq_len"
-            value={seqLen}
-            onChange={(e) => setSeqLen(e.target.value)}
-          />
-        )}
-      </HStack>
+      {mode !== "decompose" && (
+        <HStack>
+          {mode === "inference" && (
+            <Select
+              {...fieldStyle}
+              value={futureOrEstimate}
+              onChange={(e) => setFutureOrEstimate(e.target.value)}
+            >
+              <option style={{ color: "#000" }} value="estimate">
+                estimate
+              </option>
+              <option style={{ color: "#000" }} value="future">
+                future
+              </option>
+            </Select>
+          )}
+          {model === "neiro" && (
+            <Input
+              {...fieldStyle}
+              placeholder="seq_len"
+              value={seqLen}
+              onChange={(e) => setSeqLen(e.target.value)}
+            />
+          )}
+        </HStack>
+      )}
       <Box>
         <Button
           size="sm"

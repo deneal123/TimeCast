@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { VStack, HStack, Box, Textarea, Text, Flex } from "@chakra-ui/react";
+import React, { useState, useMemo } from "react";
+import { VStack, HStack, Box, Textarea, Text, Flex, Badge, Wrap, WrapItem, Button } from "@chakra-ui/react";
 import MenuActiveComponent from "../components/MenuActiveComponent";
 import useWindowDimensions from "../hooks/window_dimensions";
 import { fetchZipUrl, uploadCSVFiles } from "../API/services/file_services";
@@ -26,6 +26,61 @@ const firstPeriodOf = (results) => {
 };
 const isTrainingResults = (results) => "best_model" in (firstPeriodOf(results) || {});
 const isDecompositionResults = (results) => "trend" in (firstPeriodOf(results) || {});
+
+// Определяет читаемое название операции по структуре JSON-запроса.
+const detectOp = (jsonStr) => {
+  try {
+    const r = JSON.parse(jsonStr);
+    if (r.proccess) return { label: "Декомпозиция", color: "purple" };
+    const hasSrc = !!r.dataset?.source;
+    if (hasSrc && r.graduate)
+      return r.graduate.dictmodels
+        ? { label: "Нейро обучение (generic)", color: "blue" }
+        : { label: "Classic обучение (generic)", color: "cyan" };
+    if (hasSrc && r.inference)
+      return r.inference.dictmodels
+        ? { label: "Нейро инференс (generic)", color: "blue" }
+        : { label: "Classic инференс (generic)", color: "cyan" };
+    if (r.inference?.dictmodels?.IFFT || r.inference?.dictmodels?.IF)
+      return { label: "Нейро инференс (retail)", color: "orange" };
+    if (r.inference) return { label: "Classic инференс (retail)", color: "yellow" };
+    if (r.graduate && r.models_params) return { label: "Classic обучение (retail)", color: "yellow" };
+    if (r.graduate) return { label: "Нейро обучение (retail)", color: "orange" };
+    return { label: "Неизвестная операция", color: "red" };
+  } catch {
+    return { label: "Некорректный JSON", color: "red" };
+  }
+};
+
+// Шаблоны запросов для retail-операций.
+const RETAIL_TEMPLATES = {
+  "Инференс (classic)": JSON.stringify(
+    { dataset: { store_id: "STORE_1" },
+      inference: { dictseasonal: { week: 7, month: 30 }, future_or_estimate: "estimate" } },
+    null, 2
+  ),
+  "Инференс (нейро)": JSON.stringify(
+    { dataset: { store_id: "STORE_1" },
+      inference: { dictseasonal: { week: 7, month: 30 }, future_or_estimate: "estimate",
+        dictmodels: { IFFT: { depth: 6, dim: 256, dim_head: 64, heads: 8,
+          num_tokens_per_variate: 1, use_reversible_instance_norm: true } }, use_device: "cuda" } },
+    null, 2
+  ),
+  "Обучение (classic)": JSON.stringify(
+    { dataset: { store_id: "STORE_1" },
+      graduate: { dictseasonal: { week: 7, month: 30 } },
+      models_params: { AUTOARIMA: [3, 3, 0, 0, 1, 1, "week"] } },
+    null, 2
+  ),
+  "Обучение (нейро)": JSON.stringify(
+    { dataset: { store_id: "STORE_1" },
+      graduate: { dictseasonal: { week: 7, month: 30 },
+        dictmodels: { IFFT: { depth: 6, dim: 256, dim_head: 64, heads: 8,
+          num_tokens_per_variate: 1, use_reversible_instance_norm: true } },
+        use_device: "cuda" } },
+    null, 2
+  ),
+};
 
 const QueryPage = () => {
   const { width } = useWindowDimensions();
@@ -60,6 +115,8 @@ const QueryPage = () => {
   const [files, setFiles] = useState([]);
   const [resultData, setResultData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const detectedOp = useMemo(() => detectOp(request), [request]);
 
   // Function to handle CSV file selection
   const handleFileChange = (e) => {
@@ -206,10 +263,42 @@ const QueryPage = () => {
               Insert Query
             </Text>
             <GenericSeriesForm onBuild={setRequest} />
+
+            {/* Retail-шаблоны */}
+            <Text fontSize="13px" color="#AAA" mt={2} mb={1}>
+              Retail шаблоны:
+            </Text>
+            <Wrap spacing={2} mb={3}>
+              {Object.entries(RETAIL_TEMPLATES).map(([label, tpl]) => (
+                <WrapItem key={label}>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    borderColor="#FF0032"
+                    color="#FF0032"
+                    _hover={{ bg: "#FF003222" }}
+                    onClick={() => setRequest(tpl)}
+                  >
+                    {label}
+                  </Button>
+                </WrapItem>
+              ))}
+            </Wrap>
+
+            {/* Бейдж текущей операции */}
+            <HStack mb={2}>
+              <Text fontSize="12px" color="#888">
+                Операция:
+              </Text>
+              <Badge colorScheme={detectedOp.color} fontSize="12px" px={2} borderRadius="6px">
+                {detectedOp.label}
+              </Badge>
+            </HStack>
+
             <Textarea
               value={request}
               onChange={(e) => setRequest(e.target.value)}
-              height="320px"
+              height="260px"
               bg="#2D2D2D"
               color="#FFFFFF"
               borderColor="#FF0032"
