@@ -4,6 +4,7 @@ import QueryPage from "./pages/query_page";
 import MainPage from "./pages/main_page";
 import DocumentationPage from "./pages/documentation_page";
 import NotFoundPage from "./pages/notfound_page";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const router = createHashRouter([
   {
@@ -33,7 +34,11 @@ const router = createHashRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
+  );
 }
 
 export default App;

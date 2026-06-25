@@ -8,7 +8,8 @@ function MenuActiveComponent({
   hideButtons = false,
   buttonWidth = "200px",
   buttonHeight = "50px",
-  onClickActions = {}, // Expecting onClickActions as a prop
+  onClickActions = {},
+  disabledLabels = [],
 }) {
   // Function for handling button clicks
   const handleButtonClick = (action) => {
@@ -56,7 +57,8 @@ function MenuActiveComponent({
               borderRadius="10px"
               _hover={{ bg: "#D0021B" }}
               _active={{ transform: "scale(0.95)" }}
-              onClick={() => handleButtonClick(label)} // Call handleButtonClick with the label of the button
+              onClick={() => handleButtonClick(label)}
+              isDisabled={disabledLabels.includes(label)}
               mx={isHorizontal ? 2 : 0}
               my={isHorizontal ? 0 : 2}
             >

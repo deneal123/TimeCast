@@ -56,9 +56,10 @@ const QueryPage = () => {
             "use_device": "cuda"
         }
     }`);
-  const [responseText, setResponseText] = useState(""); // State for response message
-  const [files, setFiles] = useState([]); // State for storing selected files
-  const [resultData, setResultData] = useState(null); // Структурированные результаты инференса для графика
+  const [responseText, setResponseText] = useState("");
+  const [files, setFiles] = useState([]);
+  const [resultData, setResultData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Function to handle CSV file selection
   const handleFileChange = (e) => {
@@ -89,7 +90,8 @@ const QueryPage = () => {
 
   // Function to handle sending the query
   const handleSendQuery = async () => {
-    setResultData(null); // сбрасываем график перед новым запросом
+    setResultData(null);
+    setIsLoading(true);
     try {
       const parsedRequest = JSON.parse(request);
 
@@ -148,7 +150,9 @@ const QueryPage = () => {
       }
     } catch (error) {
       console.error("Failed to send query:", error);
-      setResponseText("Error: Invalid JSON or API request failed.");
+      setResponseText(`Ошибка: ${error.message || "Запрос не выполнен."}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -296,12 +300,18 @@ const QueryPage = () => {
             hideButtons={false}
             buttonWidth="200px"
             buttonHeight="44px"
+            disabledLabels={isLoading ? ["Send Query"] : []}
             onClickActions={{
-              "Send CSV": handleSendCSV, // ���������� ��� ������ "Send CSV"
-              "Send Query": handleSendQuery, // ���������� ��� ������ "Send Query"
-              "Load Zip": handleDownloadArchive, // ���������� ��� ������ "Load Zip"
+              "Send CSV": handleSendCSV,
+              "Send Query": handleSendQuery,
+              "Load Zip": handleDownloadArchive,
             }}
           />
+          {isLoading && (
+            <Text color="#AAA" fontSize="14px" mt={2}>
+              Выполняется запрос…
+            </Text>
+          )}
         </HStack>
 
         {/* Дашборд: декомпозиция -> trend/seasonal/resid; обучение -> таблица; инференс -> прогноз */}
