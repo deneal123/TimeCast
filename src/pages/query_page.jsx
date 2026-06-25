@@ -13,11 +13,18 @@ import {
 } from "../API/services/graduate_services";
 import { sendClassicInference, sendNeiroInference } from "../API/services/inference_services";
 import { sendSeasonAnalytic } from "../API/services/season_analytic_services";
+import {
+  queueClassicGraduate,
+  queueNeiroGraduate,
+  queueTimeSeriesGraduate,
+  queueTimeSeriesNeiroGraduate,
+} from "../API/services/task_services";
 import LogStreamComponent from "../API/apiLogStreamComponent";
 import ForecastChart from "../components/ForecastChart";
 import TrainingResults from "../components/TrainingResults";
 import DecompositionChart from "../components/DecompositionChart";
 import GenericSeriesForm from "../components/GenericSeriesForm";
+import TaskStatusPanel from "../components/TaskStatusPanel";
 
 // Различаем форму ответа по первому периоду первого item.
 const firstPeriodOf = (results) => {
@@ -115,8 +122,34 @@ const QueryPage = () => {
   const [files, setFiles] = useState([]);
   const [resultData, setResultData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [queueTaskId, setQueueTaskId] = useState(null);
 
   const detectedOp = useMemo(() => detectOp(request), [request]);
+
+  // Отправляет обучение в фоновую очередь и немедленно возвращает task_id.
+  const handleQueueTraining = async () => {
+    try {
+      const parsedRequest = JSON.parse(request);
+      let resp;
+      const hasSrc = !!parsedRequest.dataset?.source;
+      if (hasSrc && parsedRequest.graduate?.dictmodels) {
+        resp = await queueTimeSeriesNeiroGraduate(parsedRequest);
+      } else if (hasSrc && parsedRequest.graduate) {
+        resp = await queueTimeSeriesGraduate(parsedRequest);
+      } else if (parsedRequest.graduate && parsedRequest.models_params) {
+        resp = await queueClassicGraduate(parsedRequest);
+      } else if (parsedRequest.graduate) {
+        resp = await queueNeiroGraduate(parsedRequest);
+      } else {
+        setResponseText("Очередь доступна только для операций обучения (graduate).");
+        return;
+      }
+      setQueueTaskId(resp.task_id);
+      setResponseText(`Задача поставлена в очередь: ${resp.task_id}`);
+    } catch (err) {
+      setResponseText(`Ошибка: ${err.message}`);
+    }
+  };
 
   // Function to handle CSV file selection
   const handleFileChange = (e) => {
@@ -396,6 +429,18 @@ const QueryPage = () => {
               "Load Zip": handleDownloadArchive,
             }}
           />
+          {/* Кнопка фоновой очереди — только для graduate-операций */}
+          <Button
+            size="sm"
+            variant="outline"
+            borderColor="#FFBF00"
+            color="#FFBF00"
+            _hover={{ bg: "#FFBF0022" }}
+            onClick={handleQueueTraining}
+            ml={2}
+          >
+            В очередь
+          </Button>
           {isLoading && (
             <Text color="#AAA" fontSize="14px" mt={2}>
               Выполняется запрос…
@@ -413,6 +458,14 @@ const QueryPage = () => {
           ) : (
             <ForecastChart results={resultData.results} />
           ))}
+
+        {/* Панель фоновой задачи обучения */}
+        {queueTaskId && (
+          <TaskStatusPanel
+            taskId={queueTaskId}
+            onResultReady={(result) => setResultData(result)}
+          />
+        )}
       </VStack>
     </Flex>
   );
