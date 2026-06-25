@@ -122,14 +122,16 @@
       ответу `/classic_inference/`·`/neiro_inference/`; в `query_page` рисуется под ответом.
 - [x] График: прогноз **vs факт** — `actual` добавлен в `serialize_inference_results`; classic и neiro
       возвращают тест-период; `ForecastChart` рисует серую пунктирную линию факта (estimate-режим).
-- [ ] Панель обучения: live-метрики/лосс по эпохам (graduate-эндпоинты пока возвращают только
-      сообщение — нужно вернуть метрики обучения структурно).
-- [ ] Сезонная декомпозиция: тренд/сезон/остаток (нужно вернуть массивы из `season_analytic`,
-      сейчас сохраняются только картинки).
-- [ ] Унифицировать HTTP-клиент (один axios-инстанс с интерсепторами).
+- [x] Панель обучения — `TrainingResults` компонент подключён; все graduate-эндпоинты возвращают
+      `serialize_training_results`; routing в `query_page` определяет тип по `best_model`.
+- [x] Сезонная декомпозиция — `DecompositionChart` подключён; `/season_analytic/` возвращает
+      `collect_decomposition_results` (trend/seasonal/resid); routing по `trend`-ключу.
+- [x] Унифицировать HTTP-клиент — все сервисы переведены на `Instance` (axios); интерсептор
+      разворачивает `response.data` и нормализует FastAPI-detail в читаемый `Error.message`.
 - [ ] Явный выбор операции в UI вместо парсинга формы JSON на фронте.
 - [ ] Вынести контент документации из кода в `.md`/бэкенд.
-- [ ] Error boundary + loading-состояния.
+- [x] Error boundary + loading — `ErrorBoundary` оборачивает `RouterProvider`; `isLoading` блокирует
+      кнопку "Send Query" и показывает индикатор; ошибки API попадают в responseText.
 
 > ✅ Старт Этапа D проверен сборкой: `CI=true npm run build` → *Compiled successfully* с Plotly.
 > График потребляет контракт `collect_results` из Этапа C. Остальные графики (факт, обучение,
