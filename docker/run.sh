@@ -359,9 +359,6 @@ start_services() {
     log_info "  Логи:        ./docker/run.sh --logs"
     log_info "  Статус:      ./docker/run.sh --status"
     log_info "  Остановка:   ./docker/run.sh --stop"
-    if [ "$RUN_TPOT" = true ]; then
-        log_info "  Остановка всего: ./run.sh --stop --tpot"
-    fi
 }
 
 # Выполнение выбранного действия
