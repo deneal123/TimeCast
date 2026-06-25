@@ -23,16 +23,32 @@ const ForecastChart = ({ results }) => {
   const itemId = items.includes(selected) ? selected : items[0];
   const periods = results[itemId] || {};
 
-  const traces = Object.entries(periods)
+  const traces = [];
+  Object.entries(periods)
     .filter(([, v]) => Array.isArray(v.pred) && v.pred.length > 0)
-    .map(([period, v], i) => ({
-      x: v.pred.map((_, idx) => idx + 1),
-      y: v.pred,
-      type: "scatter",
-      mode: "lines+markers",
-      name: `${period}${v.rmse != null ? ` (rmse ${Number(v.rmse).toFixed(2)})` : ""}`,
-      line: { color: COLORS[i % COLORS.length], width: 2 },
-    }));
+    .forEach(([period, v], i) => {
+      const color = COLORS[i % COLORS.length];
+      // Линия факта — единая серая пунктирная, только при первом периоде (чтобы не дублировать).
+      if (i === 0 && Array.isArray(v.actual) && v.actual.length > 0) {
+        traces.push({
+          x: v.actual.map((_, idx) => idx + 1),
+          y: v.actual,
+          type: "scatter",
+          mode: "lines",
+          name: "факт",
+          line: { color: "#888888", width: 1.5, dash: "dash" },
+          opacity: 0.8,
+        });
+      }
+      traces.push({
+        x: v.pred.map((_, idx) => idx + 1),
+        y: v.pred,
+        type: "scatter",
+        mode: "lines+markers",
+        name: `${period}${v.rmse != null ? ` (rmse ${Number(v.rmse).toFixed(2)})` : ""}`,
+        line: { color, width: 2 },
+      });
+    });
 
   return (
     <Box border="2px solid #FF0032" borderRadius="10px" p={5} bg="#1A1A1A" mt={5} w="100%">
@@ -84,7 +100,7 @@ const ForecastChart = ({ results }) => {
             font: { color: "#FFFFFF" },
             margin: { l: 55, r: 20, t: 20, b: 45 },
             xaxis: { title: "Шаг прогноза", gridcolor: "#444" },
-            yaxis: { title: "Прогноз спроса", gridcolor: "#444" },
+            yaxis: { title: "Значение", gridcolor: "#444" },
             legend: { orientation: "h" },
           }}
           style={{ width: "100%" }}
