@@ -51,10 +51,9 @@ class ClassicModel(ABC):
             last_timestamp = exogenous.index[-2]
             future_timestamps = pd.date_range(start=last_timestamp + pd.Timedelta(days=1), periods=period, freq='D')
             pd.DataFrame(0, index=future_timestamps, columns=exogenous_columns)
-        self.model.fit(y=train)  # X=exogenous.loc[train.index].fillna(0))
+        self.model.fit(y=train)
         if future_or_estimate == 'estimate' or future_or_estimate == "future":
             pred = self.model.predict(fh=np.arange(0, period))
-            # X=future_exogenous.fillna(0))
         return pred
 
     def param(self):
@@ -62,7 +61,6 @@ class ClassicModel(ABC):
 
     def pred(self) -> pd.Series:
         pred = self.model.predict(fh=np.arange(0, len(self.test)))
-        # X=self.exogenous.loc[self.test.index].fillna(0))
         return pred
 
     def save(self, dir_path: str = "./weights", prefix: str = None, results=None) -> None:
@@ -137,27 +135,14 @@ class ClassicModel(ABC):
 @ClassicModel.register_model("AUTOARIMA")
 class _AUTOARIMA_(ClassicModel):
     name_model = "AUTOARIMA"
-    # model = AutoARIMA()
     model = ARIMA()
 
     def __init__(self, train: pd.Series, test: pd.Series, exogenous) -> None:
         super().__init__(train, test, exogenous)
 
     def fit(self, p: int, q: int, d: int, D: int, P: int, Q: int, m: str) -> None:
-        # self.model = AutoARIMA(start_p=2, start_q=2, start_P=0, start_Q=0, d=None, D=None,
-        #                        max_p=p, max_q=q, max_P=P, max_Q=Q, max_d=d, max_D=D,
-        #                        sp=self.dictseasonal[f'{m}'],
-        #                        seasonal=True,
-        #                        stationary=False,
-        #                        time_varying_regression=False,
-        #                        mle_regression=False,
-        #                        trace=False,
-        #                        error_action='ignore',  
-        #                        suppress_warnings=True,
-        #                        n_jobs=8,
-        #                        stepwise=True)
         self.model = ARIMA(order=(p, 0, q))
-        self.model.fit(y=self.train)  # X=self.exogenous.loc[self.train.index].fillna(0))
+        self.model.fit(y=self.train)
 
 
 @ClassicModel.register_model("AUTOREG")
@@ -169,8 +154,8 @@ class _AUTOREG_(ClassicModel):
         super().__init__(train, test, exogenous)
 
     def fit(self, lags: int, m: str) -> None:
-        self.model = AutoREG(lags=lags, seasonal=True, trend='t')  # period=self.dictseasonal[f'{m}'])
-        self.model.fit(y=self.train)  # X=self.exogenous.loc[self.train.index].fillna(0))
+        self.model = AutoREG(lags=lags, seasonal=True, trend='t')
+        self.model.fit(y=self.train)
 
 
 @ClassicModel.register_model("AUTOETS")
@@ -183,7 +168,7 @@ class _AUTOETS_(ClassicModel):
 
     def fit(self, m: str) -> None:
         self.model = AutoETS(auto=True, freq='D', sp=self.dictseasonal[f'{m}'])
-        self.model.fit(y=self.train)  # X=self.exogenous.loc[self.train.index].fillna(0))
+        self.model.fit(y=self.train)
 
 
 @ClassicModel.register_model("PROPHET")

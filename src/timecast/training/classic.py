@@ -156,45 +156,6 @@ class ClassicGraduate:
     @staticmethod
     def calc_optimum(train, test, exogenous, model, param, ses, item_id):
 
-        # train_len = len(train)
-        # series = pd.concat([train, test])
-
-        # resid, trend, season = dec_series(series, 7, 'additive') # additive
-
-        # resid[resid == 0.01] = 0.00001
-        # trend[trend == 0.01] = 0.00001
-        # season[season == 0.01] = 0.00001
-
-        # Нормализуем на объединенных данных
-        # resid = pd.Series(
-        #     self.minmax_resid.fit_transform(resid.values.reshape(-1, 1)).flatten(),
-        #     name='resid', index=resid.index
-        # )
-        # trend = pd.Series(
-        #     self.minmax_trend.fit_transform(trend.values.reshape(-1, 1)).flatten(),
-        #     name='trend', index=trend.index
-        # )
-        # season = pd.Series(
-        #     self.minmax_season.fit_transform(season.values.reshape(-1, 1)).flatten(),
-        #     name='season', index=season.index
-        # )
-        # exogenous['sell_price'] = self.minmax_sellprice.fit_transform(
-        #          exogenous['sell_price'].values.reshape(-1, 1)
-        #      ).flatten()
-
-        # resid_train, resid_test = resid.iloc[:train_len], resid.iloc[train_len:]
-        # trend_train, trend_test = trend.iloc[:train_len], trend.iloc[train_len:]
-        # season_train, season_test = season.iloc[:train_len], season.iloc[train_len:]
-
-        # train = pd.concat([resid_train, trend_train, season_train], axis=1)
-        # test = pd.concat([resid_test, trend_test, season_test], axis=1)
-
-        # series = pd.Series(
-        #     self.minmax_series.fit_transform(series.values.reshape(-1, 1)).flatten(),
-        #     name='series', index=series.index
-        # )
-        # train, test = series.iloc[:train_len], series.iloc[train_len:]     
-
         train[train == 0.01] = 0.000001
         test[test == 0.01] = 0.000001
         tss = ClassicModel.create_model(model, train, test, exogenous)

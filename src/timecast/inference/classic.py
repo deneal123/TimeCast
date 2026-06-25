@@ -131,9 +131,6 @@ class ClassicInference:
                     prefix=f"{item_id}_{key}_{model_name}"
                 )
 
-                # # Загружаем JSON-данные
-                # json_data = self.load_json_file(json_path)
-
                 if os.path.exists(json_path):
                     with open(json_path, encoding="utf-8") as json_file:
                         json_data = json.loads(json_file.read())

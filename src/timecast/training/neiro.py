@@ -108,10 +108,6 @@ class NeiroGraduate:
                 self.evaluate_models(item_id, value)
 
     def __str__(self):
-        # log.info(f"Определенное устройство: {self.use_device}")
-        # log.info(f"Количество эпох обучения {self.num_epochs}")
-        # log.info(f"Размер пакета: {self.batch_size}")
-        # log.info(f"Выбранный оптимизатор: {self.name_optimizer}")
         return """"""
 
     # Функция для загрузки данных
