@@ -45,11 +45,6 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     networks:
       - default
       - internal

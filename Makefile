@@ -29,6 +29,8 @@ build:
 test:
 	@echo "Running library (timecast) tests..."
 	cd timecast && uv run pytest -q
+	@echo "Running backend tests..."
+	cd backend && uv run pytest -q
 	@echo "Running frontend tests..."
 	@if [ -d frontend ] && command -v npm >/dev/null 2>&1; then \
 		cd frontend && npm run test:ci; \

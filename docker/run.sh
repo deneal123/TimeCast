@@ -343,15 +343,14 @@ start_services() {
     log_info "Доступные адреса:"
 
     if [ "$MODE" = "prod" ]; then
-        log_info "  Frontend:    http://${APP_DOMAIN}"
-        log_info "  Backend API: http://${APP_DOMAIN}/api"
-        log_info "  MINIO UI:      http://${APP_DOMAIN}:9001"
+        log_info "  Frontend:    https://${APP_DOMAIN}"
+        log_info "  Backend API: https://${APP_DOMAIN}/server/"
+        log_info "  MINIO UI:    http://${APP_DOMAIN}:9001"
     else
         log_info "  Frontend:    http://localhost:3000"
-        log_info "  Backend API: http://localhost:8000"
-        log_info "  API Docs:    http://localhost:8000/docs"
+        log_info "  Backend API: http://localhost:8000/server/"
+        log_info "  API Docs:    http://localhost:8000/server/docs"
         log_info "  MINIO UI:    http://localhost:9001"
-        
     fi
 
     log_info ""

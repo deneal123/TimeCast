@@ -31,11 +31,6 @@ services:
     environment:
       UVICORN_WORKERS: ${UVICORN_WORKERS:-2}
     command: server
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     volumes:
       - ../infra/storage:/var/lib/app/storage
     stdin_open: true
