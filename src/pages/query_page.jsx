@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   HStack,
   Box,
@@ -12,6 +12,7 @@ import {
   Icon,
   Tooltip,
   Divider,
+  useToast,
 } from "@chakra-ui/react";
 import {
   AttachmentIcon,
@@ -21,8 +22,8 @@ import {
   TimeIcon,
   CheckIcon,
   RepeatClockIcon,
+  CopyIcon,
 } from "@chakra-ui/icons";
-import useWindowDimensions from "../hooks/window_dimensions";
 import { fetchZipUrl, uploadCSVFiles } from "../API/services/file_services";
 import {
   sendClassicGraduate,
@@ -126,8 +127,7 @@ const loadHistory = () => {
 const saveToHistory = (query) => {
   try {
     const prev = loadHistory().filter((q) => q !== query);
-    const next = [query, ...prev].slice(0, HISTORY_MAX);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+    localStorage.setItem(HISTORY_KEY, JSON.stringify([query, ...prev].slice(0, HISTORY_MAX)));
   } catch {}
 };
 
@@ -135,7 +135,7 @@ const saveToHistory = (query) => {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-const SectionBox = ({ title, badge, badgeColor, children, ...rest }) => (
+const SectionBox = ({ title, badge, badgeColor, headerRight, children, ...rest }) => (
   <Box
     border="1px solid #2A2E36"
     borderRadius="14px"
@@ -148,16 +148,19 @@ const SectionBox = ({ title, badge, badgeColor, children, ...rest }) => (
       py={3}
       bg="#0F1218"
       borderBottom="1px solid #2A2E36"
-      spacing={3}
+      justify="space-between"
     >
-      <Text color="#FFFFFF" fontWeight="600" fontSize="15px">
-        {title}
-      </Text>
-      {badge && (
-        <Badge colorScheme={badgeColor ?? "gray"} fontSize="10px" px={2} borderRadius="6px">
-          {badge}
-        </Badge>
-      )}
+      <HStack spacing={3}>
+        <Text color="#FFFFFF" fontWeight="600" fontSize="15px">
+          {title}
+        </Text>
+        {badge && (
+          <Badge colorScheme={badgeColor ?? "gray"} fontSize="10px" px={2} borderRadius="6px">
+            {badge}
+          </Badge>
+        )}
+      </HStack>
+      {headerRight}
     </HStack>
     <Box p={5}>{children}</Box>
   </Box>
@@ -186,12 +189,31 @@ const ToolbarButton = ({ icon, label, onClick, isLoading, colorScheme = "red", i
   </Tooltip>
 );
 
+const IconBtn = ({ icon, label, onClick, color = "#555" }) => (
+  <Tooltip label={label} placement="top" hasArrow>
+    <Button
+      size="xs"
+      variant="ghost"
+      color={color}
+      _hover={{ color: "#FFFFFF", bg: "#2A2E36" }}
+      onClick={onClick}
+      p={1}
+      minW="24px"
+      h="24px"
+      borderRadius="6px"
+    >
+      <Icon as={icon} boxSize="12px" />
+    </Button>
+  </Tooltip>
+);
+
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
 const QueryPage = () => {
-  const { width } = useWindowDimensions();
+  const toast = useToast();
+  const resultsRef = useRef(null);
 
   const [request, setRequest] = useState(
     JSON.stringify(
@@ -213,13 +235,17 @@ const QueryPage = () => {
 
   const detectedOp = useMemo(() => detectOp(request), [request]);
 
-  // Persist successful queries to localStorage history
+  const isJsonValid = useMemo(() => {
+    try { JSON.parse(request); return true; }
+    catch { return false; }
+  }, [request]);
+
   const pushHistory = useCallback((q) => {
     saveToHistory(q);
     setHistory(loadHistory());
   }, []);
 
-  // Keyboard shortcuts: Ctrl+Enter → Send Query, Ctrl+Shift+Enter → Queue
+  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e) => {
       if (e.key === "Enter" && e.ctrlKey && !e.shiftKey && !isLoading) {
@@ -237,7 +263,30 @@ const QueryPage = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, request]);
 
-  // --- Handlers ---
+  // --- Utility handlers ---
+
+  const handlePrettify = () => {
+    try {
+      setRequest(JSON.stringify(JSON.parse(request), null, 2));
+    } catch {
+      toast({ title: "Некорректный JSON", status: "error", duration: 2000, position: "bottom-right" });
+    }
+  };
+
+  const handleCopyJson = () => {
+    navigator.clipboard.writeText(request).then(() => {
+      toast({ title: "JSON скопирован", status: "success", duration: 1500, isClosable: true, position: "bottom-right" });
+    });
+  };
+
+  const handleCopyResponse = () => {
+    if (!responseText) return;
+    navigator.clipboard.writeText(responseText).then(() => {
+      toast({ title: "Ответ скопирован", status: "success", duration: 1500, isClosable: true, position: "bottom-right" });
+    });
+  };
+
+  // --- Main handlers ---
 
   const handleQueueTraining = async () => {
     try {
@@ -248,27 +297,43 @@ const QueryPage = () => {
       else if (hasSrc && p.graduate) resp = await queueTimeSeriesGraduate(p);
       else if (p.graduate && p.models_params) resp = await queueClassicGraduate(p);
       else if (p.graduate) resp = await queueNeiroGraduate(p);
-      else { setResponseText("Очередь доступна только для операций обучения (graduate)."); return; }
+      else {
+        toast({ title: "Только операции обучения можно ставить в очередь", status: "warning", duration: 3000, position: "bottom-right" });
+        return;
+      }
       setQueueTaskId(resp.task_id);
-      setResponseText(`Задача поставлена в очередь: ${resp.task_id}`);
+      toast({
+        title: "Задача добавлена в очередь",
+        description: resp.task_id,
+        status: "success",
+        duration: 4000,
+        isClosable: true,
+        position: "bottom-right",
+      });
     } catch (err) {
-      setResponseText(`Ошибка: ${err.message}`);
+      toast({ title: "Ошибка постановки в очередь", description: err.message, status: "error", duration: 4000, isClosable: true, position: "bottom-right" });
     }
   };
 
   const handleFileChange = (e) => {
     const selected = Array.from(e.target.files);
-    if (selected.length === 3) setFiles(selected);
-    else setResponseText("Выберите ровно 3 CSV-файла.");
+    if (selected.length === 3) {
+      setFiles(selected);
+    } else {
+      toast({ title: "Выберите ровно 3 CSV-файла", status: "warning", duration: 3000, position: "bottom-right" });
+    }
   };
 
   const handleSendCSV = async () => {
-    if (files.length !== 3) { setResponseText("Выберите ровно 3 CSV-файла."); return; }
+    if (files.length !== 3) {
+      toast({ title: "Выберите ровно 3 CSV-файла", status: "warning", duration: 3000, position: "bottom-right" });
+      return;
+    }
     try {
-      const msg = await uploadCSVFiles(files);
-      setResponseText(msg);
+      await uploadCSVFiles(files);
+      toast({ title: "CSV файлы загружены", status: "success", duration: 3000, isClosable: true, position: "bottom-right" });
     } catch {
-      setResponseText("Ошибка загрузки CSV.");
+      toast({ title: "Ошибка загрузки CSV", status: "error", duration: 3000, isClosable: true, position: "bottom-right" });
     }
   };
 
@@ -296,20 +361,26 @@ const QueryPage = () => {
       } else if (p.proccess) {
         response = await sendSeasonAnalytic(p);
       } else {
-        setResponseText("Некорректная структура запроса.");
+        toast({ title: "Некорректная структура запроса", status: "warning", duration: 3000, position: "bottom-right" });
         return;
       }
       setResponseText(JSON.stringify(response, null, 2));
       setResultData(response);
       pushHistory(request);
+      toast({ title: "Запрос выполнен", status: "success", duration: 2000, position: "bottom-right" });
+      // Scroll to results after render
+      requestAnimationFrame(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
     } catch (error) {
-      setResponseText(`Ошибка: ${error.message || "Запрос не выполнен."}`);
+      const msg = error.message || "Запрос не выполнен.";
+      setResponseText(`Ошибка: ${msg}`);
+      toast({ title: "Ошибка запроса", description: msg, status: "error", duration: 5000, isClosable: true, position: "bottom-right" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Tab key inserts 2 spaces in the JSON textarea
   const handleTextareaKeyDown = (e) => {
     if (e.key === "Tab") {
       e.preventDefault();
@@ -317,7 +388,6 @@ const QueryPage = () => {
       const { selectionStart: s, selectionEnd: end } = ta;
       const newVal = request.substring(0, s) + "  " + request.substring(end);
       setRequest(newVal);
-      // Restore cursor position after React re-render
       requestAnimationFrame(() => {
         ta.selectionStart = ta.selectionEnd = s + 2;
       });
@@ -328,9 +398,9 @@ const QueryPage = () => {
     try {
       const url = await fetchZipUrl();
       window.location.href = url;
-      setResponseText("Архив загружен.");
+      toast({ title: "Архив загружен", status: "success", duration: 2000, position: "bottom-right" });
     } catch {
-      setResponseText("Ошибка загрузки архива.");
+      toast({ title: "Ошибка загрузки архива", status: "error", duration: 3000, position: "bottom-right" });
     }
   };
 
@@ -341,7 +411,7 @@ const QueryPage = () => {
   return (
     <Flex
       direction="column"
-      w={width}
+      w="100%"
       px={[4, 6, 8]}
       pt={6}
       pb={10}
@@ -351,11 +421,16 @@ const QueryPage = () => {
     >
       <Box w="100%" maxW="1400px">
 
-        {/* Top two columns */}
-        <HStack spacing={5} align="stretch" mb={5}>
+        {/* Top two columns — stacks on small screens */}
+        <Flex gap={5} align="stretch" mb={5} direction={["column", "column", "row"]}>
 
           {/* Left — Query builder */}
-          <SectionBox title="Запрос" badge={detectedOp.label} badgeColor={detectedOp.color} w="50%">
+          <SectionBox
+            title="Запрос"
+            badge={detectedOp.label}
+            badgeColor={detectedOp.color}
+            flex={1}
+          >
             <GenericSeriesForm onBuild={setRequest} />
 
             <Divider borderColor="#2A2E36" my={4} />
@@ -381,23 +456,56 @@ const QueryPage = () => {
               ))}
             </Wrap>
 
+            {/* JSON label row */}
             <HStack justify="space-between" mb={2}>
-              <Text fontSize="12px" color="#555" fontWeight="600" letterSpacing="0.08em">
-                JSON
-              </Text>
-              <HStack spacing={2}>
-                <Text fontSize="11px" color="#333">
-                  Ctrl+Enter → отправить
+              <HStack spacing={2} align="center">
+                <Tooltip label={isJsonValid ? "JSON валиден" : "Ошибка JSON"} placement="top" hasArrow>
+                  <Box
+                    w="7px"
+                    h="7px"
+                    borderRadius="full"
+                    bg={isJsonValid ? "#48BB78" : "#FF8888"}
+                    flexShrink={0}
+                    cursor="default"
+                  />
+                </Tooltip>
+                <Text fontSize="12px" color="#555" fontWeight="600" letterSpacing="0.08em">
+                  JSON
                 </Text>
+              </HStack>
+
+              <HStack spacing={1}>
+                <Text fontSize="11px" color="#333">Ctrl+Enter</Text>
+                <IconBtn icon={CopyIcon} label="Скопировать JSON" onClick={handleCopyJson} />
+                <Tooltip label="Форматировать JSON" placement="top" hasArrow>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    color="#555"
+                    _hover={{ color: "#FFBF00", bg: "#2A2E36" }}
+                    onClick={handlePrettify}
+                    h="24px"
+                    px={2}
+                    borderRadius="6px"
+                    fontSize="11px"
+                    fontFamily="monospace"
+                  >
+                    {"{ }"}
+                  </Button>
+                </Tooltip>
                 {history.length > 0 && (
                   <Tooltip label="История запросов" placement="top" hasArrow>
                     <Button
                       size="xs"
                       variant="ghost"
-                      color="#555"
+                      color={showHistory ? "#FFBF00" : "#555"}
                       _hover={{ color: "#FFBF00" }}
-                      leftIcon={<Icon as={RepeatClockIcon} />}
+                      leftIcon={<Icon as={RepeatClockIcon} boxSize="11px" />}
                       onClick={() => setShowHistory((v) => !v)}
+                      h="24px"
+                      px={2}
+                      borderRadius="6px"
+                      fontSize="11px"
                     >
                       История
                     </Button>
@@ -416,24 +524,21 @@ const QueryPage = () => {
                 maxH="180px"
                 overflowY="auto"
               >
-                {history.map((q, i) => {
-                  const preview = q.replace(/\s+/g, " ").slice(0, 80);
-                  return (
-                    <Box
-                      key={i}
-                      px={3}
-                      py={2}
-                      cursor="pointer"
-                      borderBottom={i < history.length - 1 ? "1px solid #1A1D21" : "none"}
-                      _hover={{ bg: "#141820" }}
-                      onClick={() => { setRequest(q); setShowHistory(false); }}
-                    >
-                      <Text color="#888" fontSize="11px" fontFamily="monospace" noOfLines={1}>
-                        {preview}
-                      </Text>
-                    </Box>
-                  );
-                })}
+                {history.map((q, i) => (
+                  <Box
+                    key={i}
+                    px={3}
+                    py={2}
+                    cursor="pointer"
+                    borderBottom={i < history.length - 1 ? "1px solid #1A1D21" : "none"}
+                    _hover={{ bg: "#141820" }}
+                    onClick={() => { setRequest(q); setShowHistory(false); }}
+                  >
+                    <Text color="#888" fontSize="11px" fontFamily="monospace" noOfLines={1}>
+                      {q.replace(/\s+/g, " ").slice(0, 80)}
+                    </Text>
+                  </Box>
+                ))}
               </Box>
             )}
 
@@ -444,8 +549,9 @@ const QueryPage = () => {
               h="220px"
               bg="#0D1017"
               color="#E8E8E8"
-              border="1px solid #2A2E36"
-              _hover={{ borderColor: "#444" }}
+              border="1px solid"
+              borderColor={isJsonValid ? "#2A2E36" : "#FF003255"}
+              _hover={{ borderColor: isJsonValid ? "#444" : "#FF0032AA" }}
               _focus={{ borderColor: "#FF0032", boxShadow: "0 0 0 1px #FF003244" }}
               borderRadius="10px"
               resize="none"
@@ -455,7 +561,15 @@ const QueryPage = () => {
           </SectionBox>
 
           {/* Right — Live logs */}
-          <SectionBox title="Лог выполнения" w="50%">
+          <SectionBox
+            title="Лог выполнения"
+            flex={1}
+            headerRight={
+              responseText ? (
+                <IconBtn icon={CopyIcon} label="Скопировать ответ" onClick={handleCopyResponse} color="#444" />
+              ) : undefined
+            }
+          >
             <LogStreamComponent onNewLog={handleNewLog} />
             <Textarea
               value={responseText}
@@ -472,7 +586,7 @@ const QueryPage = () => {
               fontSize="12px"
             />
           </SectionBox>
-        </HStack>
+        </Flex>
 
         {/* Toolbar */}
         <Box
@@ -571,23 +685,25 @@ const QueryPage = () => {
         </Box>
 
         {/* Results */}
-        {resultData?.results && (
-          isDecompositionResults(resultData.results) ? (
-            <DecompositionChart results={resultData.results} />
-          ) : isTrainingResults(resultData.results) ? (
-            <TrainingResults results={resultData.results} />
-          ) : (
-            <ForecastChart results={resultData.results} />
-          )
-        )}
+        <Box ref={resultsRef}>
+          {resultData?.results && (
+            isDecompositionResults(resultData.results) ? (
+              <DecompositionChart results={resultData.results} />
+            ) : isTrainingResults(resultData.results) ? (
+              <TrainingResults results={resultData.results} />
+            ) : (
+              <ForecastChart results={resultData.results} />
+            )
+          )}
 
-        {/* Background task panel */}
-        {queueTaskId && (
-          <TaskStatusPanel
-            taskId={queueTaskId}
-            onResultReady={(result) => setResultData(result)}
-          />
-        )}
+          {queueTaskId && (
+            <TaskStatusPanel
+              taskId={queueTaskId}
+              onResultReady={(result) => setResultData(result)}
+            />
+          )}
+        </Box>
+
       </Box>
     </Flex>
   );
