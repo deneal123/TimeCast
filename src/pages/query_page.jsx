@@ -32,6 +32,7 @@ import {
   RepeatClockIcon,
   CopyIcon,
   InfoOutlineIcon,
+  LinkIcon,
 } from "@chakra-ui/icons";
 import { fetchZipUrl, uploadCSVFiles } from "../API/services/file_services";
 import {
@@ -120,6 +121,24 @@ const RETAIL_TEMPLATES = {
         use_device: "cuda" } },
     null, 2
   ),
+};
+
+// ---------------------------------------------------------------------------
+// URL query param (share feature)
+// ---------------------------------------------------------------------------
+
+const readUrlQuery = () => {
+  try {
+    const hash = window.location.hash; // e.g. "#/query?q=..."
+    const search = hash.includes("?") ? hash.split("?")[1] : "";
+    const q = new URLSearchParams(search).get("q");
+    if (!q) return null;
+    const decoded = decodeURIComponent(q);
+    JSON.parse(decoded); // validate
+    return decoded;
+  } catch {
+    return null;
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -227,16 +246,16 @@ const QueryPage = () => {
   const resultsRef = useRef(null);
   const logRef = useRef(null);
 
-  const [request, setRequest] = useState(
-    JSON.stringify(
+  const [request, setRequest] = useState(() => {
+    return readUrlQuery() || JSON.stringify(
       { dataset: { store_id: "STORE_1" },
         inference: { dictseasonal: { week: 7, month: 30, quater: 90 },
           dictmodels: { IFFT: { depth: 6, dim: 256, dim_head: 64, heads: 8,
             num_tokens_per_variate: 1, num_variates: 7, use_reversible_instance_norm: true } },
           future_or_estimate: "estimate", use_device: "cuda" } },
       null, 2
-    )
-  );
+    );
+  });
   const [responseText, setResponseText] = useState("");
   const [files, setFiles] = useState([]);
   const [resultData, setResultData] = useState(null);
@@ -303,6 +322,34 @@ const QueryPage = () => {
     navigator.clipboard.writeText(responseText).then(() => {
       toast({ title: "Ответ скопирован", status: "success", duration: 1500, isClosable: true, position: "bottom-right" });
     });
+  };
+
+  const handleDownloadResponse = () => {
+    if (!responseText) return;
+    const trimmed = responseText.trim();
+    const isJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+    const ext  = isJson ? "json" : "txt";
+    const type = isJson ? "application/json" : "text/plain";
+    const blob = new Blob([responseText], { type });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url;
+    a.download = `timecast-response.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleShare = () => {
+    try {
+      const hash = window.location.hash.split("?")[0] || "#/query";
+      const url = `${window.location.origin}${window.location.pathname}${hash}?q=${encodeURIComponent(request)}`;
+      navigator.clipboard.writeText(url);
+      toast({ title: "Ссылка скопирована", status: "success", duration: 2500, position: "bottom-right" });
+    } catch {
+      toast({ title: "Ошибка копирования ссылки", status: "error", duration: 2000, position: "bottom-right" });
+    }
   };
 
   // --- Main handlers ---
@@ -585,7 +632,10 @@ const QueryPage = () => {
             flex={1}
             headerRight={
               responseText ? (
-                <IconBtn icon={CopyIcon} label="Скопировать ответ" onClick={handleCopyResponse} color="#444" />
+                <HStack spacing={1}>
+                  <IconBtn icon={DownloadIcon} label="Скачать ответ" onClick={handleDownloadResponse} color="#444" />
+                  <IconBtn icon={CopyIcon}     label="Скопировать ответ" onClick={handleCopyResponse} color="#444" />
+                </HStack>
               ) : undefined
             }
           >
@@ -602,8 +652,14 @@ const QueryPage = () => {
           px={5}
           py={4}
           mb={5}
+          overflowX="auto"
+          sx={{
+            "&::-webkit-scrollbar": { h: "4px" },
+            "&::-webkit-scrollbar-track": { bg: "transparent" },
+            "&::-webkit-scrollbar-thumb": { bg: "#2A2E36", borderRadius: "2px" },
+          }}
         >
-          <HStack spacing={3} flexWrap="wrap" gap={3}>
+          <HStack spacing={3} minW="max-content">
             {/* File upload */}
             <Box>
               <input
@@ -671,6 +727,25 @@ const QueryPage = () => {
               colorScheme="yellow"
             />
 
+            <Box flex={1} />
+
+            <Tooltip label="Поделиться запросом" placement="top" hasArrow>
+              <Button
+                size="sm"
+                variant="ghost"
+                color="#555"
+                _hover={{ color: "#FFBF00", bg: "#FFBF0018" }}
+                leftIcon={<Icon as={LinkIcon} boxSize="12px" />}
+                onClick={handleShare}
+                h="36px"
+                px={3}
+                borderRadius="8px"
+                fontSize="13px"
+              >
+                Поделиться
+              </Button>
+            </Tooltip>
+
             {responseText && (
               <Tooltip label="Очистить лог" placement="top" hasArrow>
                 <Button
@@ -681,7 +756,6 @@ const QueryPage = () => {
                   leftIcon={<Icon as={DeleteIcon} />}
                   onClick={() => setResponseText("")}
                   h="36px"
-                  ml="auto"
                 >
                   Очистить
                 </Button>
@@ -697,7 +771,6 @@ const QueryPage = () => {
                 onClick={onHelpOpen}
                 h="36px"
                 px={2}
-                ml={responseText ? 0 : "auto"}
               >
                 <Icon as={InfoOutlineIcon} boxSize="14px" />
               </Button>
