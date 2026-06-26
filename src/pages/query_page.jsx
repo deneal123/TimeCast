@@ -470,8 +470,12 @@ const QueryPage = () => {
     }
   };
 
-  const handleNewLog = (newLog) =>
-    setResponseText((prev) => prev + "\n" + newLog);
+  // Stable callbacks — prevent React.memo children from re-rendering during SSE log updates.
+  const handleNewLog = useCallback(
+    (newLog) => setResponseText((prev) => prev + "\n" + newLog),
+    [],
+  );
+  const handleResultReady = useCallback((result) => setResultData(result), []);
 
   useLogStream(handleNewLog);
 
@@ -794,7 +798,7 @@ const QueryPage = () => {
           {queueTaskId && (
             <TaskStatusPanel
               taskId={queueTaskId}
-              onResultReady={(result) => setResultData(result)}
+              onResultReady={handleResultReady}
             />
           )}
         </Box>

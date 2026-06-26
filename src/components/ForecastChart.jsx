@@ -135,4 +135,4 @@ const ForecastChart = ({ results }) => {
   );
 };
 
-export default ForecastChart;
+export default React.memo(ForecastChart);

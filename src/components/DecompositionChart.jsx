@@ -122,4 +122,4 @@ const DecompositionChart = ({ results }) => {
   );
 };
 
-export default DecompositionChart;
+export default React.memo(DecompositionChart);

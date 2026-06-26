@@ -172,4 +172,4 @@ const TrainingResults = ({ results }) => {
   );
 };
 
-export default TrainingResults;
+export default React.memo(TrainingResults);

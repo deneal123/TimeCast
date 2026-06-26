@@ -58,4 +58,4 @@ const ResultCard = ({
   </Box>
 );
 
-export default ResultCard;
+export default React.memo(ResultCard);

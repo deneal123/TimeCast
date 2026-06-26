@@ -217,4 +217,4 @@ const TaskStatusPanel = ({ taskId, onResultReady }) => {
   );
 };
 
-export default TaskStatusPanel;
+export default React.memo(TaskStatusPanel);

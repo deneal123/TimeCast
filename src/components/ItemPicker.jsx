@@ -89,4 +89,4 @@ const ItemPicker = ({
   );
 };
 
-export default ItemPicker;
+export default React.memo(ItemPicker);
