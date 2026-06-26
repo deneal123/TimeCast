@@ -9,6 +9,8 @@ import {
   SimpleGrid,
   Badge,
   Flex,
+  Button,
+  Tooltip,
 } from "@chakra-ui/react";
 import { PLOT_LAYOUT_BASE, PLOT_CONFIG } from "../utils/plotConfig";
 
@@ -74,6 +76,55 @@ const MetricCard = ({ period, rmse, r2, color }) => (
   </Box>
 );
 
+// Tab-style item picker for ≤5 items, dropdown for more
+const ItemPicker = ({ items, selected, onSelect, accentColor = "#FF0032" }) => {
+  if (items.length <= 5) {
+    return (
+      <HStack spacing={1} flexWrap="wrap" justify="flex-end">
+        {items.map((id) => {
+          const active = id === selected;
+          return (
+            <Tooltip key={id} label={id} placement="top" hasArrow isDisabled={id.length <= 14}>
+              <Button
+                size="xs"
+                variant="ghost"
+                bg={active ? `${accentColor}1A` : "transparent"}
+                color={active ? accentColor : "#555"}
+                border="1px solid"
+                borderColor={active ? `${accentColor}44` : "transparent"}
+                _hover={{ color: "#CCCCCC", borderColor: "#2A2E36" }}
+                borderRadius="6px"
+                onClick={() => onSelect(id)}
+                px={3}
+                h="26px"
+                fontSize="12px"
+                fontWeight={active ? "600" : "400"}
+                transition="all 0.15s"
+                maxW="120px"
+                isTruncated
+              >
+                {id}
+              </Button>
+            </Tooltip>
+          );
+        })}
+      </HStack>
+    );
+  }
+  return (
+    <Select
+      {...SELECT_STYLE}
+      w="220px"
+      value={selected}
+      onChange={(e) => onSelect(e.target.value)}
+    >
+      {items.map((id) => (
+        <option key={id} value={id}>{id}</option>
+      ))}
+    </Select>
+  );
+};
+
 const ForecastChart = ({ results }) => {
   const items = useMemo(() => Object.keys(results || {}), [results]);
   const [selected, setSelected] = useState("");
@@ -125,6 +176,8 @@ const ForecastChart = ({ results }) => {
         bg="#0F1218"
         borderBottom="1px solid #2A2E36"
         justify="space-between"
+        flexWrap="wrap"
+        gap={2}
       >
         <HStack spacing={3}>
           <Text color="#FFFFFF" fontWeight="600" fontSize="15px">
@@ -134,18 +187,14 @@ const ForecastChart = ({ results }) => {
             inference
           </Badge>
         </HStack>
-        <Select
-          {...SELECT_STYLE}
-          w="220px"
-          value={itemId}
-          onChange={(e) => setSelected(e.target.value)}
-        >
-          {items.map((id) => (
-            <option key={id} value={id}>
-              {id}
-            </option>
-          ))}
-        </Select>
+        {items.length > 1 && (
+          <ItemPicker
+            items={items}
+            selected={itemId}
+            onSelect={setSelected}
+            accentColor="#FF0032"
+          />
+        )}
       </HStack>
 
       {/* Metric cards */}

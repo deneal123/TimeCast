@@ -15,6 +15,8 @@ import {
   Td,
   TableContainer,
   Divider,
+  Button,
+  Tooltip,
 } from "@chakra-ui/react";
 import { PLOT_LAYOUT_BASE, PLOT_CONFIG } from "../utils/plotConfig";
 
@@ -28,6 +30,47 @@ const SELECT_STYLE = {
   size: "sm",
   _hover: { borderColor: "#444" },
   sx: { option: { background: "#1A1D21" } },
+};
+
+const ItemPicker = ({ items, selected, onSelect, accentColor = "#FFBF00" }) => {
+  if (items.length <= 5) {
+    return (
+      <HStack spacing={1} flexWrap="wrap" justify="flex-end">
+        {items.map((id) => {
+          const active = id === selected;
+          return (
+            <Tooltip key={id} label={id} placement="top" hasArrow isDisabled={id.length <= 14}>
+              <Button
+                size="xs"
+                variant="ghost"
+                bg={active ? `${accentColor}1A` : "transparent"}
+                color={active ? accentColor : "#555"}
+                border="1px solid"
+                borderColor={active ? `${accentColor}44` : "transparent"}
+                _hover={{ color: "#CCCCCC", borderColor: "#2A2E36" }}
+                borderRadius="6px"
+                onClick={() => onSelect(id)}
+                px={3}
+                h="26px"
+                fontSize="12px"
+                fontWeight={active ? "600" : "400"}
+                transition="all 0.15s"
+                maxW="120px"
+                isTruncated
+              >
+                {id}
+              </Button>
+            </Tooltip>
+          );
+        })}
+      </HStack>
+    );
+  }
+  return (
+    <Select {...SELECT_STYLE} w="220px" value={selected} onChange={(e) => onSelect(e.target.value)}>
+      {items.map((id) => <option key={id} value={id}>{id}</option>)}
+    </Select>
+  );
 };
 
 const MODEL_HEX = {
@@ -136,16 +179,9 @@ const TrainingResults = ({ results }) => {
             training
           </Badge>
         </HStack>
-        <Select
-          {...SELECT_STYLE}
-          w="220px"
-          value={itemId}
-          onChange={(e) => setSelected(e.target.value)}
-        >
-          {items.map((id) => (
-            <option key={id} value={id}>{id}</option>
-          ))}
-        </Select>
+        {items.length > 1 && (
+          <ItemPicker items={items} selected={itemId} onSelect={setSelected} />
+        )}
       </HStack>
 
       {/* R² bar chart */}

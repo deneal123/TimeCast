@@ -10,8 +10,9 @@ import {
   SimpleGrid,
   Collapse,
   Icon,
+  Tooltip,
 } from "@chakra-ui/react";
-import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
+import { ChevronDownIcon, ChevronUpIcon, RepeatIcon } from "@chakra-ui/icons";
 
 const INPUT_STYLE = {
   bg: "#0D1017",
@@ -37,6 +38,19 @@ const FieldLabel = ({ children }) => (
   </Text>
 );
 
+const FORM_DEFAULTS = {
+  source:          "series.csv",
+  seriesIdCol:     "id",
+  timeCol:         "",
+  targetCol:       "",
+  featureCols:     "",
+  mode:            "graduate",
+  model:           "classic",
+  seasonal:        "week:7, month:30",
+  futureOrEstimate:"estimate",
+  seqLen:          "30",
+};
+
 const IFFT_DEFAULT = {
   depth: 6,
   dim: 256,
@@ -58,6 +72,20 @@ const GenericSeriesForm = ({ onBuild }) => {
   const [futureOrEstimate, setFutureOrEstimate] = useState("estimate");
   const [seqLen, setSeqLen] = useState("30");
   const [expanded, setExpanded] = useState(false);
+
+  const handleReset = () => {
+    setSource(FORM_DEFAULTS.source);
+    setSeriesIdCol(FORM_DEFAULTS.seriesIdCol);
+    setTimeCol(FORM_DEFAULTS.timeCol);
+    setTargetCol(FORM_DEFAULTS.targetCol);
+    setFeatureCols(FORM_DEFAULTS.featureCols);
+    setMode(FORM_DEFAULTS.mode);
+    setModel(FORM_DEFAULTS.model);
+    setSeasonal(FORM_DEFAULTS.seasonal);
+    setFutureOrEstimate(FORM_DEFAULTS.futureOrEstimate);
+    setSeqLen(FORM_DEFAULTS.seqLen);
+    setExpanded(false);
+  };
 
   const parseSeasonal = () => {
     const out = {};
@@ -239,20 +267,34 @@ const GenericSeriesForm = ({ onBuild }) => {
         </VStack>
       </Collapse>
 
-      <Button
-        size="sm"
-        bg="#FF0032"
-        color="#FFFFFF"
-        _hover={{ bg: "#CC0028", transform: "translateY(-1px)" }}
-        _active={{ transform: "translateY(0)" }}
-        transition="all 0.15s"
-        borderRadius="8px"
-        onClick={build}
-        alignSelf="flex-start"
-        px={5}
-      >
-        Сгенерировать JSON
-      </Button>
+      <HStack spacing={2}>
+        <Button
+          size="sm"
+          bg="#FF0032"
+          color="#FFFFFF"
+          _hover={{ bg: "#CC0028", transform: "translateY(-1px)" }}
+          _active={{ transform: "translateY(0)" }}
+          transition="all 0.15s"
+          borderRadius="8px"
+          onClick={build}
+          px={5}
+        >
+          Сгенерировать JSON
+        </Button>
+        <Tooltip label="Сбросить форму" placement="top" hasArrow>
+          <Button
+            size="sm"
+            variant="ghost"
+            color="#444"
+            _hover={{ color: "#FF8888", bg: "#FF003212" }}
+            borderRadius="8px"
+            onClick={handleReset}
+            px={2}
+          >
+            <Icon as={RepeatIcon} boxSize="14px" />
+          </Button>
+        </Tooltip>
+      </HStack>
     </VStack>
   );
 };
