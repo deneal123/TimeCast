@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import logging.config
 import os
 import warnings
 
@@ -117,20 +118,14 @@ log_queue = asyncio.Queue()
 
 
 class LogStreamHandler(logging.Handler):
-    def __init__(self):
-        super().__init__()
-
     def emit(self, record):
         log_entry = self.format(record)
-        # Добавляем лог в очередь с проверкой, есть ли активный цикл событий
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            print(f"Adding log entry to queue: {log_entry}")
-            # Если цикл событий уже работает, используем asyncio.create_task
-            asyncio.create_task(log_queue.put(log_entry))
-        else:
-            # Если цикл не работает, добавляем задачу вручную через run_until_complete
-            loop.run_until_complete(log_queue.put(log_entry))
+        # asyncio.get_running_loop() raises RuntimeError during startup/shutdown
+        # when no event loop is active — silently drop the entry in that case.
+        try:
+            asyncio.get_running_loop().create_task(log_queue.put(log_entry))
+        except RuntimeError:
+            pass
 
 
 log_stream_handler = LogStreamHandler()
@@ -177,7 +172,6 @@ async def upload_csv(files: list[UploadFile] = File(...)):
     except HTTPException as ex:
         log.exception("Error", exc_info=ex)
         raise ex
-
 
 
 @app_server.get("/get_zip/", response_model=dict, tags=["File"])
@@ -454,8 +448,6 @@ async def queue_timeseries_neiro_graduate(entry: TimeSeriesGraduateRequest,
 
 
 def run_server():
-    import logging
-
     import uvicorn
     import yaml
 
