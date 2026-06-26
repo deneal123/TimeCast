@@ -31,7 +31,7 @@ const relativeTime = (ts) => {
   return `${Math.floor(diff / 3600)}ч назад`;
 };
 
-const TaskRow = ({ task }) => {
+const TaskRow = React.memo(({ task }) => {
   const { isOpen, onToggle } = useDisclosure();
   const meta = STATUS_META[task.status] ?? STATUS_META.pending;
 
@@ -43,8 +43,12 @@ const TaskRow = ({ task }) => {
         align="center"
         justify="space-between"
         cursor="pointer"
+        role="button"
+        tabIndex={0}
+        aria-expanded={isOpen}
         _hover={{ bg: "#0F1218" }}
         onClick={onToggle}
+        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onToggle()}
         transition="background 0.15s"
       >
         <HStack spacing={3} flex={1} minW={0}>
@@ -106,9 +110,9 @@ const TaskRow = ({ task }) => {
       </Collapse>
     </Box>
   );
-};
+});
 
-const CountChip = ({ label, count, color }) => (
+const CountChip = React.memo(({ label, count, color }) => (
   <HStack spacing={1}>
     <Box w="7px" h="7px" borderRadius="full" bg={color} />
     <Text color="#555" fontSize="12px">
@@ -118,7 +122,7 @@ const CountChip = ({ label, count, color }) => (
       {count}
     </Text>
   </HStack>
-);
+));
 
 const TasksPage = () => {
   const [tasks, setTasks] = useState([]);

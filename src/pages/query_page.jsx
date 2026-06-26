@@ -221,6 +221,7 @@ const ToolbarButton = ({ icon, label, onClick, isLoading, colorScheme = "red", i
 const IconBtn = ({ icon, label, onClick, color = "#555" }) => (
   <Tooltip label={label} placement="top" hasArrow>
     <Button
+      aria-label={label}
       size="xs"
       variant="ghost"
       color={color}
