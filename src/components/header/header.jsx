@@ -4,18 +4,15 @@ import { Flex, Image, Text, HStack, Button } from "@chakra-ui/react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const NAV_LINKS = [
-  { label: "Главная", path: "/main" },
-  { label: "Дашборд", path: "/query" },
+  { label: "Главная",      path: "/main" },
+  { label: "Дашборд",      path: "/query" },
+  { label: "Задачи",       path: "/tasks" },
   { label: "Документация", path: "/documentation" },
 ];
 
-const Header = ({ showMenu = false, hideButtons = false, menuButtons = [] }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const visibleLinks = menuButtons.length > 0
-    ? NAV_LINKS.filter((l) => menuButtons.some((m) => m.path === l.path))
-    : NAV_LINKS;
+const Header = ({ showMenu = false }) => {
+  const navigate  = useNavigate();
+  const location  = useLocation();
 
   return (
     <Flex
@@ -33,7 +30,7 @@ const Header = ({ showMenu = false, hideButtons = false, menuButtons = [] }) => 
       backdropFilter="blur(12px)"
       flexShrink={0}
     >
-      {/* Logo + title */}
+      {/* Logo */}
       <Flex
         align="center"
         gap="10px"
@@ -57,9 +54,9 @@ const Header = ({ showMenu = false, hideButtons = false, menuButtons = [] }) => 
       </Flex>
 
       {/* Navigation */}
-      {showMenu && !hideButtons && (
+      {showMenu && (
         <HStack spacing={1}>
-          {visibleLinks.map(({ label, path }) => {
+          {NAV_LINKS.map(({ label, path }) => {
             const isActive = location.pathname === path;
             return (
               <Button

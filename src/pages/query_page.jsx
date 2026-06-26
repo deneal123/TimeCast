@@ -214,6 +214,7 @@ const IconBtn = ({ icon, label, onClick, color = "#555" }) => (
 const QueryPage = () => {
   const toast = useToast();
   const resultsRef = useRef(null);
+  const logRef = useRef(null);
 
   const [request, setRequest] = useState(
     JSON.stringify(
@@ -239,6 +240,13 @@ const QueryPage = () => {
     try { JSON.parse(request); return true; }
     catch { return false; }
   }, [request]);
+
+  // Auto-scroll log textarea to bottom when new content arrives
+  useEffect(() => {
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight;
+    }
+  }, [responseText]);
 
   const pushHistory = useCallback((q) => {
     saveToHistory(q);
@@ -572,6 +580,7 @@ const QueryPage = () => {
           >
             <LogStreamComponent onNewLog={handleNewLog} />
             <Textarea
+              ref={logRef}
               value={responseText}
               onChange={(e) => setResponseText(e.target.value)}
               h="480px"

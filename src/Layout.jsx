@@ -1,33 +1,38 @@
 import React from "react";
 import { Flex } from "@chakra-ui/react";
+import { AnimatePresence, motion } from "framer-motion";
 import Header from "./components/header/header";
 import { Outlet, useLocation } from "react-router-dom";
 import Footer from "./components/footer";
 
-const NAV = [
-  { label: "Главная", path: "/main" },
-  { label: "Дашборд", path: "/query" },
-  { label: "Документация", path: "/documentation" },
-];
+const MotionFlex = motion(Flex);
+
+const PAGE_TRANSITION = {
+  initial:    { opacity: 0, y: 10 },
+  animate:    { opacity: 1, y: 0, transition: { duration: 0.22, ease: "easeOut" } },
+  exit:       { opacity: 0, y: -6, transition: { duration: 0.15, ease: "easeIn" } },
+};
 
 function Layout() {
   const location = useLocation();
   const isMain = location.pathname === "/main";
 
-  const menuButtons = isMain
-    ? []
-    : NAV.filter((n) => n.path !== location.pathname);
-
   return (
     <Flex direction="column" minH="100vh" w="100%" bg="menu_mts">
-      <Header
-        showMenu={!isMain}
-        hideButtons={isMain}
-        menuButtons={menuButtons}
-      />
-      <Flex direction="column" flex={1}>
-        <Outlet />
-      </Flex>
+      <Header showMenu={!isMain} />
+      <AnimatePresence mode="wait" initial={false}>
+        <MotionFlex
+          key={location.pathname}
+          direction="column"
+          flex={1}
+          variants={PAGE_TRANSITION}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+        >
+          <Outlet />
+        </MotionFlex>
+      </AnimatePresence>
       {!isMain && <Footer />}
     </Flex>
   );

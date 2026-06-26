@@ -3,6 +3,7 @@ import Layout from "./Layout";
 import QueryPage from "./pages/query_page";
 import MainPage from "./pages/main_page";
 import DocumentationPage from "./pages/documentation_page";
+import TasksPage from "./pages/tasks_page";
 import NotFoundPage from "./pages/notfound_page";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -20,13 +21,18 @@ const router = createHashRouter([
         errorElement: <NotFoundPage />,
       },
       {
-        path: "/documentation",
-        element: <DocumentationPage />,
+        path: "/query",
+        element: <QueryPage />,
         errorElement: <NotFoundPage />,
       },
       {
-        path: "/query",
-        element: <QueryPage />,
+        path: "/tasks",
+        element: <TasksPage />,
+        errorElement: <NotFoundPage />,
+      },
+      {
+        path: "/documentation",
+        element: <DocumentationPage />,
         errorElement: <NotFoundPage />,
       },
     ],
