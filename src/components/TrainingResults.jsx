@@ -2,103 +2,31 @@ import React, { useMemo, useState } from "react";
 import createPlotlyComponent from "react-plotly.js/factory";
 import Plotly from "plotly.js-dist-min";
 import {
-  Box,
-  Text,
-  Select,
-  HStack,
-  Badge,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer,
+  Box, Text, Badge,
+  Table, Thead, Tbody, Tr, Th, Td, TableContainer,
   Divider,
-  Button,
-  Tooltip,
 } from "@chakra-ui/react";
 import { PLOT_LAYOUT_BASE, PLOT_CONFIG } from "../utils/plotConfig";
+import ItemPicker from "./ItemPicker";
+import ResultCard from "./ResultCard";
 
 const Plot = createPlotlyComponent(Plotly);
 
-const SELECT_STYLE = {
-  bg: "#0D1017",
-  color: "#E8E8E8",
-  border: "1px solid #2A2E36",
-  borderRadius: "8px",
-  size: "sm",
-  _hover: { borderColor: "#444" },
-  sx: { option: { background: "#1A1D21" } },
-};
-
-const ItemPicker = ({ items, selected, onSelect, accentColor = "#FFBF00" }) => {
-  if (items.length <= 5) {
-    return (
-      <HStack spacing={1} flexWrap="wrap" justify="flex-end">
-        {items.map((id) => {
-          const active = id === selected;
-          return (
-            <Tooltip key={id} label={id} placement="top" hasArrow isDisabled={id.length <= 14}>
-              <Button
-                size="xs"
-                variant="ghost"
-                bg={active ? `${accentColor}1A` : "transparent"}
-                color={active ? accentColor : "#555"}
-                border="1px solid"
-                borderColor={active ? `${accentColor}44` : "transparent"}
-                _hover={{ color: "#CCCCCC", borderColor: "#2A2E36" }}
-                borderRadius="6px"
-                onClick={() => onSelect(id)}
-                px={3}
-                h="26px"
-                fontSize="12px"
-                fontWeight={active ? "600" : "400"}
-                transition="all 0.15s"
-                maxW="120px"
-                isTruncated
-              >
-                {id}
-              </Button>
-            </Tooltip>
-          );
-        })}
-      </HStack>
-    );
-  }
-  return (
-    <Select {...SELECT_STYLE} w="220px" value={selected} onChange={(e) => onSelect(e.target.value)}>
-      {items.map((id) => <option key={id} value={id}>{id}</option>)}
-    </Select>
-  );
-};
-
 const MODEL_HEX = {
-  AUTOARIMA: "#4A90D9",
-  AUTOREG:   "#00B5D8",
-  AUTOETS:   "#48BB78",
-  PROPHET:   "#ED8936",
-  TBATS:     "#9F7AEA",
-  IFFT:      "#FFBF00",
-  IF:        "#FFBF00",
+  AUTOARIMA: "#4A90D9", AUTOREG: "#00B5D8", AUTOETS: "#48BB78",
+  PROPHET:   "#ED8936", TBATS:   "#9F7AEA", IFFT:    "#FFBF00", IF: "#FFBF00",
 };
 
 const MODEL_COLOR = {
-  AUTOARIMA: "blue", AUTOREG: "cyan", AUTOETS: "green",
-  PROPHET: "orange", TBATS: "purple", IFFT: "yellow", IF: "yellow",
+  AUTOARIMA: "blue", AUTOREG: "cyan",   AUTOETS: "green",
+  PROPHET:   "orange", TBATS: "purple", IFFT:   "yellow", IF: "yellow",
 };
 
-const modelColor = (name) => {
-  if (!name) return "gray";
-  const k = Object.keys(MODEL_COLOR).find((k) => name.toUpperCase().includes(k));
-  return k ? MODEL_COLOR[k] : "gray";
-};
+const modelKey = (name) =>
+  name ? Object.keys(MODEL_HEX).find((k) => name.toUpperCase().includes(k)) : null;
 
-const modelHex = (name) => {
-  if (!name) return "#555";
-  const k = Object.keys(MODEL_HEX).find((k) => name.toUpperCase().includes(k));
-  return k ? MODEL_HEX[k] : "#888";
-};
+const modelColor = (name) => { const k = modelKey(name); return k ? MODEL_COLOR[k] : "gray"; };
+const modelHex   = (name) => { const k = modelKey(name); return k ? MODEL_HEX[k]   : "#888"; };
 
 const r2Color = (val) => {
   if (val == null) return "#666";
@@ -114,12 +42,12 @@ const TrainingResults = ({ results }) => {
   if (!items.length) return null;
   const itemId = items.includes(selected) ? selected : items[0];
   const periods = results[itemId] || {};
-  const rows = Object.entries(periods);
+  const rows    = Object.entries(periods);
 
-  // R² bar chart
-  const periodList = rows.map(([p]) => p);
-  const r2Values   = rows.map(([, v]) => Math.max(0, v?.best_r2 ?? 0));
-  const modelNames = rows.map(([, v]) => v?.best_model ?? "—");
+  // R² horizontal bar chart
+  const periodList = rows.map(([p])    => p);
+  const r2Values   = rows.map(([, v])  => Math.max(0, v?.best_r2    ?? 0));
+  const modelNames = rows.map(([, v])  => v?.best_model ?? "—");
   const hasChart   = r2Values.some((v) => v > 0);
 
   const barTrace = {
@@ -145,46 +73,27 @@ const TrainingResults = ({ results }) => {
       title: { text: "R²", font: { color: "#555", size: 12 } },
       tickformat: ".2f",
     },
-    yaxis: {
-      ...PLOT_LAYOUT_BASE.yaxis,
-      title: null,
-      automargin: true,
-    },
+    yaxis: { ...PLOT_LAYOUT_BASE.yaxis, title: null, automargin: true },
     margin: { l: 70, r: 30, t: 10, b: 50 },
     showlegend: false,
     bargap: 0.3,
   };
 
   return (
-    <Box
-      bg="#141820"
-      border="1px solid #2A2E36"
-      borderRadius="14px"
-      overflow="hidden"
+    <ResultCard
+      title="Результаты обучения"
+      badge="training"
+      badgeScheme="yellow"
+      headerRight={
+        <ItemPicker
+          items={items}
+          selected={itemId}
+          onSelect={setSelected}
+          accentColor="#FFBF00"
+        />
+      }
       mt={5}
-      w="100%"
     >
-      {/* Header */}
-      <HStack
-        px={5} py={3}
-        bg="#0F1218"
-        borderBottom="1px solid #2A2E36"
-        justify="space-between"
-      >
-        <HStack spacing={3}>
-          <Text color="#FFFFFF" fontWeight="600" fontSize="15px">
-            Результаты обучения
-          </Text>
-          <Badge colorScheme="yellow" fontSize="11px" px={2} borderRadius="6px">
-            training
-          </Badge>
-        </HStack>
-        {items.length > 1 && (
-          <ItemPicker items={items} selected={itemId} onSelect={setSelected} />
-        )}
-      </HStack>
-
-      {/* R² bar chart */}
       {hasChart && (
         <>
           <Box px={5} pt={4} pb={2}>
@@ -203,7 +112,6 @@ const TrainingResults = ({ results }) => {
         </>
       )}
 
-      {/* Table */}
       <TableContainer px={5} py={4}>
         <Table variant="unstyled" size="sm">
           <Thead>
@@ -234,15 +142,12 @@ const TrainingResults = ({ results }) => {
                 transition="background 0.15s"
               >
                 <Td color="#AAAAAA" borderBottom="1px solid #1A1D21" py={3}
-                  fontFamily="monospace" fontSize="13px">
+                    fontFamily="monospace" fontSize="13px">
                   {period}
                 </Td>
                 <Td borderBottom="1px solid #1A1D21" py={3}>
                   {v.best_model ? (
-                    <Badge
-                      colorScheme={modelColor(v.best_model)}
-                      fontSize="12px" px={2} borderRadius="6px"
-                    >
+                    <Badge colorScheme={modelColor(v.best_model)} fontSize="12px" px={2} borderRadius="6px">
                       {v.best_model}
                     </Badge>
                   ) : (
@@ -250,12 +155,12 @@ const TrainingResults = ({ results }) => {
                   )}
                 </Td>
                 <Td isNumeric color="#CCCCCC" borderBottom="1px solid #1A1D21"
-                  py={3} fontFamily="monospace" fontSize="13px">
+                    py={3} fontFamily="monospace" fontSize="13px">
                   {v.best_rmse != null ? Number(v.best_rmse).toFixed(4) : "—"}
                 </Td>
                 <Td isNumeric borderBottom="1px solid #1A1D21" py={3}
-                  fontFamily="monospace" fontSize="13px"
-                  color={r2Color(v.best_r2)} fontWeight="600">
+                    fontFamily="monospace" fontSize="13px"
+                    color={r2Color(v.best_r2)} fontWeight="600">
                   {v.best_r2 != null ? Number(v.best_r2).toFixed(4) : "—"}
                 </Td>
               </Tr>
@@ -263,7 +168,7 @@ const TrainingResults = ({ results }) => {
           </Tbody>
         </Table>
       </TableContainer>
-    </Box>
+    </ResultCard>
   );
 };
 

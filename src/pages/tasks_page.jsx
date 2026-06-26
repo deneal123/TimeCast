@@ -16,20 +16,12 @@ import {
   RepeatIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  CheckCircleIcon,
-  WarningIcon,
   WarningTwoIcon,
   TimeIcon,
 } from "@chakra-ui/icons";
 import { listTasks } from "../API/services/task_services";
+import { STATUS_META } from "../utils/taskConstants";
 import TaskStatusPanel from "../components/TaskStatusPanel";
-
-const STATUS_META = {
-  pending: { color: "#888",    scheme: "gray",   icon: TimeIcon,        label: "В очереди",    dot: "#888" },
-  running: { color: "#FFBF00", scheme: "yellow",  icon: null,            label: "Выполняется",  dot: "#FFBF00" },
-  done:    { color: "#48BB78", scheme: "green",   icon: CheckCircleIcon, label: "Готово",       dot: "#48BB78" },
-  failed:  { color: "#FF8888", scheme: "red",     icon: WarningIcon,     label: "Ошибка",       dot: "#FF8888" },
-};
 
 const relativeTime = (ts) => {
   if (!ts) return "";

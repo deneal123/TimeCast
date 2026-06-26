@@ -10,17 +10,11 @@ import {
   Spinner,
   Icon,
 } from "@chakra-ui/react";
-import { ExternalLinkIcon, WarningIcon, CheckCircleIcon, TimeIcon } from "@chakra-ui/icons";
+import { ExternalLinkIcon, WarningIcon } from "@chakra-ui/icons";
 import { getTask } from "../API/services/task_services";
+import { STATUS_META } from "../utils/taskConstants";
 import ForecastChart from "./ForecastChart";
 import TrainingResults from "./TrainingResults";
-
-const STATUS_META = {
-  pending: { color: "gray",   scheme: "gray",   icon: TimeIcon,        label: "В очереди" },
-  running: { color: "#FFBF00", scheme: "yellow", icon: null,            label: "Выполняется" },
-  done:    { color: "#48BB78", scheme: "green",  icon: CheckCircleIcon, label: "Готово" },
-  failed:  { color: "#FF8888", scheme: "red",    icon: WarningIcon,     label: "Ошибка" },
-};
 
 const POLL_INTERVAL_MS = 2500;
 

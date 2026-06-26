@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from "react";
 import createPlotlyComponent from "react-plotly.js/factory";
 import Plotly from "plotly.js-dist-min";
-import {
-  Box, Text, Select, HStack, Badge, Flex, SimpleGrid, Button, Tooltip,
-} from "@chakra-ui/react";
+import { Box, Text, HStack, SimpleGrid, Flex } from "@chakra-ui/react";
 import { PLOT_LAYOUT_BASE, PLOT_CONFIG } from "../utils/plotConfig";
+import ItemPicker from "./ItemPicker";
+import ResultCard from "./ResultCard";
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -21,58 +21,6 @@ const PLOT_LAYOUT = {
     ...PLOT_LAYOUT_BASE.xaxis,
     title: { text: "Шаг", font: { color: "#555", size: 12 } },
   },
-};
-
-const SELECT_STYLE = {
-  bg: "#0D1017",
-  color: "#E8E8E8",
-  border: "1px solid #2A2E36",
-  borderRadius: "8px",
-  size: "sm",
-  _hover: { borderColor: "#444" },
-  sx: { option: { background: "#1A1D21" } },
-};
-
-// Shared tab-style picker: tabs for ≤5 items, dropdown for more
-const ItemPicker = ({ items, selected, onSelect, accentColor = "#9F7AEA" }) => {
-  if (items.length <= 5) {
-    return (
-      <HStack spacing={1} flexWrap="wrap" justify="flex-end">
-        {items.map((id) => {
-          const active = id === selected;
-          return (
-            <Tooltip key={id} label={id} placement="top" hasArrow isDisabled={id.length <= 14}>
-              <Button
-                size="xs"
-                variant="ghost"
-                bg={active ? `${accentColor}1A` : "transparent"}
-                color={active ? accentColor : "#555"}
-                border="1px solid"
-                borderColor={active ? `${accentColor}44` : "transparent"}
-                _hover={{ color: "#CCCCCC", borderColor: "#2A2E36" }}
-                borderRadius="6px"
-                onClick={() => onSelect(id)}
-                px={3}
-                h="26px"
-                fontSize="12px"
-                fontWeight={active ? "600" : "400"}
-                transition="all 0.15s"
-                maxW="120px"
-                isTruncated
-              >
-                {id}
-              </Button>
-            </Tooltip>
-          );
-        })}
-      </HStack>
-    );
-  }
-  return (
-    <Select {...SELECT_STYLE} w="200px" value={selected} onChange={(e) => onSelect(e.target.value)}>
-      {items.map((id) => <option key={id} value={id}>{id}</option>)}
-    </Select>
-  );
 };
 
 const StatCard = ({ label, color, values }) => {
@@ -112,7 +60,7 @@ const DecompositionChart = ({ results }) => {
   const [selPeriod, setSelPeriod] = useState("");
 
   if (!items.length) return null;
-  const itemId  = items.includes(selItem)   ? selItem   : items[0];
+  const itemId  = items.includes(selItem)    ? selItem   : items[0];
   const periods = Object.keys(results[itemId] || {});
   const period  = periods.includes(selPeriod) ? selPeriod : periods[0];
   const comp    = (results[itemId] || {})[period] || {};
@@ -121,73 +69,40 @@ const DecompositionChart = ({ results }) => {
   const traces = COMPONENTS
     .filter(({ key }) => Array.isArray(comp[key]) && comp[key].length > 0)
     .map(({ key, color, label }) => ({
-      x: xOf(comp[key]),
-      y: comp[key],
-      type: "scatter",
-      mode: "lines",
-      name: label,
+      x: xOf(comp[key]), y: comp[key],
+      type: "scatter", mode: "lines", name: label,
       line: { color, width: 2 },
     }));
 
   return (
-    <Box
-      bg="#141820"
-      border="1px solid #2A2E36"
-      borderRadius="14px"
-      overflow="hidden"
-      mt={5}
-      w="100%"
-    >
-      {/* Header */}
-      <HStack
-        px={5}
-        py={3}
-        bg="#0F1218"
-        borderBottom="1px solid #2A2E36"
-        justify="space-between"
-        flexWrap="wrap"
-        gap={2}
-      >
-        <HStack spacing={3}>
-          <Text color="#FFFFFF" fontWeight="600" fontSize="15px">
-            Сезонная декомпозиция
-          </Text>
-          <Badge colorScheme="purple" fontSize="11px" px={2} borderRadius="6px">
-            decompose
-          </Badge>
-        </HStack>
-
+    <ResultCard
+      title="Сезонная декомпозиция"
+      badge="decompose"
+      badgeScheme="purple"
+      headerRight={
         <HStack spacing={2} flexWrap="wrap" justify="flex-end">
-          {/* Item picker (tabs or dropdown) */}
-          {items.length > 1 && (
-            <ItemPicker
-              items={items}
-              selected={itemId}
-              onSelect={(v) => { setSelItem(v); setSelPeriod(""); }}
-              accentColor="#9F7AEA"
-            />
-          )}
-
-          {/* Period picker */}
-          {periods.length > 1 && (
-            <ItemPicker
-              items={periods}
-              selected={period}
-              onSelect={setSelPeriod}
-              accentColor="#00B5D8"
-            />
-          )}
+          <ItemPicker
+            items={items}
+            selected={itemId}
+            onSelect={(v) => { setSelItem(v); setSelPeriod(""); }}
+            accentColor="#9F7AEA"
+          />
+          <ItemPicker
+            items={periods}
+            selected={period}
+            onSelect={setSelPeriod}
+            accentColor="#00B5D8"
+          />
         </HStack>
-      </HStack>
-
-      {/* Stat cards */}
+      }
+      mt={5}
+    >
       <SimpleGrid columns={[1, 3]} spacing={3} px={5} pt={4} pb={2}>
         {COMPONENTS.map(({ key, color, label }) => (
           <StatCard key={key} label={label} color={color} values={comp[key]} />
         ))}
       </SimpleGrid>
 
-      {/* Chart */}
       <Box px={3} pb={4}>
         {traces.length ? (
           <Plot
@@ -203,7 +118,7 @@ const DecompositionChart = ({ results }) => {
           </Flex>
         )}
       </Box>
-    </Box>
+    </ResultCard>
   );
 };
 
