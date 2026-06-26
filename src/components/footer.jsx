@@ -14,7 +14,7 @@ const Footer = () => (
     flexShrink={0}
   >
     <Text color="#444" fontSize="13px">
-      TimeCast © 2024 — Вольхин Данил, ВШЭ
+      TimeCast © 2025 — Вольхин Данил, ВШЭ
     </Text>
     <HStack spacing={4}>
       <Text color="#333" fontSize="12px">МТС — временные ряды</Text>

@@ -18,6 +18,7 @@ import {
   ChevronUpIcon,
   CheckCircleIcon,
   WarningIcon,
+  WarningTwoIcon,
   TimeIcon,
 } from "@chakra-ui/icons";
 import { listTasks } from "../API/services/task_services";
@@ -130,6 +131,7 @@ const CountChip = ({ label, count, color }) => (
 const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
   const timerRef = useRef(null);
 
@@ -141,9 +143,10 @@ const TasksPage = () => {
       const list = Array.isArray(data) ? data : (data.tasks ?? []);
       list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       setTasks(list);
+      setError(null);
       setLastRefresh(new Date());
-    } catch {
-      // ignore — will retry on next poll
+    } catch (e) {
+      setError(e?.message || "Не удалось загрузить список задач");
     } finally {
       setLoading(false);
     }
@@ -199,6 +202,36 @@ const TasksPage = () => {
             Обновить
           </Button>
         </HStack>
+
+        {/* Error banner */}
+        {error && (
+          <Box
+            bg="#1A0A0A"
+            border="1px solid #FF003244"
+            borderRadius="12px"
+            px={5}
+            py={4}
+            mb={5}
+          >
+            <HStack justify="space-between">
+              <HStack spacing={3}>
+                <Icon as={WarningTwoIcon} color="#FF8888" flexShrink={0} />
+                <Text color="#FF8888" fontSize="13px">{error}</Text>
+              </HStack>
+              <Button
+                size="xs"
+                variant="outline"
+                borderColor="#FF003255"
+                color="#FF8888"
+                _hover={{ borderColor: "#FF0032", bg: "#FF003210" }}
+                borderRadius="6px"
+                onClick={() => { setError(null); fetchTasks(); }}
+              >
+                Повторить
+              </Button>
+            </HStack>
+          </Box>
+        )}
 
         {/* Stats row */}
         <HStack
