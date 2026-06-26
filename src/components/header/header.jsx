@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import logo from "./../../images/logo.svg";
-import { Flex, Image, Text, HStack, Button, Box, Tooltip } from "@chakra-ui/react";
+import {
+  Flex, Image, Text, HStack, Button, Box, Tooltip, VStack,
+  IconButton, useDisclosure, useBreakpointValue,
+  Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerBody,
+} from "@chakra-ui/react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { HamburgerIcon } from "@chakra-ui/icons";
 import { baseUrl } from "../../API/apiConsts";
 
 const NAV_LINKS = [
@@ -12,7 +17,7 @@ const NAV_LINKS = [
 ];
 
 const useBackendHealth = () => {
-  const [status, setStatus] = useState(null); // null=unknown, true=ok, false=error
+  const [status, setStatus] = useState(null);
 
   useEffect(() => {
     const check = async () => {
@@ -38,14 +43,13 @@ const useBackendHealth = () => {
 
 const HealthDot = () => {
   const ok = useBackendHealth();
-  const color  = ok === null ? "#444" : ok ? "#48BB78" : "#FF0032";
-  const label  = ok === null ? "Проверка соединения…" : ok ? "Backend: online" : "Backend: offline";
+  const color = ok === null ? "#444" : ok ? "#48BB78" : "#FF0032";
+  const label = ok === null ? "Проверка соединения…" : ok ? "Backend: online" : "Backend: offline";
 
   return (
     <Tooltip label={label} placement="bottom" hasArrow>
       <Box
-        w="8px"
-        h="8px"
+        w="8px" h="8px"
         borderRadius="full"
         bg={color}
         flexShrink={0}
@@ -63,9 +67,34 @@ const HealthDot = () => {
   );
 };
 
+const NavLink = ({ label, path, isActive, onClick }) => (
+  <Button
+    variant="ghost"
+    color={isActive ? "#FFBF00" : "#888888"}
+    fontWeight={isActive ? "600" : "400"}
+    borderBottom={isActive ? "2px solid #FFBF00" : "2px solid transparent"}
+    borderRadius={0}
+    px={4}
+    h="64px"
+    _hover={{ color: "#FFFFFF", bg: "transparent" }}
+    transition="all 0.15s"
+    onClick={onClick}
+    size="sm"
+  >
+    {label}
+  </Button>
+);
+
 const Header = ({ showMenu = false }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate   = useNavigate();
+  const location   = useLocation();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const isMobile   = useBreakpointValue({ base: true, md: false }) ?? false;
+
+  const handleNav = (path) => {
+    navigate(path);
+    onClose();
+  };
 
   return (
     <Flex
@@ -106,33 +135,76 @@ const Header = ({ showMenu = false }) => {
         </Text>
       </Flex>
 
-      {/* Navigation + health dot */}
-      {showMenu && (
+      {/* Desktop navigation */}
+      {showMenu && !isMobile && (
         <HStack spacing={2}>
-          {NAV_LINKS.map(({ label, path }) => {
-            const isActive = location.pathname === path;
-            return (
-              <Button
-                key={path}
-                size="sm"
-                variant="ghost"
-                color={isActive ? "#FFBF00" : "#888888"}
-                fontWeight={isActive ? "600" : "400"}
-                borderBottom={isActive ? "2px solid #FFBF00" : "2px solid transparent"}
-                borderRadius={0}
-                px={4}
-                h="64px"
-                _hover={{ color: "#FFFFFF", bg: "transparent" }}
-                transition="all 0.15s"
-                onClick={() => navigate(path)}
-              >
-                {label}
-              </Button>
-            );
-          })}
+          {NAV_LINKS.map(({ label, path }) => (
+            <NavLink
+              key={path}
+              label={label}
+              path={path}
+              isActive={location.pathname === path}
+              onClick={() => navigate(path)}
+            />
+          ))}
           <HealthDot />
         </HStack>
       )}
+
+      {/* Mobile hamburger */}
+      {showMenu && isMobile && (
+        <HStack spacing={3}>
+          <HealthDot />
+          <IconButton
+            icon={<HamburgerIcon />}
+            variant="ghost"
+            color="#888"
+            _hover={{ color: "#FFFFFF", bg: "transparent" }}
+            onClick={onOpen}
+            aria-label="Открыть меню"
+            size="md"
+          />
+        </HStack>
+      )}
+
+      {/* Mobile drawer */}
+      <Drawer isOpen={isOpen} onClose={onClose} placement="right" size="xs">
+        <DrawerOverlay bg="blackAlpha.700" backdropFilter="blur(4px)" />
+        <DrawerContent bg="#1A1D21" borderLeft="1px solid #FFFFFF0F">
+          <DrawerCloseButton color="#888" top={4} right={4} />
+          <DrawerBody pt={16} pb={6} px={5}>
+            <VStack align="stretch" spacing={1}>
+              {NAV_LINKS.map(({ label, path }) => {
+                const isActive = location.pathname === path;
+                return (
+                  <Button
+                    key={path}
+                    variant="ghost"
+                    justifyContent="flex-start"
+                    color={isActive ? "#FFBF00" : "#888"}
+                    fontWeight={isActive ? "600" : "400"}
+                    bg={isActive ? "#FFBF0010" : "transparent"}
+                    _hover={{ color: "#FFFFFF", bg: "#FFFFFF08" }}
+                    borderRadius="10px"
+                    h="44px"
+                    px={4}
+                    onClick={() => handleNav(path)}
+                  >
+                    {label}
+                  </Button>
+                );
+              })}
+            </VStack>
+
+            <Box mt={8} pt={4} borderTop="1px solid #FFFFFF0F">
+              <HStack spacing={2}>
+                <HealthDot />
+                <Text color="#444" fontSize="12px">Backend статус</Text>
+              </HStack>
+            </Box>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
     </Flex>
   );
 };

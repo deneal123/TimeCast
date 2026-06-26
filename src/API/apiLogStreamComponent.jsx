@@ -1,35 +1,60 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { baseUrl } from "./apiConsts";
 
-// LogStreamComponent ����� ��������� ������� ��� ���������� ����� �� ������������� ����������
+const INITIAL_DELAY = 1500;
+const MAX_DELAY     = 30000;
+
+// Streams server-sent log events to the parent via onNewLog callback.
+// Reconnects with exponential backoff on disconnect or error.
 const LogStreamComponent = ({ onNewLog }) => {
+  const esRef    = useRef(null);
+  const onNewLogRef = useRef(onNewLog);
+
   useEffect(() => {
-    const eventSource = new EventSource(`${baseUrl}/stream-logs`);
-
-    eventSource.onopen = () => {
-      console.log("Connection to log stream established.");
-    };
-
-    eventSource.onmessage = (event) => {
-      console.log("Received log entry:", event.data);
-
-      //���������� ����� ��� ������������� ���������� ����� onNewLog
-      if (onNewLog) {
-        onNewLog(event.data);
-      }
-    };
-
-    eventSource.onerror = (error) => {
-      console.error("EventSource failed:", error);
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-    };
+    onNewLogRef.current = onNewLog;
   }, [onNewLog]);
 
-  return null; // ���� ��������� �� �������� ������, ��� ��� �������� � ������������ ���������
+  useEffect(() => {
+    let cancelled = false;
+    let delay     = INITIAL_DELAY;
+    let timer     = null;
+
+    const connect = () => {
+      if (cancelled) return;
+
+      const es = new EventSource(`${baseUrl}/stream-logs`);
+      esRef.current = es;
+
+      es.onopen = () => {
+        delay = INITIAL_DELAY;
+      };
+
+      es.onmessage = (event) => {
+        onNewLogRef.current?.(event.data);
+        delay = INITIAL_DELAY;
+      };
+
+      es.onerror = () => {
+        es.close();
+        esRef.current = null;
+        if (!cancelled) {
+          timer = setTimeout(connect, delay);
+          delay = Math.min(delay * 2, MAX_DELAY);
+        }
+      };
+    };
+
+    connect();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      esRef.current?.close();
+      esRef.current = null;
+    };
+  }, []);
+
+  return null;
 };
 
 export default LogStreamComponent;
