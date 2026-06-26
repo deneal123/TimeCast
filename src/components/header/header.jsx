@@ -24,8 +24,8 @@ const useBackendHealth = () => {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 4000);
       try {
-        const r = await fetch(`${baseUrl}/tasks/`, { signal: controller.signal });
-        setStatus(r.ok || r.status < 500);
+        const r = await fetch(`${baseUrl}/health`, { signal: controller.signal });
+        setStatus(r.ok);
       } catch {
         setStatus(false);
       } finally {

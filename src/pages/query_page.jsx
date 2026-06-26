@@ -51,7 +51,7 @@ import {
   queueTimeSeriesGraduate,
   queueTimeSeriesNeiroGraduate,
 } from "../API/services/task_services";
-import LogStreamComponent from "../API/apiLogStreamComponent";
+import useLogStream from "../hooks/useLogStream";
 import LogViewer from "../components/LogViewer";
 import ForecastChart from "../components/ForecastChart";
 import TrainingResults from "../components/TrainingResults";
@@ -473,6 +473,8 @@ const QueryPage = () => {
   const handleNewLog = (newLog) =>
     setResponseText((prev) => prev + "\n" + newLog);
 
+  useLogStream(handleNewLog);
+
   // ---------------------------------------------------------------------------
   return (
     <Flex
@@ -639,7 +641,6 @@ const QueryPage = () => {
               ) : undefined
             }
           >
-            <LogStreamComponent onNewLog={handleNewLog} />
             <LogViewer ref={logRef} value={responseText} height="480px" />
           </SectionBox>
         </Flex>

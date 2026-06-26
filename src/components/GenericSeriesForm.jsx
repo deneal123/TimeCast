@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   VStack,
   HStack,
@@ -71,7 +71,15 @@ const GenericSeriesForm = ({ onBuild }) => {
   const [seasonal, setSeasonal] = useState("week:7, month:30");
   const [futureOrEstimate, setFutureOrEstimate] = useState("estimate");
   const [seqLen, setSeqLen] = useState("30");
-  const [expanded, setExpanded] = useState(false);
+  const [expanded,  setExpanded]  = useState(false);
+  const [isDirty,   setIsDirty]   = useState(false);
+  const didBuildRef = useRef(false);
+
+  // Marks the form dirty once the user has built at least once.
+  const markDirty = () => { if (didBuildRef.current) setIsDirty(true); };
+
+  // Shorthand: returns an onChange handler that updates state and marks dirty.
+  const field = (setter) => (e) => { setter(e.target.value); markDirty(); };
 
   const handleReset = () => {
     setSource(FORM_DEFAULTS.source);
@@ -85,6 +93,8 @@ const GenericSeriesForm = ({ onBuild }) => {
     setFutureOrEstimate(FORM_DEFAULTS.futureOrEstimate);
     setSeqLen(FORM_DEFAULTS.seqLen);
     setExpanded(false);
+    didBuildRef.current = false;
+    setIsDirty(false);
   };
 
   const parseSeasonal = () => {
@@ -131,6 +141,8 @@ const GenericSeriesForm = ({ onBuild }) => {
     }
 
     onBuild(JSON.stringify(payload, null, 2));
+    didBuildRef.current = true;
+    setIsDirty(false);
   };
 
   return (
@@ -156,7 +168,7 @@ const GenericSeriesForm = ({ onBuild }) => {
       <SimpleGrid columns={2} spacing={3}>
         <Box>
           <FieldLabel>Операция</FieldLabel>
-          <Select {...SELECT_STYLE} value={mode} onChange={(e) => setMode(e.target.value)}>
+          <Select {...SELECT_STYLE} value={mode} onChange={field(setMode)}>
             <option value="graduate">Обучение (train)</option>
             <option value="inference">Инференс</option>
             <option value="decompose">Декомпозиция</option>
@@ -165,7 +177,7 @@ const GenericSeriesForm = ({ onBuild }) => {
         {mode !== "decompose" && (
           <Box>
             <FieldLabel>Модель</FieldLabel>
-            <Select {...SELECT_STYLE} value={model} onChange={(e) => setModel(e.target.value)}>
+            <Select {...SELECT_STYLE} value={model} onChange={field(setModel)}>
               <option value="classic">Classic</option>
               <option value="neiro">Neural (iTransformer)</option>
             </Select>
@@ -179,7 +191,7 @@ const GenericSeriesForm = ({ onBuild }) => {
           {...INPUT_STYLE}
           placeholder="series.csv"
           value={source}
-          onChange={(e) => setSource(e.target.value)}
+          onChange={field(setSource)}
         />
       </Box>
 
@@ -189,7 +201,7 @@ const GenericSeriesForm = ({ onBuild }) => {
           {...INPUT_STYLE}
           placeholder="week:7, month:30"
           value={seasonal}
-          onChange={(e) => setSeasonal(e.target.value)}
+          onChange={field(setSeasonal)}
         />
       </Box>
 
@@ -203,7 +215,7 @@ const GenericSeriesForm = ({ onBuild }) => {
                 {...INPUT_STYLE}
                 placeholder="id"
                 value={seriesIdCol}
-                onChange={(e) => setSeriesIdCol(e.target.value)}
+                onChange={field(setSeriesIdCol)}
               />
             </Box>
             <Box>
@@ -212,7 +224,7 @@ const GenericSeriesForm = ({ onBuild }) => {
                 {...INPUT_STYLE}
                 placeholder="date"
                 value={timeCol}
-                onChange={(e) => setTimeCol(e.target.value)}
+                onChange={field(setTimeCol)}
               />
             </Box>
             <Box>
@@ -221,7 +233,7 @@ const GenericSeriesForm = ({ onBuild }) => {
                 {...INPUT_STYLE}
                 placeholder="value"
                 value={targetCol}
-                onChange={(e) => setTargetCol(e.target.value)}
+                onChange={field(setTargetCol)}
               />
             </Box>
           </SimpleGrid>
@@ -232,7 +244,7 @@ const GenericSeriesForm = ({ onBuild }) => {
               {...INPUT_STYLE}
               placeholder="price, promo"
               value={featureCols}
-              onChange={(e) => setFeatureCols(e.target.value)}
+              onChange={field(setFeatureCols)}
             />
           </Box>
 
@@ -244,7 +256,7 @@ const GenericSeriesForm = ({ onBuild }) => {
                   <Select
                     {...SELECT_STYLE}
                     value={futureOrEstimate}
-                    onChange={(e) => setFutureOrEstimate(e.target.value)}
+                    onChange={field(setFutureOrEstimate)}
                   >
                     <option value="estimate">estimate (тест)</option>
                     <option value="future">future (прогноз)</option>
@@ -258,7 +270,7 @@ const GenericSeriesForm = ({ onBuild }) => {
                     {...INPUT_STYLE}
                     placeholder="30"
                     value={seqLen}
-                    onChange={(e) => setSeqLen(e.target.value)}
+                    onChange={field(setSeqLen)}
                   />
                 </Box>
               )}
@@ -268,19 +280,29 @@ const GenericSeriesForm = ({ onBuild }) => {
       </Collapse>
 
       <HStack spacing={2}>
-        <Button
-          size="sm"
-          bg="#FF0032"
-          color="#FFFFFF"
-          _hover={{ bg: "#CC0028", transform: "translateY(-1px)" }}
-          _active={{ transform: "translateY(0)" }}
-          transition="all 0.15s"
-          borderRadius="8px"
-          onClick={build}
-          px={5}
+        <Tooltip
+          label={isDirty ? "Форма изменилась — обновите JSON" : ""}
+          placement="top"
+          hasArrow
+          isDisabled={!isDirty}
         >
-          Сгенерировать JSON
-        </Button>
+          <Button
+            size="sm"
+            bg={isDirty ? "#FFBF00" : "#FF0032"}
+            color={isDirty ? "#1A1D21" : "#FFFFFF"}
+            _hover={{
+              bg: isDirty ? "#E6AC00" : "#CC0028",
+              transform: "translateY(-1px)",
+            }}
+            _active={{ transform: "translateY(0)" }}
+            transition="all 0.15s"
+            borderRadius="8px"
+            onClick={build}
+            px={5}
+          >
+            {isDirty ? "Обновить JSON" : "Сгенерировать JSON"}
+          </Button>
+        </Tooltip>
         <Tooltip label="Сбросить форму" placement="top" hasArrow>
           <Button
             size="sm"
