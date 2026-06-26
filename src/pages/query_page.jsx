@@ -13,6 +13,14 @@ import {
   Tooltip,
   Divider,
   useToast,
+  useDisclosure,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  Kbd,
 } from "@chakra-ui/react";
 import {
   AttachmentIcon,
@@ -23,6 +31,7 @@ import {
   CheckIcon,
   RepeatClockIcon,
   CopyIcon,
+  InfoOutlineIcon,
 } from "@chakra-ui/icons";
 import { fetchZipUrl, uploadCSVFiles } from "../API/services/file_services";
 import {
@@ -42,6 +51,7 @@ import {
   queueTimeSeriesNeiroGraduate,
 } from "../API/services/task_services";
 import LogStreamComponent from "../API/apiLogStreamComponent";
+import LogViewer from "../components/LogViewer";
 import ForecastChart from "../components/ForecastChart";
 import TrainingResults from "../components/TrainingResults";
 import DecompositionChart from "../components/DecompositionChart";
@@ -213,6 +223,7 @@ const IconBtn = ({ icon, label, onClick, color = "#555" }) => (
 
 const QueryPage = () => {
   const toast = useToast();
+  const { isOpen: isHelpOpen, onOpen: onHelpOpen, onClose: onHelpClose } = useDisclosure();
   const resultsRef = useRef(null);
   const logRef = useRef(null);
 
@@ -579,21 +590,7 @@ const QueryPage = () => {
             }
           >
             <LogStreamComponent onNewLog={handleNewLog} />
-            <Textarea
-              ref={logRef}
-              value={responseText}
-              onChange={(e) => setResponseText(e.target.value)}
-              h="480px"
-              bg="#0D1017"
-              color="#AAAAAA"
-              border="1px solid #2A2E36"
-              _hover={{ borderColor: "#444" }}
-              _focus={{ borderColor: "#444", boxShadow: "none" }}
-              borderRadius="10px"
-              resize="none"
-              fontFamily="monospace"
-              fontSize="12px"
-            />
+            <LogViewer ref={logRef} value={responseText} height="480px" />
           </SectionBox>
         </Flex>
 
@@ -690,6 +687,21 @@ const QueryPage = () => {
                 </Button>
               </Tooltip>
             )}
+
+            <Tooltip label="Клавиатурные шорткаты" placement="top" hasArrow>
+              <Button
+                size="sm"
+                variant="ghost"
+                color="#444"
+                _hover={{ color: "#FFFFFF" }}
+                onClick={onHelpOpen}
+                h="36px"
+                px={2}
+                ml={responseText ? 0 : "auto"}
+              >
+                <Icon as={InfoOutlineIcon} boxSize="14px" />
+              </Button>
+            </Tooltip>
           </HStack>
         </Box>
 
@@ -714,6 +726,64 @@ const QueryPage = () => {
         </Box>
 
       </Box>
+
+      {/* Keyboard shortcuts modal */}
+      <Modal isOpen={isHelpOpen} onClose={onHelpClose} isCentered size="md">
+        <ModalOverlay bg="blackAlpha.700" backdropFilter="blur(6px)" />
+        <ModalContent bg="#141820" border="1px solid #2A2E36" borderRadius="14px">
+          <ModalHeader
+            color="#FFFFFF"
+            fontSize="15px"
+            fontWeight="600"
+            borderBottom="1px solid #2A2E36"
+            pb={3}
+          >
+            Клавиатурные шорткаты
+          </ModalHeader>
+          <ModalCloseButton color="#555" top={3} right={4} />
+          <ModalBody py={5}>
+            <Flex direction="column" gap={3}>
+              {[
+                { keys: ["Ctrl", "Enter"],         desc: "Отправить запрос" },
+                { keys: ["Ctrl", "Shift", "Enter"], desc: "Поставить в очередь" },
+                { keys: ["Tab"],                    desc: "Вставить 2 пробела (в JSON)" },
+                { keys: ["Esc"],                    desc: "Закрыть историю запросов" },
+              ].map(({ keys, desc }) => (
+                <HStack key={desc} justify="space-between">
+                  <HStack spacing={1}>
+                    {keys.map((k, i) => (
+                      <React.Fragment key={k}>
+                        <Kbd
+                          bg="#0D1017"
+                          color="#AAAAAA"
+                          border="1px solid #2A2E36"
+                          borderRadius="6px"
+                          fontSize="11px"
+                          px={2}
+                          py="2px"
+                        >
+                          {k}
+                        </Kbd>
+                        {i < keys.length - 1 && (
+                          <Text color="#444" fontSize="11px">+</Text>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </HStack>
+                  <Text color="#888" fontSize="13px">{desc}</Text>
+                </HStack>
+              ))}
+            </Flex>
+
+            <Divider borderColor="#2A2E36" my={4} />
+
+            <Text color="#444" fontSize="11px">
+              JSON-лог автоматически определяет формат: цветной лог или подсветка синтаксиса JSON
+            </Text>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
     </Flex>
   );
 };
