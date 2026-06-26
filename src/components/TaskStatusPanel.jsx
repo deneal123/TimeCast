@@ -24,9 +24,18 @@ const STATUS_META = {
 
 const POLL_INTERVAL_MS = 2500;
 
+const fmtElapsed = (s) => {
+  if (s < 60) return `${s}с`;
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return r > 0 ? `${m}м ${r}с` : `${m}м`;
+};
+
 const TaskStatusPanel = ({ taskId, onResultReady }) => {
-  const [record, setRecord] = useState(null);
-  const activeRef = useRef(true);
+  const [record,  setRecord]  = useState(null);
+  const [elapsed, setElapsed] = useState(0);
+  const activeRef  = useRef(true);
+  const timerRef   = useRef(null);
 
   useEffect(() => {
     if (!taskId) return;
@@ -49,6 +58,17 @@ const TaskStatusPanel = ({ taskId, onResultReady }) => {
     poll();
     return () => { activeRef.current = false; };
   }, [taskId, onResultReady]);
+
+  // Elapsed timer while running
+  useEffect(() => {
+    if (record?.status === "running") {
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [record?.status]);
 
   if (!record) return null;
 
@@ -98,9 +118,14 @@ const TaskStatusPanel = ({ taskId, onResultReady }) => {
       {/* Status body */}
       <Box px={5} py={4}>
         {record.status === "running" && (
-          <HStack spacing={3} color="#FFBF00">
+          <HStack spacing={3}>
             <Spinner size="sm" color="#FFBF00" thickness="2px" />
-            <Text fontSize="13px">Обучение выполняется…</Text>
+            <Text fontSize="13px" color="#FFBF00">Обучение выполняется…</Text>
+            {elapsed > 0 && (
+              <Text fontSize="12px" color="#666" fontFamily="monospace">
+                {fmtElapsed(elapsed)}
+              </Text>
+            )}
           </HStack>
         )}
 

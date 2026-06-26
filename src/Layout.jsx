@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Flex, Spinner } from "@chakra-ui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import Header from "./components/header/header";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { Outlet, useLocation } from "react-router-dom";
 import Footer from "./components/footer";
 
@@ -38,21 +39,23 @@ function Layout() {
   return (
     <Flex direction="column" minH="100vh" w="100%" bg="menu_mts">
       <Header showMenu={!isMain} />
-      <React.Suspense fallback={<PageLoader />}>
-        <AnimatePresence mode="wait" initial={false}>
-          <MotionFlex
-            key={location.pathname}
-            direction="column"
-            flex={1}
-            variants={PAGE_TRANSITION}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <Outlet />
-          </MotionFlex>
-        </AnimatePresence>
-      </React.Suspense>
+      <ErrorBoundary>
+        <React.Suspense fallback={<PageLoader />}>
+          <AnimatePresence mode="wait" initial={false}>
+            <MotionFlex
+              key={location.pathname}
+              direction="column"
+              flex={1}
+              variants={PAGE_TRANSITION}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <Outlet />
+            </MotionFlex>
+          </AnimatePresence>
+        </React.Suspense>
+      </ErrorBoundary>
       {!isMain && <Footer />}
     </Flex>
   );

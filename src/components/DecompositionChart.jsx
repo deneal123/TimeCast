@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from "react";
 import createPlotlyComponent from "react-plotly.js/factory";
 import Plotly from "plotly.js-dist-min";
-import { Box, Text, Select, HStack, Badge, Flex, SimpleGrid } from "@chakra-ui/react";
+import {
+  Box, Text, Select, HStack, Badge, Flex, SimpleGrid, Button, Tooltip,
+} from "@chakra-ui/react";
 import { PLOT_LAYOUT_BASE, PLOT_CONFIG } from "../utils/plotConfig";
 
 const Plot = createPlotlyComponent(Plotly);
@@ -31,11 +33,53 @@ const SELECT_STYLE = {
   sx: { option: { background: "#1A1D21" } },
 };
 
+// Shared tab-style picker: tabs for ≤5 items, dropdown for more
+const ItemPicker = ({ items, selected, onSelect, accentColor = "#9F7AEA" }) => {
+  if (items.length <= 5) {
+    return (
+      <HStack spacing={1} flexWrap="wrap" justify="flex-end">
+        {items.map((id) => {
+          const active = id === selected;
+          return (
+            <Tooltip key={id} label={id} placement="top" hasArrow isDisabled={id.length <= 14}>
+              <Button
+                size="xs"
+                variant="ghost"
+                bg={active ? `${accentColor}1A` : "transparent"}
+                color={active ? accentColor : "#555"}
+                border="1px solid"
+                borderColor={active ? `${accentColor}44` : "transparent"}
+                _hover={{ color: "#CCCCCC", borderColor: "#2A2E36" }}
+                borderRadius="6px"
+                onClick={() => onSelect(id)}
+                px={3}
+                h="26px"
+                fontSize="12px"
+                fontWeight={active ? "600" : "400"}
+                transition="all 0.15s"
+                maxW="120px"
+                isTruncated
+              >
+                {id}
+              </Button>
+            </Tooltip>
+          );
+        })}
+      </HStack>
+    );
+  }
+  return (
+    <Select {...SELECT_STYLE} w="200px" value={selected} onChange={(e) => onSelect(e.target.value)}>
+      {items.map((id) => <option key={id} value={id}>{id}</option>)}
+    </Select>
+  );
+};
+
 const StatCard = ({ label, color, values }) => {
   if (!Array.isArray(values) || !values.length) return null;
   const nums = values.filter((v) => typeof v === "number");
-  const min = Math.min(...nums).toFixed(2);
-  const max = Math.max(...nums).toFixed(2);
+  const min  = Math.min(...nums).toFixed(2);
+  const max  = Math.max(...nums).toFixed(2);
   const mean = (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(2);
 
   return (
@@ -47,18 +91,14 @@ const StatCard = ({ label, color, values }) => {
       px={4}
       py={3}
     >
-      <Text color={color} fontWeight="600" fontSize="13px" mb={1}>
-        {label}
-      </Text>
+      <Text color={color} fontWeight="600" fontSize="13px" mb={1}>{label}</Text>
       <HStack spacing={3}>
         {[["min", min], ["mean", mean], ["max", max]].map(([k, v]) => (
           <Box key={k}>
             <Text color="#444" fontSize="10px" fontWeight="600" letterSpacing="0.06em">
               {k.toUpperCase()}
             </Text>
-            <Text color="#AAAAAA" fontSize="12px" fontFamily="monospace">
-              {v}
-            </Text>
+            <Text color="#AAAAAA" fontSize="12px" fontFamily="monospace">{v}</Text>
           </Box>
         ))}
       </HStack>
@@ -68,16 +108,16 @@ const StatCard = ({ label, color, values }) => {
 
 const DecompositionChart = ({ results }) => {
   const items = useMemo(() => Object.keys(results || {}), [results]);
-  const [selItem, setSelItem] = useState("");
+  const [selItem,   setSelItem]   = useState("");
   const [selPeriod, setSelPeriod] = useState("");
 
   if (!items.length) return null;
-  const itemId = items.includes(selItem) ? selItem : items[0];
+  const itemId  = items.includes(selItem)   ? selItem   : items[0];
   const periods = Object.keys(results[itemId] || {});
-  const period = periods.includes(selPeriod) ? selPeriod : periods[0];
-  const comp = (results[itemId] || {})[period] || {};
+  const period  = periods.includes(selPeriod) ? selPeriod : periods[0];
+  const comp    = (results[itemId] || {})[period] || {};
 
-  const xOf = (arr) => arr.map((_, i) => i + 1);
+  const xOf   = (arr) => arr.map((_, i) => i + 1);
   const traces = COMPONENTS
     .filter(({ key }) => Array.isArray(comp[key]) && comp[key].length > 0)
     .map(({ key, color, label }) => ({
@@ -105,6 +145,8 @@ const DecompositionChart = ({ results }) => {
         bg="#0F1218"
         borderBottom="1px solid #2A2E36"
         justify="space-between"
+        flexWrap="wrap"
+        gap={2}
       >
         <HStack spacing={3}>
           <Text color="#FFFFFF" fontWeight="600" fontSize="15px">
@@ -114,32 +156,26 @@ const DecompositionChart = ({ results }) => {
             decompose
           </Badge>
         </HStack>
-        <HStack spacing={3}>
-          <Select
-            {...SELECT_STYLE}
-            w="200px"
-            value={itemId}
-            onChange={(e) => setSelItem(e.target.value)}
-          >
-            {items.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
-          </Select>
+
+        <HStack spacing={2} flexWrap="wrap" justify="flex-end">
+          {/* Item picker (tabs or dropdown) */}
+          {items.length > 1 && (
+            <ItemPicker
+              items={items}
+              selected={itemId}
+              onSelect={(v) => { setSelItem(v); setSelPeriod(""); }}
+              accentColor="#9F7AEA"
+            />
+          )}
+
+          {/* Period picker */}
           {periods.length > 1 && (
-            <Select
-              {...SELECT_STYLE}
-              w="130px"
-              value={period}
-              onChange={(e) => setSelPeriod(e.target.value)}
-            >
-              {periods.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </Select>
+            <ItemPicker
+              items={periods}
+              selected={period}
+              onSelect={setSelPeriod}
+              accentColor="#00B5D8"
+            />
           )}
         </HStack>
       </HStack>
@@ -163,9 +199,7 @@ const DecompositionChart = ({ results }) => {
           />
         ) : (
           <Flex align="center" justify="center" h="200px">
-            <Text color="#444" fontSize="14px">
-              Нет данных декомпозиции
-            </Text>
+            <Text color="#444" fontSize="14px">Нет данных декомпозиции</Text>
           </Flex>
         )}
       </Box>
