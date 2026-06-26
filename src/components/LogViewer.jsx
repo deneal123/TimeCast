@@ -35,9 +35,39 @@ const lineColor = (line) => {
   return "#AAAAAA";
 };
 
+const MAX_LOG_LINES = 2000;
+
 const LogViewer = React.forwardRef(({ value, height = "480px" }, ref) => {
   const trimmed = (value || "").trim();
-  const isJson = trimmed.startsWith("{") || trimmed.startsWith("[");
+  const isJson  = trimmed.startsWith("{") || trimmed.startsWith("[");
+
+  const renderLines = () => {
+    const allLines = trimmed.split("\n");
+    const clipped  = allLines.length > MAX_LOG_LINES;
+    const lines    = clipped ? allLines.slice(-MAX_LOG_LINES) : allLines;
+    return (
+      <>
+        {clipped && (
+          <Text fontSize="11px" color="#555" fontFamily="monospace" mb={1}>
+            {"... "}{allLines.length - MAX_LOG_LINES}{" строк скрыто (показаны последние "}{MAX_LOG_LINES}{")"}
+          </Text>
+        )}
+        {lines.map((line, i) => (
+          <Text
+            key={i}
+            color={lineColor(line)}
+            fontSize="12px"
+            fontFamily="monospace"
+            lineHeight="1.65"
+            whiteSpace="pre-wrap"
+            wordBreak="break-all"
+          >
+            {line || " "}
+          </Text>
+        ))}
+      </>
+    );
+  };
 
   return (
     <Box
@@ -59,19 +89,7 @@ const LogViewer = React.forwardRef(({ value, height = "480px" }, ref) => {
           {trimmed}
         </SyntaxHighlighter>
       ) : trimmed ? (
-        trimmed.split("\n").map((line, i) => (
-          <Text
-            key={i}
-            color={lineColor(line)}
-            fontSize="12px"
-            fontFamily="monospace"
-            lineHeight="1.65"
-            whiteSpace="pre-wrap"
-            wordBreak="break-all"
-          >
-            {line || " "}
-          </Text>
-        ))
+        renderLines()
       ) : (
         <Text color="#2A2E36" fontSize="12px" fontFamily="monospace">
           Ожидание ответа…
