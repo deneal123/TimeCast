@@ -1,5 +1,5 @@
 import React from "react";
-import { Flex } from "@chakra-ui/react";
+import { Flex, Spinner } from "@chakra-ui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import Header from "./components/header/header";
 import { Outlet, useLocation } from "react-router-dom";
@@ -13,6 +13,12 @@ const PAGE_TRANSITION = {
   exit:       { opacity: 0, y: -6, transition: { duration: 0.15, ease: "easeIn" } },
 };
 
+const PageLoader = () => (
+  <Flex align="center" justify="center" flex={1} minH="200px">
+    <Spinner color="#FF0032" size="lg" thickness="3px" speed="0.6s" />
+  </Flex>
+);
+
 function Layout() {
   const location = useLocation();
   const isMain = location.pathname === "/main";
@@ -20,19 +26,21 @@ function Layout() {
   return (
     <Flex direction="column" minH="100vh" w="100%" bg="menu_mts">
       <Header showMenu={!isMain} />
-      <AnimatePresence mode="wait" initial={false}>
-        <MotionFlex
-          key={location.pathname}
-          direction="column"
-          flex={1}
-          variants={PAGE_TRANSITION}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-        >
-          <Outlet />
-        </MotionFlex>
-      </AnimatePresence>
+      <React.Suspense fallback={<PageLoader />}>
+        <AnimatePresence mode="wait" initial={false}>
+          <MotionFlex
+            key={location.pathname}
+            direction="column"
+            flex={1}
+            variants={PAGE_TRANSITION}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            <Outlet />
+          </MotionFlex>
+        </AnimatePresence>
+      </React.Suspense>
       {!isMain && <Footer />}
     </Flex>
   );

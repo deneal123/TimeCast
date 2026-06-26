@@ -1,40 +1,23 @@
+import React from "react";
 import { createHashRouter, RouterProvider, Navigate } from "react-router-dom";
 import Layout from "./Layout";
-import QueryPage from "./pages/query_page";
-import MainPage from "./pages/main_page";
-import DocumentationPage from "./pages/documentation_page";
-import TasksPage from "./pages/tasks_page";
-import NotFoundPage from "./pages/notfound_page";
 import ErrorBoundary from "./components/ErrorBoundary";
+
+const MainPage        = React.lazy(() => import("./pages/main_page"));
+const QueryPage       = React.lazy(() => import("./pages/query_page"));
+const TasksPage       = React.lazy(() => import("./pages/tasks_page"));
+const DocumentationPage = React.lazy(() => import("./pages/documentation_page"));
+const NotFoundPage    = React.lazy(() => import("./pages/notfound_page"));
 
 const router = createHashRouter([
   {
     element: <Layout />,
     children: [
-      {
-        path: "/",
-        element: <Navigate to="/main" />,
-      },
-      {
-        path: "/main",
-        element: <MainPage />,
-        errorElement: <NotFoundPage />,
-      },
-      {
-        path: "/query",
-        element: <QueryPage />,
-        errorElement: <NotFoundPage />,
-      },
-      {
-        path: "/tasks",
-        element: <TasksPage />,
-        errorElement: <NotFoundPage />,
-      },
-      {
-        path: "/documentation",
-        element: <DocumentationPage />,
-        errorElement: <NotFoundPage />,
-      },
+      { path: "/",             element: <Navigate to="/main" /> },
+      { path: "/main",         element: <MainPage />,          errorElement: <NotFoundPage /> },
+      { path: "/query",        element: <QueryPage />,         errorElement: <NotFoundPage /> },
+      { path: "/tasks",        element: <TasksPage />,         errorElement: <NotFoundPage /> },
+      { path: "/documentation",element: <DocumentationPage />, errorElement: <NotFoundPage /> },
     ],
   },
 ]);

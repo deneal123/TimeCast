@@ -10,41 +10,19 @@ import {
   Badge,
   Flex,
 } from "@chakra-ui/react";
+import { PLOT_LAYOUT_BASE, PLOT_CONFIG } from "../utils/plotConfig";
 
 const Plot = createPlotlyComponent(Plotly);
 
 const COLORS = ["#FF0032", "#FFBF00", "#00B5D8", "#48BB78", "#9F7AEA"];
 
 const PLOT_LAYOUT = {
-  autosize: true,
+  ...PLOT_LAYOUT_BASE,
   height: 400,
-  paper_bgcolor: "#141820",
-  plot_bgcolor: "#0D1017",
-  font: { color: "#888", size: 12, family: "Inter, sans-serif" },
-  margin: { l: 60, r: 20, t: 16, b: 50 },
   xaxis: {
+    ...PLOT_LAYOUT_BASE.xaxis,
     title: { text: "Шаг прогноза", font: { color: "#555", size: 12 } },
-    gridcolor: "#1E2330",
-    linecolor: "#2A2E36",
-    zerolinecolor: "#2A2E36",
-    tickfont: { color: "#666" },
   },
-  yaxis: {
-    title: { text: "Значение", font: { color: "#555", size: 12 } },
-    gridcolor: "#1E2330",
-    linecolor: "#2A2E36",
-    zerolinecolor: "#2A2E36",
-    tickfont: { color: "#666" },
-  },
-  legend: {
-    orientation: "h",
-    y: -0.15,
-    bgcolor: "transparent",
-    borderwidth: 0,
-    font: { color: "#888", size: 12 },
-  },
-  hovermode: "x unified",
-  hoverlabel: { bgcolor: "#1A1D21", bordercolor: "#2A2E36", font: { color: "#FFFFFF" } },
 };
 
 const SELECT_STYLE = {
@@ -191,7 +169,7 @@ const ForecastChart = ({ results }) => {
             layout={PLOT_LAYOUT}
             style={{ width: "100%" }}
             useResizeHandler
-            config={{ displayModeBar: false, responsive: true }}
+            config={PLOT_CONFIG}
           />
         ) : (
           <Flex align="center" justify="center" h="200px">
