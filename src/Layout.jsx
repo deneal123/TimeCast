@@ -1,9 +1,16 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Flex, Spinner } from "@chakra-ui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import Header from "./components/header/header";
 import { Outlet, useLocation } from "react-router-dom";
 import Footer from "./components/footer";
+
+const PAGE_TITLES = {
+  "/main":          "Главная",
+  "/query":         "Дашборд",
+  "/tasks":         "Задачи",
+  "/documentation": "Документация",
+};
 
 const MotionFlex = motion(Flex);
 
@@ -22,6 +29,11 @@ const PageLoader = () => (
 function Layout() {
   const location = useLocation();
   const isMain = location.pathname === "/main";
+
+  useEffect(() => {
+    const title = PAGE_TITLES[location.pathname];
+    document.title = title ? `${title} — TimeCast` : "TimeCast";
+  }, [location.pathname]);
 
   return (
     <Flex direction="column" minH="100vh" w="100%" bg="menu_mts">

@@ -3,6 +3,7 @@ import { baseUrl } from "./apiConsts";
 
 export const Instance = axios.create({
   baseURL: baseUrl,
+  timeout: 600000, // 10 min — training requests can be long
 });
 
 // Unwrap data layer; normalise backend error detail (FastAPI returns [{msg, type}] or string).
