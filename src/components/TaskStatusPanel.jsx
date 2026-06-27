@@ -11,6 +11,7 @@ import {
   Icon,
 } from "@chakra-ui/react";
 import { ExternalLinkIcon, WarningIcon } from "@chakra-ui/icons";
+import { baseUrl } from "../API/apiConsts";
 import { getTask } from "../API/services/task_services";
 import { STATUS_META } from "../utils/taskConstants";
 import ForecastChart from "./ForecastChart";
@@ -180,7 +181,7 @@ const TaskStatusPanel = ({ taskId, onResultReady }) => {
                   justify="space-between"
                 >
                   <Link
-                    href={`/server/tasks/${record.task_id}/artifacts/${encodeURIComponent(a.key)}`}
+                    href={`${baseUrl}/tasks/${record.task_id}/artifacts/${encodeURIComponent(a.key)}`}
                     isExternal
                     color="#FFBF00"
                     fontSize="12px"
