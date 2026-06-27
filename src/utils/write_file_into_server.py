@@ -8,7 +8,7 @@ from src.utils.custom_logging import setup_logging
 log = setup_logging()
 
 
-async def write_file_into_server(name_object: str, file) -> None:
+async def write_file_into_server(name_object: str, file) -> str:
     # Путь загрузки файлов (UploadFile — реально асинхронный поток запроса, остаётся async).
     # basename — защита от path traversal на случай вызова в обход валидации сервиса.
     file_name = os.path.basename(file.filename or "")

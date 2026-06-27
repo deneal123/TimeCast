@@ -6,7 +6,6 @@ from fastapi import HTTPException, UploadFile, status
 
 from src import path_to_project
 from src.utils.custom_logging import setup_logging
-from src.utils.return_url_object import return_url_object
 from src.utils.write_file_into_server import write_file_into_server
 
 log = setup_logging()
@@ -73,8 +72,8 @@ def get_zip_from_server(
         path_to_plots = os.path.join(path_to_project(), os.getenv("PLOTS_PATH", "public/plots"))
         path_to_zip = os.path.join(path_to_project(), os.getenv("ZIP_PATH", "public/zip"))
         zip_filename = create_zip_with_unique_name(path_to_plots, path_to_zip)
-        log.info("Url was successfully got")
-        return {"url": f"{return_url_object(zip_filename, 'zip')}"}
+        log.info("Zip created: %s", zip_filename)
+        return {"filename": zip_filename}
     except Exception as ex:
         log.error(ex)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
