@@ -29,6 +29,20 @@ def test_upload_dir_skips_missing_directory(tmp_path):
     assert svc.upload_dir(missing, "prefix") == []
 
 
+def test_upload_dir_accepts_str_path(tmp_path):
+    """upload_dir должен принимать str-путь (timecast config возвращает str, не Path)."""
+    (tmp_path / "weights.pkl").write_bytes(b"w")
+
+    from src.services.storage_service import StorageService
+
+    svc = object.__new__(StorageService)
+    svc._bucket = "bucket"
+    svc.upload_file = lambda local_path, key: key
+    # Передаём str, а не Path — должно работать без AttributeError
+    results = svc.upload_dir(str(tmp_path), "task/weights")
+    assert len(results) == 1
+
+
 def test_upload_dir_logic(tmp_path):
     """upload_dir обходит директорию и формирует правильные S3-ключи."""
     (tmp_path / "model.pkl").write_bytes(b"weights")
