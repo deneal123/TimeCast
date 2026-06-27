@@ -51,6 +51,29 @@ def test_list_all_contains_all():
     assert ids.issubset(listed)
 
 
+def test_eviction_removes_oldest_terminal():
+    store = TaskStore(max_tasks=3)
+    ids = [store.create("op") for _ in range(3)]
+    for tid in ids:
+        store.update(tid, status=TaskStatus.DONE)
+    new_id = store.create("op")
+    assert len(store.list_all()) == 3
+    assert store.get(new_id) is not None
+    assert store.get(ids[0]) is None  # oldest evicted
+
+
+def test_eviction_skips_active_tasks():
+    store = TaskStore(max_tasks=2)
+    active = store.create("op")
+    store.update(active, status=TaskStatus.RUNNING)
+    done = store.create("op")
+    store.update(done, status=TaskStatus.DONE)
+    new_id = store.create("op")
+    assert store.get(active) is not None  # running is never evicted
+    assert store.get(new_id) is not None
+    assert store.get(done) is None
+
+
 # ---------------------------------------------------------------------------
 # Smoke: /server/tasks/ endpoints
 # ---------------------------------------------------------------------------

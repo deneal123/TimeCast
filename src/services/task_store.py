@@ -29,10 +29,24 @@ class TaskRecord:
     error: str | None = None
 
 
+_MAX_TASKS = 200
+
+
 class TaskStore:
-    def __init__(self) -> None:
+    def __init__(self, max_tasks: int = _MAX_TASKS) -> None:
         self._tasks: dict[str, TaskRecord] = {}
         self._lock = Lock()
+        self._max = max_tasks
+
+    def _evict_oldest_terminal(self) -> None:
+        """Remove the oldest done/failed task to stay within capacity. Called under lock."""
+        terminal = sorted(
+            (t for t in self._tasks.values() if t.status in (TaskStatus.DONE, TaskStatus.FAILED)),
+            key=lambda t: t.created_at,
+        )
+        to_drop = len(self._tasks) - self._max
+        for record in terminal[:to_drop]:
+            del self._tasks[record.task_id]
 
     def create(self, operation: str) -> str:
         task_id = uuid.uuid4().hex[:12]
@@ -40,6 +54,8 @@ class TaskStore:
         record = TaskRecord(task_id=task_id, operation=operation, created_at=now, updated_at=now)
         with self._lock:
             self._tasks[task_id] = record
+            if len(self._tasks) > self._max:
+                self._evict_oldest_terminal()
         return task_id
 
     def get(self, task_id: str) -> TaskRecord | None:
