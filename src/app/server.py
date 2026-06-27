@@ -163,68 +163,24 @@ async def health():
     return {"status": "ok"}
 
 
-
 @app_server.post("/upload_csv/", response_model=dict, tags=["File"])
 async def upload_csv(files: list[UploadFile] = File(...)):
-    """
-    Route for upload csv files.
-
-    :param files: CSV Files. [UploadFile]
-
-    :return: response model None.
-    """
-    try:
-        return await upload_csv_to_server(files)
-    except HTTPException as ex:
-        log.exception("Error", exc_info=ex)
-        raise ex
+    return await upload_csv_to_server(files)
 
 
 @app_server.get("/get_zip/", response_model=dict, tags=["File"])
 async def get_zip():
-    """
-    Route for get zip file.
-
-    :return: response model URL.
-    """
-    try:
-        return get_zip_from_server()
-    except HTTPException as ex:
-        log.exception("Error", exc_info=ex)
-        raise ex
-
+    return get_zip_from_server()
 
 
 @app_server.post("/season_analytic/", response_model=dict, tags=["Analytic"])
 async def season_analytic(entry: EntrySeasonAnalyticPipeline):
-    """
-    Route for season analytic.
-
-    :param entry: Validate pydantic model. [EntryClassicGraduatePipeline]
-
-    :return: response model None.
-    """
-    try:
-        return await season_analytic_pipeline(entry)
-    except HTTPException as ex:
-        log.exception("Error", exc_info=ex)
-        raise ex
+    return await season_analytic_pipeline(entry)
 
 
 @app_server.post("/classic_graduate/", response_model=dict, tags=["Graduate"])
 async def classic_graduate(entry: EntryClassicGraduatePipeline):
-    """
-    Route for graduate of classical models.
-
-    :param entry: Validate pydantic model. [EntryClassicGraduatePipeline]
-
-    :return: response model None.
-    """
-    try:
-        return await classic_graduate_pipeline(entry)
-    except HTTPException as ex:
-        log.exception("Error", exc_info=ex)
-        raise ex
+    return await classic_graduate_pipeline(entry)
 
 
 class TimeSeriesGraduateRequest(BaseModel):
@@ -242,89 +198,43 @@ class TimeSeriesInferenceRequest(BaseModel):
 @app_server.post("/timeseries_graduate/", response_model=dict, tags=["Graduate"])
 async def timeseries_graduate(entry: TimeSeriesGraduateRequest):
     """Обучение classic-моделей на ПРОИЗВОЛЬНОМ временном ряду (без привязки к домену)."""
-    try:
-        return await timeseries_graduate_pipeline(entry.dataset, entry.graduate)
-    except HTTPException as ex:
-        log.exception("Error", exc_info=ex)
-        raise ex
+    return await timeseries_graduate_pipeline(entry.dataset, entry.graduate)
 
 
 @app_server.post("/timeseries_inference/", response_model=dict, tags=["Inference"])
 async def timeseries_inference(entry: TimeSeriesInferenceRequest):
     """Инференс classic-моделей на ПРОИЗВОЛЬНОМ временном ряду (без привязки к домену)."""
-    try:
-        return await timeseries_inference_pipeline(entry.dataset, entry.inference)
-    except HTTPException as ex:
-        log.exception("Error", exc_info=ex)
-        raise ex
+    return await timeseries_inference_pipeline(entry.dataset, entry.inference)
 
 
 @app_server.post("/timeseries_neiro_graduate/", response_model=dict, tags=["Graduate"])
 async def timeseries_neiro_graduate(entry: TimeSeriesGraduateRequest):
     """Обучение нейросети на ПРОИЗВОЛЬНОМ временном ряду (num_variates авто = 3 + число фич)."""
-    try:
-        return await timeseries_neiro_graduate_pipeline(entry.dataset, entry.graduate)
-    except HTTPException as ex:
-        log.exception("Error", exc_info=ex)
-        raise ex
+    return await timeseries_neiro_graduate_pipeline(entry.dataset, entry.graduate)
 
 
 @app_server.post("/timeseries_neiro_inference/", response_model=dict, tags=["Inference"])
 async def timeseries_neiro_inference(entry: TimeSeriesInferenceRequest):
     """Инференс нейросети на ПРОИЗВОЛЬНОМ временном ряду (без привязки к домену)."""
-    try:
-        return await timeseries_neiro_inference_pipeline(entry.dataset, entry.inference)
-    except HTTPException as ex:
-        log.exception("Error", exc_info=ex)
-        raise ex
+    return await timeseries_neiro_inference_pipeline(entry.dataset, entry.inference)
 
 
 @app_server.post("/neiro_graduate/", response_model=dict, tags=["Graduate"])
 async def neiro_graduate(entry: EntryNeiroGraduatePipeline):
-    """
-    Route for graduate of neiro models.
-
-    :param entry: Validate pydantic model. [EntryNeiroGraduatePipeline]
-
-    :return: response model None.
-    """
-    try:
-        return await neiro_graduate_pipeline(entry)
-    except HTTPException as ex:
-        log.exception("Error", exc_info=ex)
-        raise ex
+    """Обучение нейросети (retail-домен): EntryNeiroGraduatePipeline."""
+    return await neiro_graduate_pipeline(entry)
 
 
 @app_server.post("/classic_inference/", response_model=dict, tags=["Inference"])
 async def classic_inference(entry: EntryClassicInferencePipeline):
-    """
-    Route for inference of classical models.
-
-    :param entry: Validate pydantic model. [EntryClassicInference]
-
-    :return: response model None.
-    """
-    try:
-        return await classic_inference_pipeline(entry)
-    except HTTPException as ex:
-        log.exception("Error", exc_info=ex)
-        raise ex
+    """Инференс classical-моделей (retail-домен): EntryClassicInferencePipeline."""
+    return await classic_inference_pipeline(entry)
 
 
 @app_server.post("/neiro_inference/", response_model=dict, tags=["Inference"])
 async def neiro_inference(entry: EntryNeiroInferencePipeline):
-    """
-    Route for inference of neiro models.
-
-    :param entry: Validate pydantic model. [EntryNeiroInferencePipeline]
-
-    :return: response model None.
-    """
-    try:
-        return await neiro_inference_pipeline(entry)
-    except HTTPException as ex:
-        log.exception("Error", exc_info=ex)
-        raise ex
+    """Инференс нейросети (retail-домен): EntryNeiroInferencePipeline."""
+    return await neiro_inference_pipeline(entry)
 
 
 
