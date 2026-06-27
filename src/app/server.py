@@ -94,6 +94,12 @@ async def timecast_error_handler(request: Request, exc: TimeCastError):
                         content={"detail": str(exc) or exc.__class__.__name__})
 
 
+@app_server.exception_handler(Exception)
+async def unhandled_error_handler(request: Request, exc: Exception):
+    log.exception("Unhandled server error", exc_info=exc)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+
 # Определяем теги
 ServerStreamTag = OpenApiTag(name="Stream", description="Operations stream")
 ServerFileTag = OpenApiTag(name="File", description="Operations file")
