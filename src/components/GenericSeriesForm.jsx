@@ -146,7 +146,12 @@ const GenericSeriesForm = ({ onBuild }) => {
   };
 
   return (
-    <VStack align="stretch" spacing={3} mb={3}>
+    <VStack
+      align="stretch"
+      spacing={3}
+      mb={3}
+      onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") build(); }}
+    >
       {/* Header row */}
       <HStack justify="space-between" align="center">
         <Text fontSize="12px" color="#555" fontWeight="600" letterSpacing="0.08em">
@@ -281,10 +286,9 @@ const GenericSeriesForm = ({ onBuild }) => {
 
       <HStack spacing={2}>
         <Tooltip
-          label={isDirty ? "Форма изменилась — обновите JSON" : ""}
+          label={isDirty ? "Форма изменилась — обновите JSON (Ctrl+Enter)" : "Ctrl+Enter"}
           placement="top"
           hasArrow
-          isDisabled={!isDirty}
         >
           <Button
             size="sm"
