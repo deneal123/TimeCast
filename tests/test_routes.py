@@ -31,7 +31,3 @@ def test_upload_csv_empty_file():
     assert r.status_code == 400
 
 
-def test_generate_log_returns_200():
-    r = client.get("/server/generate-log")
-    assert r.status_code == 200
-    assert "message" in r.json()

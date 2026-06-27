@@ -150,13 +150,6 @@ async def stream_logs():
     return StreamingResponse(log_generator(), media_type="text/event-stream")
 
 
-# Тестирование логов (например, для проверки)
-@app_server.get("/generate-log", tags=["Stream"])
-async def generate_log():
-    log.info("This is a new log message!")  # Генерация тестового лога
-    return {"message": "Log generated"}
-
-
 # Health-check для Docker/nginx (доступен как /server/health).
 @app_server.get("/health", tags=["Stream"])
 async def health():
