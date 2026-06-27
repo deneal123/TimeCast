@@ -60,8 +60,9 @@ class StorageService:
         log.debug("Загружен артефакт: s3://%s/%s", self._bucket, s3_key)
         return s3_key
 
-    def upload_dir(self, local_dir: Path, prefix: str) -> list[dict]:
+    def upload_dir(self, local_dir: Path | str, prefix: str) -> list[dict]:
         """Рекурсивно загружает директорию. Возвращает [{key, size}] для новых файлов."""
+        local_dir = Path(local_dir)
         if not local_dir.exists():
             return []
         results = []
