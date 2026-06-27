@@ -1,9 +1,10 @@
+import { baseUrl } from "../apiConsts";
 import { Instance } from "../instance";
 
 export async function fetchZipUrl() {
   const data = await Instance.get("/get_zip");
-  if (!data.url) throw new Error("Response does not contain a valid URL.");
-  return data.url;
+  if (!data.filename) throw new Error("Response does not contain filename.");
+  return `${baseUrl}/public/zip/${data.filename}`;
 }
 
 export async function uploadCSVFiles(files) {
