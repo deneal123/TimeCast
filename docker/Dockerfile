@@ -27,6 +27,9 @@ RUN uv pip install --system /opt/timecast
 RUN uv pip install --system \
     fastapi uvicorn python-multipart aiofiles python-dotenv pyyaml rich pydantic
 
+# Runtime-директории для статики (plots, zip); создаём пустыми в образе.
+RUN mkdir -p /app/public/plots /app/public/zip /app/data
+
 # Исходники приложения.
 COPY backend/src /app/src
 COPY backend/docker/entrypoint.sh /usr/local/bin/entrypoint.sh
