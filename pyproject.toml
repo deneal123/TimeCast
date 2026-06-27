@@ -46,9 +46,15 @@ where = ["src"]
 [tool.setuptools.package-data]
 timecast = ["py.typed"]
 
-# GPU-сборка torch — стандарт проекта. Для CPU/CI убрать индекс.
+# GPU-сборка torch. explicit=true гарантирует, что только torch
+# резолвится с этого индекса; остальные пакеты идут на PyPI.
 [[tool.uv.index]]
+name = "pytorch-cuda"
 url = "https://download.pytorch.org/whl/cu132"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cuda" }]
 
 [tool.ruff]
 line-length = 100
