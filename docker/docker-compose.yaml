@@ -33,8 +33,6 @@ services:
     command: server
     volumes:
       - ../infra/storage:/var/lib/app/storage
-    stdin_open: true
-    tty: true
     restart: "always"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8000/server/health || exit 1"]
