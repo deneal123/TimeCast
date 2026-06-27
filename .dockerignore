@@ -11,8 +11,8 @@
 frontend/build
 backend/data
 backend/public
-**/data
-**/public
+infra/**/data
+infra/**/public
 infra/minio_data
 infra/redis_data
 infra/storage
