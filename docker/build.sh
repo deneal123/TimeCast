@@ -2,7 +2,7 @@
 set -e
 
 # ============================================================================
-# MLservice Build Script
+# TimeCast Build Script
 # ============================================================================
 #
 # Использование:
@@ -148,7 +148,7 @@ if [ -n "$DOCKERHUB_REPO" ] && [ -n "$TAG" ]; then
     # Tag backend image explicitly using backend Dockerfile/build context
     if [ -d backend ]; then
         log_info "Tagging backend image as ${DOCKERHUB_REPO}:${TAG}"
-        docker build $NO_CACHE -t "${DOCKERHUB_REPO}:${TAG}" -f backend/Dockerfile backend || \
+        docker build $NO_CACHE -t "${DOCKERHUB_REPO}:${TAG}" -f backend/docker/Dockerfile . || \
             log_warning "Failed to tag backend image via direct build"
     fi
     # Optionally tag frontend image (suffix -frontend)
