@@ -30,6 +30,9 @@ weights_classic/
 weights_neiro/
 *.log
 
+# uv — lock file не коммитим для библиотеки (гибкость для потребителей)
+uv.lock
+
 # IDE / OS
 .idea/
 .vscode/
