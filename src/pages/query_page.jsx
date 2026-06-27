@@ -384,23 +384,23 @@ const QueryPage = () => {
 
   const handleFileChange = (e) => {
     const selected = Array.from(e.target.files);
-    if (selected.length === 3) {
+    if (selected.length >= 1) {
       setFiles(selected);
     } else {
-      toast({ title: "Выберите ровно 3 CSV-файла", status: "warning", duration: 3000, position: "bottom-right" });
+      toast({ title: "Выберите хотя бы 1 CSV-файл", status: "warning", duration: 3000, position: "bottom-right" });
     }
   };
 
   const handleSendCSV = async () => {
-    if (files.length !== 3) {
-      toast({ title: "Выберите ровно 3 CSV-файла", status: "warning", duration: 3000, position: "bottom-right" });
+    if (files.length < 1) {
+      toast({ title: "Сначала выберите CSV файл(ы)", status: "warning", duration: 3000, position: "bottom-right" });
       return;
     }
     try {
       await uploadCSVFiles(files);
-      toast({ title: "CSV файлы загружены", status: "success", duration: 3000, isClosable: true, position: "bottom-right" });
-    } catch {
-      toast({ title: "Ошибка загрузки CSV", status: "error", duration: 3000, isClosable: true, position: "bottom-right" });
+      toast({ title: `CSV загружено (${files.length} файл${files.length > 1 ? "а" : ""})`, status: "success", duration: 3000, isClosable: true, position: "bottom-right" });
+    } catch (err) {
+      toast({ title: "Ошибка загрузки CSV", description: err.message, status: "error", duration: 3000, isClosable: true, position: "bottom-right" });
     }
   };
 
@@ -689,13 +689,13 @@ const QueryPage = () => {
                   h="36px"
                   cursor="pointer"
                 >
-                  {files.length === 3 ? (
+                  {files.length >= 1 ? (
                     <HStack spacing={1}>
                       <Icon as={CheckIcon} color="#48BB78" boxSize="12px" />
-                      <Text fontSize="12px">3 файла выбраны</Text>
+                      <Text fontSize="12px">{files.length} файл{files.length > 1 ? "а" : ""} выбрано</Text>
                     </HStack>
                   ) : (
-                    "Выбрать CSV (3)"
+                    "Выбрать CSV файлы"
                   )}
                 </Button>
               </label>
@@ -705,13 +705,13 @@ const QueryPage = () => {
 
             <ToolbarButton
               icon={ArrowUpIcon}
-              label="Send CSV"
+              label="Загрузить CSV"
               onClick={handleSendCSV}
               colorScheme="red"
             />
             <ToolbarButton
               icon={ArrowUpIcon}
-              label="Send Query"
+              label="Отправить запрос"
               onClick={handleSendQuery}
               isLoading={isLoading}
               isDisabled={isLoading}
@@ -719,7 +719,7 @@ const QueryPage = () => {
             />
             <ToolbarButton
               icon={DownloadIcon}
-              label="Load Zip"
+              label="Скачать архив"
               onClick={handleDownloadArchive}
               colorScheme="cyan"
             />
