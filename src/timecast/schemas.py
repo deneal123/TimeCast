@@ -9,8 +9,7 @@ from pydantic import (
     StrictInt,
     StrictStr,
     ValidationError,
-    condecimal,
-    root_validator,
+    model_validator,
 )
 
 from timecast._internal.logging import setup_logging
@@ -35,7 +34,7 @@ def validate_with_pydantic(model_cls):
                     raise ValidationFailedError("No data provided for validation.")
                 # Валидация данных
                 if isinstance(data, BaseModel):
-                    data = data.dict(by_alias=True)
+                    data = data.model_dump(by_alias=True)
                 validated_data = model_cls(**data)
                 # Передаем валидированные данные дальше
                 kwargs["entry"] = validated_data
@@ -59,7 +58,7 @@ def auto_generate_docstring(cls: type[BaseModel]) -> type[BaseModel]:
         Генерация строки документации из описания полей модели Pydantic.
         """
         docstring = []
-        for field_name, field_info in model.__fields__.items():
+        for field_name, field_info in model.model_fields.items():
             field_details = f"Field '{field_name}':\n"
             if field_info.description:  # Получение описания
                 field_details += f"  Description: {field_info.description}\n"
@@ -109,7 +108,8 @@ class EntryClassicDataset(BaseModel):
 
     exclude_fields: dict[str, bool] | None = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def handle_excluded_fields(cls, values):
         exclude_fields = values.get("exclude_fields", {})
         shop_sales = values.get("shop_sales", None)
@@ -221,7 +221,8 @@ class EntryClassicProcess(BaseModel):
 
     exclude_fields: dict[str, bool] | None = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def handle_excluded_fields(cls, values):
         exclude_fields = values.get("exclude_fields", {})
         dict_merge = values.get("dictmerge", None)
@@ -276,7 +277,8 @@ class EntryClassicGraduate(BaseModel):
 
     exclude_fields: dict[str, bool] | None = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def handle_excluded_fields(cls, values):
         exclude_fields = values.get("exclude_fields", {})
         dict_idx = values.get("dictidx", None)
@@ -348,7 +350,8 @@ class EntryClassicInference(BaseModel):
 
     exclude_fields: dict[str, bool] | None = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def handle_excluded_fields(cls, values):
         exclude_fields = values.get("exclude_fields", {})
         dict_idx = values.get("dictidx", None)
@@ -467,7 +470,8 @@ class EntryNeiroInference(BaseModel):
 
     exclude_fields: dict[str, bool] | None = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def handle_excluded_fields(cls, values):
         exclude_fields = values.get("exclude_fields", {})
         dict_idx = values.get("dictidx", None)
@@ -542,10 +546,11 @@ class EntryNeiroGraduate(BaseModel):
                                         alias="seq_len",
                                         examples=[365],
                                         description="Длина последовательности (lookback)")
-    TestSize: condecimal(ge=0.1, le=0.5, decimal_places=1) | None = Field(0.3,
-                                                                             alias="test_size",
-                                                                             examples=[0.3],
-                                                                             description="Доля тестовой выборки, которую не будет видеть модель")
+    TestSize: float | None = Field(0.3,
+                                    ge=0.1, le=0.5,
+                                    alias="test_size",
+                                    examples=[0.3],
+                                    description="Доля тестовой выборки, которую не будет видеть модель")
     StepLen: StrictInt | None = Field(1,
                                          alias="step_length",
                                          examples=[1],
@@ -558,10 +563,11 @@ class EntryNeiroGraduate(BaseModel):
                                            alias="use_device",
                                            examples=["cuda"],
                                            description="Какое устройство использовать? cpu/cuda")
-    StartLerningRate: condecimal(ge=1e-08, le=0.01, decimal_places=8) | None = Field(0.0001,
-                                                                                             alias="start_learning_rate",
-                                                                                             examples=[0.0001],
-                                                                                             description="Начальная величина шага градиентного спуска")
+    StartLerningRate: float | None = Field(0.0001,
+                                             ge=1e-08, le=0.01,
+                                             alias="start_learning_rate",
+                                             examples=[0.0001],
+                                             description="Начальная величина шага градиентного спуска")
     BatchSize: StrictInt | None = Field(10,
                                            alias="batch_size",
                                            examples=[10],
@@ -597,7 +603,8 @@ class EntryNeiroGraduate(BaseModel):
 
     exclude_fields: dict[str, bool] | None = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def handle_excluded_fields(cls, values):
         exclude_fields = values.get("exclude_fields", {})
         dict_idx = values.get("dictidx", None)
@@ -637,8 +644,7 @@ class EntrySeasonAnalyticPipeline(BaseModel):
                                            alias="proccess",
                                            description="Данные для валидации EntryClassicProcess")
 
-    class Config:
-        populate_by_name = True  # Поддержка алиасов
+    model_config = ConfigDict(populate_by_name=True)
 
     def __init__(self, **data):
 
@@ -668,8 +674,7 @@ class EntryClassicGraduatePipeline(BaseModel):
                                            alias="graduate",
                                            description="Данные для валидации EntryClassicGraduate")
 
-    class Config:
-        populate_by_name = True  # Поддержка алиасов
+    model_config = ConfigDict(populate_by_name=True)
 
     def __init__(self, **data):
 
@@ -699,8 +704,7 @@ class EntryClassicInferencePipeline(BaseModel):
                                              alias="inference",
                                              description="Данные для валидации EntryClassicInference")
 
-    class Config:
-        populate_by_name = True  # Поддержка алиасов
+    model_config = ConfigDict(populate_by_name=True)
 
     def __init__(self, **data):
 
@@ -730,8 +734,7 @@ class EntryNeiroGraduatePipeline(BaseModel):
                                          alias="graduate",
                                          description="Данные для валидации EntryNeiroGraduate")
 
-    class Config:
-        populate_by_name = True  # Поддержка алиасов
+    model_config = ConfigDict(populate_by_name=True)
 
     def __init__(self, **data):
 
@@ -761,8 +764,7 @@ class EntryNeiroInferencePipeline(BaseModel):
                                            alias="inference",
                                            description="Данные для валидации EntryNeiroInference")
 
-    class Config:
-        populate_by_name = True  # Поддержка алиасов
+    model_config = ConfigDict(populate_by_name=True)
 
     def __init__(self, **data):
 
